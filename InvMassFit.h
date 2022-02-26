@@ -2,7 +2,6 @@
 // David Grund, Feb 26, 2022
 // To perform fit of the invariant mass distribution of measured data
 
-
 // Main function
 void DoInvMassFitMain(Int_t opt, Bool_t pass3);
 // Support functions
