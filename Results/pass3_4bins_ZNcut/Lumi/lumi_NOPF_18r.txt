@@ -1,0 +1,3 @@
+Integrated luminosity corresponding to CCUP31-B-NOPF-CENTNOTRD (run number < 295881):
+analyzed: 0.000 (0.0 percent of the total lumi for this period) 
+recorded: 0.000 (0.0 percent of the total lumi for this period) 

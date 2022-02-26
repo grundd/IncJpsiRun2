@@ -1,0 +1,14 @@
+# Ignore the folder with data trees
+Trees/
+
+# Ignore any temporary files from a local/GRID analysis
+*.d
+*.so
+*.pcm
+*.root
+*.sh
+*.xml
+*.jdl
+
+.token.txt
+
