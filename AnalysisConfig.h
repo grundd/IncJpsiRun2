@@ -4,7 +4,7 @@
 
 // ******************************
 Bool_t START_FROM_CLEAN = kFALSE;
-Int_t iWhichAnalysisToRun = 0;
+Int_t iWhichAnalysisToRun = 11;
 // ******************************
 
 TString str_subfolder = "";
@@ -53,24 +53,36 @@ void InitAnalysis(Int_t iAnalysis){
         isZNcut = kFALSE;
     }
     if(iAnalysis == 10){
+        str_subfolder = "pass1_4bins_ZNcut/";
+        nPtBins = 4;
+        isPass3 = kFALSE;
+        isZNcut = kTRUE;
+    }
+    if(iAnalysis == 11){
+        str_subfolder = "pass1_5bins_ZNcut/";
+        nPtBins = 5;
+        isPass3 = kFALSE;
+        isZNcut = kTRUE;
+    }
+    if(iAnalysis == 20){
         str_subfolder = "pass3_4bins/";
         nPtBins = 4;
         isPass3 = kTRUE;
         isZNcut = kFALSE;
     }
-    if(iAnalysis == 11){
+    if(iAnalysis == 21){
         str_subfolder = "pass3_5bins/";
         nPtBins = 5;
         isPass3 = kTRUE;
         isZNcut = kFALSE;
     }
-    if(iAnalysis == 20){
+    if(iAnalysis == 30){
         str_subfolder = "pass3_4bins_ZNcut/";
         nPtBins = 4;
         isPass3 = kTRUE;
         isZNcut = kTRUE;
     }
-    if(iAnalysis == 21){
+    if(iAnalysis == 31){
         str_subfolder = "pass3_5bins_ZNcut/";
         nPtBins = 5;
         isPass3 = kTRUE;
