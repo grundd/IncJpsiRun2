@@ -170,11 +170,11 @@ Bool_t CountEvents_EventPassed(){
             if(TMath::Abs(fZNC_time[i]) < 2) fZNC_hit = kTRUE;
         }    
         // 15) If ZNA signal, then max 10.5 neutrons
-        if(fZNA_hit && fZNA_n > 10.5) return kFALSE;
+        if(fZNA_hit && fZNA_n > cut_fZN_neutrons) return kFALSE;
         counterData[15]++;
 
         // 16) If ZNC signal, then max 10.5 neutrons
-        if(fZNC_hit && fZNC_n > 10.5) return kFALSE;
+        if(fZNC_hit && fZNC_n > cut_fZN_neutrons) return kFALSE;
         counterData[16]++;
     }
 

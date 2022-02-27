@@ -4,13 +4,17 @@
 
 // my headers
 #include "AnalysisConfig.h"
+#include "SetPtBinning.h" // must be before InvMassFits and AnalysisManager header files as it contains ptBoundaries
 #include "AnalysisManager.h"
 #include "CountEvents.h"
 #include "CountEvents_MC.h"
 #include "GetTriggerCounters.h"
 #include "IntegratedLuminosity.h"
+#include "InvMassFit_MC.h"
+#include "InvMassFit.h"
+#include "BinsThroughMassFit.h"
 
-const Int_t nSteps = 7;
+const Int_t nSteps = 9;
 Bool_t AnalysisStepsDone[nSteps+1] = { kFALSE };
 Int_t iProgress = 0;
 ofstream progress_file;
@@ -69,7 +73,7 @@ void RunAnalysis(){
     if(!AnalysisStepsDone[2] || START_FROM_CLEAN) CountEvents_MC_main();
     UpdateProgressFile();
 
-    // 3) Ge trigger counters for both periods
+    // 3) Get trigger counters for both periods
     if(!AnalysisStepsDone[3] || START_FROM_CLEAN) GetTriggerCounters_main();
     UpdateProgressFile();
 
@@ -77,19 +81,30 @@ void RunAnalysis(){
     if(!AnalysisStepsDone[4] || START_FROM_CLEAN) IntegratedLuminosity_main();
     UpdateProgressFile();
 
-    /*
-    // 5) Invariant mass fits of coh, inc, all and allbins
-    if(!AnalysisStepsDone[5] || START_FROM_CLEAN);
+    // 5) MC invariant mass fits of coh, inc, all and allbins
+    if(!AnalysisStepsDone[5] || START_FROM_CLEAN) InvMassFit_MC_main(0);
     UpdateProgressFile();
 
-    // 6) Calculating widths of pT bins
-    if(!AnalysisStepsDone[6] || START_FROM_CLEAN);
+    // 6) Invariant mass fits of coh, inc, all and allbins
+    if(!AnalysisStepsDone[6] || START_FROM_CLEAN) InvMassFit_main(0);
     UpdateProgressFile();
 
-    // 7) Invariant mass fits in pT bins
-    if(!AnalysisStepsDone[7] || START_FROM_CLEAN);
+    // 7) Set pT binning via the invariant mass fitting
+    if(!AnalysisStepsDone[7] || START_FROM_CLEAN) BinsThroughMassFit_main();
     UpdateProgressFile();
-    */
+
+    // Set pT binning (must be always done as it is required in the following steps!)
+    SetPtBinning_main();
+
+    // 8) MC invariant mass fits in pT bins
+    if(!AnalysisStepsDone[8] || START_FROM_CLEAN) InvMassFit_MC_main(1);
+    UpdateProgressFile();
+
+    // 9) Invariant mass fits in pT bins
+    if(!AnalysisStepsDone[9] || START_FROM_CLEAN) InvMassFit_main(1);
+    UpdateProgressFile();
+
+    // 10) 
 
     // Save the progress to the file
     progress_file.close();

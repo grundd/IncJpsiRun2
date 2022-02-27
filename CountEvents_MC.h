@@ -95,11 +95,11 @@ Bool_t CountEvents_MC_EventPassed(){
         counterMC[0]++;
 
         // 2) At least two tracks associated with the vertex
-        if(fVertexContrib < 2) return kFALSE;
+        if(fVertexContrib < cut_fVertexContrib) return kFALSE;
         counterMC[1]++;
 
         // 3) Distance from the IP lower than 15 cm
-        if(fVertexZ > 15) return kFALSE;
+        if(fVertexZ > cut_fVertexZ) return kFALSE;
         counterMC[2]++;
     }
 
@@ -141,11 +141,11 @@ Bool_t CountEvents_MC_EventPassed(){
     counterMC[9]++;
 
     // 9) Dilepton rapidity |y| < 0.8
-    if(!(abs(fY) < 0.8)) return kFALSE;
+    if(!(abs(fY) < cut_fY)) return kFALSE;
     counterMC[10]++;
 
     // 10) Pseudorapidity of both tracks |eta| < 0.8
-    if(!(abs(fEta1) < 0.8 && abs(fEta2) < 0.8)) return kFALSE;
+    if(!(abs(fEta1) < cut_fEta && abs(fEta2) < cut_fEta)) return kFALSE;
     counterMC[11]++;
 
     // 11) Tracks have opposite charges
@@ -176,11 +176,11 @@ Bool_t CountEvents_MC_EventPassed(){
             if(TMath::Abs(fZNC_time[i]) < 2) fZNC_hit = kTRUE;
         }    
         // 15) If ZNA signal, then max 10.5 neutrons
-        if(fZNA_hit && fZNA_n > 10.5) return kFALSE;
+        if(fZNA_hit && fZNA_n > cut_fZN_neutrons) return kFALSE;
         counterMC[16]++;
 
         // 16) If ZNC signal, then max 10.5 neutrons
-        if(fZNC_hit && fZNC_n > 10.5) return kFALSE;
+        if(fZNC_hit && fZNC_n > cut_fZN_neutrons) return kFALSE;
         counterMC[17]++;
     }
 

@@ -3,37 +3,33 @@
 // To perform fit of the invariant mass distribution of measured data
 
 // Main function
-void DoInvMassFitMain(Int_t opt, Bool_t pass3);
+void InvMassFit_DoFit(Int_t opt);
 // Support functions
-void DrawCorrelationMatrix(TCanvas *cCorrMat, RooFitResult* fResFit);
-void SetCanvas(TCanvas *c, Bool_t bLogScale);
-void PrepareDataTree(Bool_t pass3);
+void InvMassFit_DrawCorrMatrix(TCanvas *cCorrMat, RooFitResult* fResFit);
+void InvMassFit_SetCanvas(TCanvas *c, Bool_t bLogScale);
+void InvMassFit_PrepareData();
 
-void InvMassFit(){
+void InvMassFit_main(Int_t optMain){
 
-    //PrepareDataTree(kFALSE);
-    //PrepareDataTree(kTRUE);
-
-    Bool_t pass3 = kTRUE;
-
-    Bool_t main_fits = kTRUE;
-    if(main_fits){
-        DoInvMassFitMain(0, pass3);
-        DoInvMassFitMain(1, pass3);
-        DoInvMassFitMain(2, pass3);
-        DoInvMassFitMain(3, pass3);
+    if(optMain == 0){
+        InvMassFit_PrepareData();
+        // inc
+        InvMassFit_DoFit(0);
+        // coh
+        InvMassFit_DoFit(1);
+        // all
+        InvMassFit_DoFit(2);
+        // allbins
+        InvMassFit_DoFit(3);
     }
-    // bins:
-    Bool_t bins = kTRUE;
-    if(bins){
-        SetPtBinning(); // PtBinning method must be chosen in PtBinsManager.h
-        DoInvMassFitMain(4, pass3);
-        DoInvMassFitMain(5, pass3);
-        DoInvMassFitMain(6, pass3);
-        DoInvMassFitMain(7, pass3);
-        if(nPtBins == 5){
-            DoInvMassFitMain(8, pass3);
-        }
+
+    if(optMain == 1){
+        // in bins
+        InvMassFit_DoFit(4);
+        InvMassFit_DoFit(5);
+        InvMassFit_DoFit(6);
+        InvMassFit_DoFit(7);
+        if(nPtBins == 5) InvMassFit_DoFit(8);
     }
 
     Printf("Done.");
@@ -41,7 +37,7 @@ void InvMassFit(){
     return;
 }
 
-void DoInvMassFitMain(Int_t opt, Bool_t pass3){
+void InvMassFit_DoFit(Int_t opt){
     // Fit the invariant mass distribution using Double-sided CB function
     // Fix the values of the tail parameters to MC values
     // Peak corresponding to psi(2s) excluded
@@ -56,44 +52,44 @@ void DoInvMassFitMain(Int_t opt, Bool_t pass3){
     Double_t fMCutUpp   = 4.5;
 
     switch(opt){
-        case 0: // Incoherent-enriched sample
+        case 0: // 'inc': incoherent-enriched sample
             fPtCut = 0.20;
             sprintf(fStrReduce,"abs(fY)<%f && fPt>%f && fM>%f && fM<%f",fYCut,fPtCut,fMCutLow,fMCutUpp);
             break;
-        case 1: // Coherent-enriched sample
-            fPtCut = 0.11;
+        case 1: // 'coh': coherent-enriched sample
+            fPtCut = 0.20;
             sprintf(fStrReduce,"abs(fY)<%f && fPt<%f && fM>%f && fM<%f",fYCut,fPtCut,fMCutLow,fMCutUpp);
             break;
-        case 2: // Total sample (pt < 2.0 GeV/c)
+        case 2: // 'all': total sample (pT < 2.0 GeV/c)
             fPtCut = 2.00;
             sprintf(fStrReduce,"abs(fY)<%f && fPt<%f && fM>%f && fM<%f",fYCut,fPtCut,fMCutLow,fMCutUpp);
             break;
-        case 3: // Sample with pt from 0.2 to 1 GeV/c 
+        case 3: // 'allbins': sample with pT from 0.2 to 1 GeV/c 
             fPtCutLow = 0.20;
             fPtCutUpp = 1.00;
             sprintf(fStrReduce,"abs(fY)<%f && fPt>%f && fPt<%f && fM>%f && fM<%f",fYCut,fPtCutLow,fPtCutUpp,fMCutLow,fMCutUpp);
             break;
-        case 4: // pt bin 1
+        case 4: // pT bin 1
             fPtCutLow = ptBoundaries[0];
             fPtCutUpp = ptBoundaries[1];
             sprintf(fStrReduce,"abs(fY)<%f && fPt>%f && fPt<%f && fM>%f && fM<%f",fYCut,fPtCutLow,fPtCutUpp,fMCutLow,fMCutUpp);
             break;
-        case 5: // pt bin 2
+        case 5: // pT bin 2
             fPtCutLow = ptBoundaries[1];
             fPtCutUpp = ptBoundaries[2];
             sprintf(fStrReduce,"abs(fY)<%f && fPt>%f && fPt<%f && fM>%f && fM<%f",fYCut,fPtCutLow,fPtCutUpp,fMCutLow,fMCutUpp);
             break;
-        case 6: // pt bin 3
+        case 6: // pT bin 3
             fPtCutLow = ptBoundaries[2];
             fPtCutUpp = ptBoundaries[3];
             sprintf(fStrReduce,"abs(fY)<%f && fPt>%f && fPt<%f && fM>%f && fM<%f",fYCut,fPtCutLow,fPtCutUpp,fMCutLow,fMCutUpp);
             break;
-        case 7: // pt bin 4
+        case 7: // pT bin 4
             fPtCutLow = ptBoundaries[3];
             fPtCutUpp = ptBoundaries[4];
             sprintf(fStrReduce,"abs(fY)<%f && fPt>%f && fPt<%f && fM>%f && fM<%f",fYCut,fPtCutLow,fPtCutUpp,fMCutLow,fMCutUpp);
             break;
-        case 8:
+        case 8: // pT bin 5
             fPtCutLow = ptBoundaries[4];
             fPtCutUpp = ptBoundaries[5];
             sprintf(fStrReduce,"abs(fY)<%f && fPt>%f && fPt<%f && fM>%f && fM<%f",fYCut,fPtCutLow,fPtCutUpp,fMCutLow,fMCutUpp);
@@ -120,10 +116,7 @@ void DoInvMassFitMain(Int_t opt, Bool_t pass3){
     //fM.setBinning(binM);
 
     // Get the data trees
-    TString str_file = "";
-    if(!pass3)  str_file = "Trees/InvMassFit/InvMassFit_pass1.root";
-    else        str_file = "Trees/InvMassFit/InvMassFit_pass3.root";
-    TFile *f_in = new TFile(str_file.Data()); 
+    TFile *f_in = new TFile("Trees/" + str_subfolder + "InvMassFit/InvMassFit.root"); 
     TTree *t_in = NULL;
     if(opt == 0 || opt == 3 || opt == 4 || opt == 5 || opt == 6 || opt == 7 || opt == 8){
         f_in->GetObject("tIncEnrSample",t_in);
@@ -150,37 +143,37 @@ void DoInvMassFitMain(Int_t opt, Bool_t pass3){
     Double_t values[4];
     Double_t errors[4];
 
-    TString* path = new TString("Results/InvMassFitMC/");
+    TString* path = new TString("Results/" + str_subfolder + "InvMassFit_MC/");
     switch(opt){
-        case 0: // Incoherent-enriched sample
+        case 0: // 'inc': incoherent-enriched sample
             path->Append("inc/inc.txt");
             break;
-        case 1: // Coherent-enriched sample
+        case 1: // 'coh': coherent-enriched sample
             path->Append("coh/coh.txt");
             break;
-        case 2: // Total sample (pt < 2.0 GeV/c)
+        case 2: // 'all': total sample (pT < 2.0 GeV/c)
             path->Append("all/all.txt");
             break;
-        case 3: // Sample with pt from 0.2 to 1 GeV/c 
+        case 3: // 'allbins': sample with pT from 0.2 to 1 GeV/c 
             path->Append("allbins/allbins.txt");
             break;
-        case 4: // pt bin 1
+        case 4: // pT bin 1
             if(nPtBins == 4) path->Append("4bins/bin1.txt");
             if(nPtBins == 5) path->Append("5bins/bin1.txt");
             break;
-        case 5: // pt bin 2
+        case 5: // pT bin 2
             if(nPtBins == 4) path->Append("4bins/bin2.txt");
             if(nPtBins == 5) path->Append("5bins/bin2.txt");
             break;
-        case 6: // pt bin 3
+        case 6: // pT bin 3
             if(nPtBins == 4) path->Append("4bins/bin3.txt");
             if(nPtBins == 5) path->Append("5bins/bin3.txt");
             break;
-        case 7: // pt bin 4
+        case 7: // pT bin 4
             if(nPtBins == 4) path->Append("4bins/bin4.txt");
             if(nPtBins == 5) path->Append("5bins/bin4.txt");
             break;
-        case 8: // pt bin 5
+        case 8: // pT bin 5
             if(nPtBins == 5) path->Append("5bins/bin5.txt");
             break;
     }
@@ -255,11 +248,11 @@ void DoInvMassFitMain(Int_t opt, Bool_t pass3){
     // Plot the results
     // Draw Correlation Matrix
     TCanvas *cCorrMat = new TCanvas("cCorrMat","cCorrMat",700,600);
-    DrawCorrelationMatrix(cCorrMat,fResFit);
+    InvMassFit_DrawCorrMatrix(cCorrMat,fResFit);
 
     // Draw histogram with fit results
     TCanvas *cHist = new TCanvas("cHist","cHist",800,600);
-    SetCanvas(cHist,kFALSE);
+    InvMassFit_SetCanvas(cHist,kFALSE);
 
     RooPlot* fFrameM = fM.frame(Title("Mass fit")); 
     fDataSet->plotOn(fFrameM,Name("fDataSet"),Binning(binM),MarkerStyle(20),MarkerSize(1.));
@@ -342,21 +335,24 @@ void DoInvMassFitMain(Int_t opt, Bool_t pass3){
     l2->Draw();
 
     // Prepare path
-    TString str = "";
-    if(!pass3)  str = "Results/InvMassFit/pass1/";
-    else        str = "Results/InvMassFit/pass3/";
+    gSystem->Exec("mkdir -p Results/" + str_subfolder + "InvMassFit/");
+    TString str = "Results/" + str_subfolder + "InvMassFit/";
 
     switch(opt){
         case 0:
+            gSystem->Exec("mkdir -p Results/" + str_subfolder + "InvMassFit/inc/");
             str = str + "inc/inc";
             break;
         case 1:
+            gSystem->Exec("mkdir -p Results/" + str_subfolder + "InvMassFit/coh/");
             str = str + "coh/coh";
             break;
         case 2:
+            gSystem->Exec("mkdir -p Results/" + str_subfolder + "InvMassFit/all/");
             str = str + "all/all";
             break;
         case 3:
+            gSystem->Exec("mkdir -p Results/" + str_subfolder + "InvMassFit/allbins/");
             str = str + "allbins/allbins";
             break;
         case 4:
@@ -379,6 +375,8 @@ void DoInvMassFitMain(Int_t opt, Bool_t pass3){
             if(nPtBins == 5) str = str + "5bins/bin5"; 
             break;
     }
+    if(opt > 3 && nPtBins == 4) gSystem->Exec("mkdir -p Results/" + str_subfolder + "InvMassFit/4bins/");
+    if(opt > 3 && nPtBins == 5) gSystem->Exec("mkdir -p Results/" + str_subfolder + "InvMassFit/5bins/");
     // Print the plots
     cHist->Print((str + ".pdf").Data());
     cHist->Print((str + ".png").Data());
@@ -420,7 +418,7 @@ void DoInvMassFitMain(Int_t opt, Bool_t pass3){
     return;
 }
 
-void DrawCorrelationMatrix(TCanvas *cCorrMat, RooFitResult* fResFit){
+void InvMassFit_DrawCorrMatrix(TCanvas *cCorrMat, RooFitResult* fResFit){
 
     gStyle->SetOptTitle(0);
     gStyle->SetOptStat(0);
@@ -456,7 +454,7 @@ void DrawCorrelationMatrix(TCanvas *cCorrMat, RooFitResult* fResFit){
     return;
 }
 
-void SetCanvas(TCanvas *c, Bool_t bLogScale){
+void InvMassFit_SetCanvas(TCanvas *c, Bool_t bLogScale){
 
     if(bLogScale == kTRUE) c->SetLogy();
     c->SetTopMargin(0.055);
@@ -467,31 +465,21 @@ void SetCanvas(TCanvas *c, Bool_t bLogScale){
     return;
 }
 
-void PrepareDataTree(Bool_t pass3){
+void InvMassFit_PrepareData(){
 
-    TString str_file = "";
-    TString str_tree = "";
-    TString str_fout = "";
-    if(!pass3){
-        str_file = "Trees/AnalysisData_pass1/AnalysisResultsLHC18qrMerged.root"; 
-        str_tree = "AnalysisOutput/fTreeJPsi"; 
-        str_fout = "Trees/InvMassFit/InvMassFit_pass1.root";
-    } else {
-        str_file = "Trees/AnalysisData_pass3/AnalysisResults.root";
-        str_tree = "AnalysisOutput/fTreeJpsi"; 
-        str_fout = "Trees/InvMassFit/InvMassFit_pass3.root";
-    }
+    gSystem->Exec("mkdir -p Trees/" + str_subfolder + "InvMassFit/");
+    TString name = "Trees/" + str_subfolder + "InvMassFit/InvMassFit.root";
 
-    TFile *f_in = TFile::Open(str_file.Data(), "read");
+    TFile *f_in = TFile::Open((str_in_DT_fldr + "AnalysisResults.root").Data(), "read");
     if(f_in) Printf("Input data loaded.");
 
-    TTree *t_in = dynamic_cast<TTree*> (f_in->Get(str_tree.Data()));
+    TTree *t_in = dynamic_cast<TTree*> (f_in->Get(str_in_DT_tree.Data()));
     if(t_in) Printf("Input tree loaded.");
 
-    ConnectTreeVariables(t_in, pass3);
+    ConnectTreeVariables(t_in);
 
     // Create new data tree with applied cuts
-    TFile f_out(str_fout.Data(),"RECREATE");
+    TFile f_out(name.Data(),"RECREATE");
 
     TTree *tIncEnrSample = new TTree("tIncEnrSample", "tIncEnrSample");
     tIncEnrSample->Branch("fPt", &fPt, "fPt/D");
@@ -513,9 +501,10 @@ void PrepareDataTree(Bool_t pass3){
 
     for(Int_t iEntry = 0; iEntry < t_in->GetEntries(); iEntry++){
         t_in->GetEntry(iEntry);
-        if(EventPassed(0, 0, pass3)) tIncEnrSample->Fill();
-        if(EventPassed(0, 1, pass3)) tCohEnrSample->Fill();
-        if(EventPassed(0, 2, pass3)) tMixedSample->Fill();
+        // no inv mass cut, pT cut: inc, coh, all
+        if(EventPassed(0, 0)) tIncEnrSample->Fill();
+        if(EventPassed(0, 1)) tCohEnrSample->Fill();
+        if(EventPassed(0, 2)) tMixedSample->Fill();
 
         if((iEntry+1) % 100000 == 0){
             nEntriesAnalysed += 100000;

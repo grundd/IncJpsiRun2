@@ -149,30 +149,33 @@ void ConnectTreeVariablesMCGen(TTree *t){
     return;
 }
 
-/*
-Bool_t EventPassed(Int_t iMassCut = 0, Int_t iPtCut = 0, Bool_t pass3 = kFALSE){
+Bool_t EventPassed(Int_t iMassCut, Int_t iPtCut){
 
-    // pass1:
-    // Selections applied on the GRID:
-    // 0) fEvent non-empty
-    // 1) At least two tracks associated with the vertex
-    // 2) Distance from the IP lower than 15 cm
-    // 3) nGoodTracksTPC == 2 && nGoodTracksSPD == 2
-    // 4) Central UPC trigger CCUP31:
-    // for fRunNumber < 295881: CCUP31-B-NOPF-CENTNOTRD
-    // for fRunNumber >= 295881: CCUP31-B-SPD2-CENTNOTRD
+    // if pass1
+    if(!isPass3){
+        // Selections applied on the GRID:
+        // 0) fEvent non-empty
+        // 1) At least two tracks associated with the vertex
+        // 2) Distance from the IP lower than 15 cm
+        // 3) nGoodTracksTPC == 2 && nGoodTracksSPD == 2
+        // 4) Central UPC trigger CCUP31:
+        // for fRunNumber < 295881: CCUP31-B-NOPF-CENTNOTRD
+        // for fRunNumber >= 295881: CCUP31-B-SPD2-CENTNOTRD
 
-    // pass3:
-    // 0) fEvent non-empty
-    // 1) nGoodTracksTPC == 2 && nGoodTracksSPD == 2
-    // 2) Central UPC trigger CCUP31:
-    // for fRunNumber < 295881: CCUP31-B-NOPF-CENTNOTRD
-    // for fRunNumber >= 295881: CCUP31-B-SPD2-CENTNOTRD   
-    if(pass3){
+    // if pass3
+    } else {
+        // Selections applied on the GRID:
+        // 0) fEvent non-empty
+        // 1) nGoodTracksTPC == 2 && nGoodTracksSPD == 2
+        // 2) Central UPC trigger CCUP31:
+        // for fRunNumber < 295881: CCUP31-B-NOPF-CENTNOTRD
+        // for fRunNumber >= 295881: CCUP31-B-SPD2-CENTNOTRD
+
         // 3) At least two tracks associated with the vertex
-        if(fVertexContrib < 2) return kFALSE;
+        if(fVertexContrib < cut_fVertexContrib) return kFALSE;
+
         // 4) Distance from the IP lower than 15 cm
-        if(fVertexZ > 15) return kFALSE;
+        if(fVertexZ > cut_fVertexZ) return kFALSE;
     }
     
     // 5a) ADA offline veto (no effect on MC)
@@ -202,71 +205,93 @@ Bool_t EventPassed(Int_t iMassCut = 0, Int_t iPtCut = 0, Bool_t pass3 = kFALSE){
     // 11) Tracks have opposite charges
     if(!(fQ1 * fQ2 < 0)) return kFALSE;
 
-    // 12) Invariant mass cut (default: m between 2.2 and 4.5 GeV/c^2)
+    // 12) Invariant mass cut
     Bool_t bMassCut = kFALSE;
     switch(iMassCut){
-        case -1: // No inv mass cut
+        case -1: // no inv mass cut
             bMassCut = kTRUE;
             break;
-        case 0:
+        case 0: // m between 2.2 and 4.5 GeV/c^2
             if(fM > 2.2 && fM < 4.5) bMassCut = kTRUE;
-            break;
-        case 1:
+            break; 
+        case 1: // m between 3.0 and 3.2 GeV/c^2
             if(fM > 3.0 && fM < 3.2) bMassCut = kTRUE;
             break;
+        /*
         case 2:
             if(fM > 1.5 && fM < 7.0) bMassCut = kTRUE;
             break;
+        */
     }
     if(!bMassCut) return kFALSE;
 
-    // 13) Transverse momentum cut (default: pT > 0.2 GeV/c)
+    // 13) Transverse momentum cut
     Bool_t bPtCut = kFALSE;
     switch(iPtCut){
-        case -1: // No pt cut
+        case -1: // no pt cut
             bPtCut = kTRUE;
             break;
-        case 0: // Incoherent-enriched sample
+        case 0: // 'inc': incoherent-enriched sample
             if(fPt > 0.20) bPtCut = kTRUE;
             break;
-        case 1: // Coherent-enriched sample
+        case 1: // 'coh': coherent-enriched sample (~ Roman)
             if(fPt < 0.11) bPtCut = kTRUE;
             break;
-        case 2: // Total sample (pt < 2.0 GeV/c)
+        case 2: // 'all': total sample (pT < 2.0 GeV/c)
             if(fPt < 2.00) bPtCut = kTRUE;
             break;
-        case 3: // Sample with pt from 0.2 to 1 GeV/c 
+        case 3: // 'allbins': sample with pT from 0.2 to 1 GeV/c 
             if(fPt > 0.20 && fPt < 1.00) bPtCut = kTRUE;
             break;
     }
     if(!bPtCut) return kFALSE;
 
+    if(isZNcut){
+        Bool_t fZNA_hit = kFALSE;
+        Bool_t fZNC_hit = kFALSE;
+        Double_t fZNA_n = fZNA_energy / 2510.;
+        Double_t fZNC_n = fZNC_energy / 2510.;
+        for(Int_t i = 0; i < 4; i++){
+            // hit in ZNA
+            if(TMath::Abs(fZNA_time[i]) < 2) fZNA_hit = kTRUE;
+            // hit in ZNC
+            if(TMath::Abs(fZNC_time[i]) < 2) fZNC_hit = kTRUE;
+        }    
+        // 14) If ZNA signal, then max 10.5 neutrons
+        if(fZNA_hit && fZNA_n > cut_fZN_neutrons) return kFALSE;
+
+        // 15) If ZNC signal, then max 10.5 neutrons
+        if(fZNC_hit && fZNC_n > cut_fZN_neutrons) return kFALSE;
+    }
+
     // Event passed all the selections =>
     return kTRUE;
 }
 
-Bool_t EventPassedMCRec(Int_t iMassCut = -1, Int_t iPtCut = -1, Int_t iPtBin = -1, Bool_t pass3 = kFALSE){
+Bool_t EventPassedMCRec(Int_t iMassCut, Int_t iPtCut, Int_t iPtBin = -1){
 
-    // pass1:
-    // All selections applied on the GRID:
-    // 0) fEvent non-empty
-    // 1) At least two tracks associated with the vertex
-    // 2) Distance from the IP lower than 15 cm
-    // 3) nGoodTracksTPC == 2 && nGoodTracksSPD == 2
+    // if pass1
+    if(!isPass3){
+        // Selections applied on the GRID:
+        // 0) fEvent non-empty
+        // 1) At least two tracks associated with the vertex
+        // 2) Distance from the IP lower than 15 cm
+        // 3) nGoodTracksTPC == 2 && nGoodTracksSPD == 2
 
-    // pass3:
-    // 0) fEvent non-empty
-    // 1) nGoodTracksTPC == 2 && nGoodTracksSPD == 2
-    if(pass3){
+    // if pass3
+    } else {
+        // Selections applied on the GRID:
+        // 0) fEvent non-empty
+        // 1) nGoodTracksTPC == 2 && nGoodTracksSPD == 2
+
         // 2) At least two tracks associated with the vertex
-        if(fVertexContrib < 2) return kFALSE;
+        if(fVertexContrib < cut_fVertexContrib) return kFALSE;
+
         // 3) Distance from the IP lower than 15 cm
-        if(fVertexZ > 15) return kFALSE;
+        if(fVertexZ > cut_fVertexZ) return kFALSE;
     }
 
     // 4) Central UPC trigger CCUP31:
-    // for fRunNumber < 295881: CCUP31-B-NOPF-CENTNOTRD
-    // for fRunNumber >= 295881: CCUP31-B-SPD2-CENTNOTRD
     Bool_t CCUP31 = kFALSE;
     if(
         !fTriggerInputsMC[0] &&  // !0VBA (no signal in the V0A)
@@ -297,144 +322,70 @@ Bool_t EventPassedMCRec(Int_t iMassCut = -1, Int_t iPtCut = -1, Int_t iPtBin = -
     if(!(fTrk1SigIfMu*fTrk1SigIfMu + fTrk2SigIfMu*fTrk2SigIfMu < fTrk1SigIfEl*fTrk1SigIfEl + fTrk2SigIfEl*fTrk2SigIfEl)) return kFALSE;
 
     // 9) Dilepton rapidity |y| < 0.8
-    if(!(abs(fY) < 0.8)) return kFALSE;
+    if(!(abs(fY) < cut_fY)) return kFALSE;
 
     // 10) Pseudorapidity of both tracks |eta| < 0.8
-    if(!(abs(fEta1) < 0.8 && abs(fEta2) < 0.8)) return kFALSE;
+    if(!(abs(fEta1) < cut_fEta && abs(fEta2) < cut_fEta)) return kFALSE;
 
     // 11) Tracks have opposite charges
     if(!(fQ1 * fQ2 < 0)) return kFALSE;
 
-    // 12) Invariant mass cut (default: none)
+    // 12) Invariant mass cut
     Bool_t bMassCut = kFALSE;
     switch(iMassCut){
-        case -1: // No inv mass cut
+        case -1: // no inv mass cut
             bMassCut = kTRUE;
             break;
-        case 0:
+        case 0: // m between 2.2 and 4.5 GeV/c^2
             if(fM > 2.2 && fM < 4.5) bMassCut = kTRUE;
-            break;
-        case 1:
+            break; 
+        case 1: // m between 3.0 and 3.2 GeV/c^2
             if(fM > 3.0 && fM < 3.2) bMassCut = kTRUE;
             break;
     }
     if(!bMassCut) return kFALSE;
 
-    // 13) Transverse momentum cut (default: none)
+    // 13) Transverse momentum cut
     Bool_t bPtCut = kFALSE;
     switch(iPtCut){
-        case -1: // No pt cut
+        case -1: // no pT cut
             bPtCut = kTRUE;
             break;
-        case 0: // Incoherent-enriched sample
+        case 0: // 'inc': incoherent-enriched sample
             if(fPt > 0.20) bPtCut = kTRUE;
             break;
-        case 1: // Coherent-enriched sample
+        case 1: // 'coh': coherent-enriched sample (~ Roman)
             if(fPt < 0.11) bPtCut = kTRUE;
             break;
-        case 2: // Total sample (pt < 2.0 GeV/c)
+        case 2: // 'all': total sample (pT < 2.0 GeV/c)
             if(fPt < 2.00) bPtCut = kTRUE;
             break;
-        case 3: // Sample with pt from 0.2 to 1 GeV/c 
+        case 3: // 'allbins': sample with pT from 0.2 to 1 GeV/c 
             if(fPt > 0.20 && fPt < 1.00) bPtCut = kTRUE;
             break;
-        case 4: // Pt bins
+        case 4: // pT bins (4 or 5)
             if(fPt > ptBoundaries[iPtBin-1] && fPt <= ptBoundaries[iPtBin]) bPtCut = kTRUE;
             break;
     }
     if(!bPtCut) return kFALSE;
 
-    // Event passed all the selections =>
-    return kTRUE;
-}
+    if(isZNcut){
+        Bool_t fZNA_hit = kFALSE;
+        Bool_t fZNC_hit = kFALSE;
+        Double_t fZNA_n = fZNA_energy / 2510.;
+        Double_t fZNC_n = fZNC_energy / 2510.;
+        for(Int_t i = 0; i < 4; i++){
+            // hit in ZNA
+            if(TMath::Abs(fZNA_time[i]) < 2) fZNA_hit = kTRUE;
+            // hit in ZNC
+            if(TMath::Abs(fZNC_time[i]) < 2) fZNC_hit = kTRUE;
+        }    
+        // 14) If ZNA signal, then max 10.5 neutrons
+        if(fZNA_hit && fZNA_n > cut_fZN_neutrons) return kFALSE;
 
-Bool_t EventPassedMCRec_AOD(Int_t iMassCut = -1, Int_t iPtCut = -1, Int_t iPtBin = -1){
-
-    // Selections applied on the GRID:
-    // 0) fEvent non-empty
-    // 1) At least two tracks associated with the vertex
-    // 2) Distance from the IP lower than 15 cm
-    // 3) nGoodTracksTPC == 2 && nGoodTracksSPD == 2
-
-    // 4) Central UPC trigger CCUP31:
-    // for fRunNumber < 295881: CCUP31-B-NOPF-CENTNOTRD
-    // for fRunNumber >= 295881: CCUP31-B-SPD2-CENTNOTRD
-    Bool_t CCUP31 = kFALSE;
-    if(
-        !fTriggerInputsMC[0] &&  // !0VBA (no signal in the V0A)
-        !fTriggerInputsMC[1] &&  // !0VBC (no signal in the V0C)
-        !fTriggerInputsMC[2] &&  // !0UBA (no signal in the ADA)
-        !fTriggerInputsMC[3] &&  // !0UBC (no signal in the ADC)
-        fTriggerInputsMC[10] &&  //  0STG (SPD topological) // in replaying this trigger input, there is a bug in my GRID code for AOD files (!)
-        fTriggerInputsMC[4]      //  0OMU (TOF two hits topology)
-    ) CCUP31 = kTRUE;
-    if(!CCUP31) return kFALSE;
-
-    // 5a) ADA offline veto (no effect on MC)
-    if(!(fADA_dec == 0)) return kFALSE;
-
-    // 5b) ADC offline veto (no effect on MC)
-    if(!(fADC_dec == 0)) return kFALSE;
-
-    // 6a) V0A offline veto (no effect on MC)
-    if(!(fV0A_dec == 0)) return kFALSE;
-
-    // 6b) V0C offline veto (no effect on MC)
-    if(!(fV0C_dec == 0)) return kFALSE;
-
-    // 7) SPD cluster matches FOhits
-    // (...)
-
-    // 8) Muon pairs only
-    if(!(fTrk1SigIfMu*fTrk1SigIfMu + fTrk2SigIfMu*fTrk2SigIfMu < fTrk1SigIfEl*fTrk1SigIfEl + fTrk2SigIfEl*fTrk2SigIfEl)) return kFALSE;
-
-    // 9) Dilepton rapidity |y| < 0.8
-    if(!(abs(fY) < 0.8)) return kFALSE;
-
-    // 10) Pseudorapidity of both tracks |eta| < 0.8
-    if(!(abs(fEta1) < 0.8 && abs(fEta2) < 0.8)) return kFALSE;
-
-    // 11) Tracks have opposite charges
-    if(!(fQ1 * fQ2 < 0)) return kFALSE;
-
-    // 12) Invariant mass cut (default: none)
-    Bool_t bMassCut = kFALSE;
-    switch(iMassCut){
-        case -1: // No inv mass cut
-            bMassCut = kTRUE;
-            break;
-        case 0:
-            if(fM > 2.2 && fM < 4.5) bMassCut = kTRUE;
-            break;
-        case 1:
-            if(fM > 3.0 && fM < 3.2) bMassCut = kTRUE;
-            break;
+        // 15) If ZNC signal, then max 10.5 neutrons
+        if(fZNC_hit && fZNC_n > cut_fZN_neutrons) return kFALSE;
     }
-    if(!bMassCut) return kFALSE;
-
-    // 13) Transverse momentum cut (default: none)
-    Bool_t bPtCut = kFALSE;
-    switch(iPtCut){
-        case -1: // No pt cut
-            bPtCut = kTRUE;
-            break;
-        case 0: // Incoherent-enriched sample
-            if(fPt > 0.20) bPtCut = kTRUE;
-            break;
-        case 1: // Coherent-enriched sample
-            if(fPt < 0.11) bPtCut = kTRUE;
-            break;
-        case 2: // Total sample (pt < 2.0 GeV/c)
-            if(fPt < 2.00) bPtCut = kTRUE;
-            break;
-        case 3: // Sample with pt from 0.2 to 1 GeV/c 
-            if(fPt > 0.20 && fPt < 1.00) bPtCut = kTRUE;
-            break;
-        case 4: // Pt bins
-            if(fPt > ptBoundaries[iPtBin-1] && fPt <= ptBoundaries[iPtBin]) bPtCut = kTRUE;
-            break;
-    }
-    if(!bPtCut) return kFALSE;
 
     // Event passed all the selections =>
     return kTRUE;
@@ -443,24 +394,24 @@ Bool_t EventPassedMCRec_AOD(Int_t iMassCut = -1, Int_t iPtCut = -1, Int_t iPtBin
 Bool_t EventPassedMCGen(Int_t iPtCut = -1, Int_t iPtBin = -1){
 
     // 1) Dilepton rapidity |y| < 0.8
-    if(!(abs(fYGen) < 0.8)) return kFALSE;
+    if(!(abs(fYGen) < cut_fY)) return kFALSE;
 
     // 2) Transverse momentum cut (default: none)
     Bool_t bPtCut = kFALSE;
     switch(iPtCut){
-        case -1: // No pt cut
+        case -1: // no pT cut
             bPtCut = kTRUE;
             break;
-        case 0: // No pt cut
+        case 0: // no pT cut
             bPtCut = kTRUE;
             break;
-        case 2: // No pt cut
+        case 2: // no pT cut
             bPtCut = kTRUE;
             break;
-        case 3: // Sample with pt from 0.2 to 1 GeV/c 
+        case 3: // sample with pT from 0.2 to 1 GeV/c 
             if(fPtGen > 0.20 && fPtGen < 1.00) bPtCut = kTRUE;
             break;
-        case 4: // Pt bins
+        case 4: // pT bins (4 or 5)
             if(fPtGen > ptBoundaries[iPtBin-1] && fPtGen <= ptBoundaries[iPtBin]) bPtCut = kTRUE;
             break;
     }
@@ -469,4 +420,3 @@ Bool_t EventPassedMCGen(Int_t iPtCut = -1, Int_t iPtBin = -1){
     // Event passed all the selections =>
     return kTRUE;
 }
-*/
