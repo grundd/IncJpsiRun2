@@ -2,7 +2,7 @@
 // David Grund, Feb 26, 2022
 // To calculate the number of MC events passing the list of selections
 
-Int_t counterMC[18] = { 0 };
+Int_t counterMC[19] = { 0 };
 
 Bool_t CountEvents_MC_EventPassed();
 
@@ -53,21 +53,22 @@ void CountEvents_MC_main(){
         outfile << "3) vertex Z distance:\t" << counterMC[2] << "\n";
     }
     outfile << "4) CCUP31 trigger:   \t" << counterMC[3] << "\n";
-    outfile << "5a) ADA offline veto:\t" << counterMC[4] << "\n";
-    outfile << "5b) ADC offline veto:\t" << counterMC[5] << "\n";
-    outfile << "6a) V0A offline veto:\t" << counterMC[6] << "\n";
-    outfile << "6b) V0C offline veto:\t" << counterMC[7] << "\n";
-    outfile << "7) SPD match FOhits: \t" << counterMC[8] << "\n";
-    outfile << "8) muon pairs only:  \t" << counterMC[9] << "\n";
-    outfile << "9) dilept |y| < 0.8: \t" << counterMC[10] << "\n";
-    outfile << "10) trks |eta| < 0.8:\t" << counterMC[11] << "\n";
-    outfile << "11) opposite charges:\t" << counterMC[12] << "\n";
-    outfile << "12) mass 2.2 to 4.5: \t" << counterMC[13] << "\n";
-    outfile << "13) p_T 0.2 to 1.0:  \t" << counterMC[14] << "\n";
-    outfile << "14) mass 3.0 to 3.2: \t" << counterMC[15] << "\n";
+    outfile << "5) good run numbers: \t" << counterMC[4] << "\n";
+    outfile << "6a) ADA offline veto:\t" << counterMC[5] << "\n";
+    outfile << "6b) ADC offline veto:\t" << counterMC[6] << "\n";
+    outfile << "7a) V0A offline veto:\t" << counterMC[7] << "\n";
+    outfile << "7b) V0C offline veto:\t" << counterMC[8] << "\n";
+    outfile << "8) SPD match FOhits: \t" << counterMC[9] << "\n";
+    outfile << "9) muon pairs only:  \t" << counterMC[10] << "\n";
+    outfile << "10) dilept |y| < 0.8:\t" << counterMC[11] << "\n";
+    outfile << "11) trks |eta| < 0.8:\t" << counterMC[12] << "\n";
+    outfile << "12) opposite charges:\t" << counterMC[13] << "\n";
+    outfile << "13) mass 2.2 to 4.5: \t" << counterMC[14] << "\n";
+    outfile << "14) p_T 0.2 to 1.0:  \t" << counterMC[15] << "\n";
+    outfile << "15) mass 3.0 to 3.2: \t" << counterMC[16] << "\n";
     if(isZNcut){
-        outfile << "15) ZNA < 10.5 neut: \t" << counterMC[16] << "\n";
-        outfile << "16) ZNC < 10.5 neut: \t" << counterMC[17] << "\n";
+        outfile << "16) ZNA < 10.5 neut: \t" << counterMC[17] << "\n";
+        outfile << "17) ZNC < 10.5 neut: \t" << counterMC[18] << "\n";
     }
 
     outfile.close();
@@ -116,53 +117,57 @@ Bool_t CountEvents_MC_EventPassed(){
     if(!CCUP31) return kFALSE;
     counterMC[3]++;
 
-    // 5a) ADA offline veto (no effect on MC)
-    if(!(fADA_dec == 0)) return kFALSE;
+    // 5) Run numbers from the DPG list
+    if(!RunNumberInListOfGoodRuns()) return kFALSE;
     counterMC[4]++;
 
-    // 5b) ADC offline veto (no effect on MC)
-    if(!(fADC_dec == 0)) return kFALSE;
+    // 6a) ADA offline veto (no effect on MC)
+    if(!(fADA_dec == 0)) return kFALSE;
     counterMC[5]++;
 
-    // 6a) V0A offline veto (no effect on MC)
-    if(!(fV0A_dec == 0)) return kFALSE;
+    // 6b) ADC offline veto (no effect on MC)
+    if(!(fADC_dec == 0)) return kFALSE;
     counterMC[6]++;
 
-    // 6b) V0C offline veto (no effect on MC)
-    if(!(fV0C_dec == 0)) return kFALSE;
+    // 7a) V0A offline veto (no effect on MC)
+    if(!(fV0A_dec == 0)) return kFALSE;
     counterMC[7]++;
 
-    // 7) SPD cluster matches FOhits
-    if(!(fMatchingSPD == kTRUE)) return kFALSE;
+    // 7b) V0C offline veto (no effect on MC)
+    if(!(fV0C_dec == 0)) return kFALSE;
     counterMC[8]++;
 
-    // 8) Muon pairs only
-    if(!(fTrk1SigIfMu*fTrk1SigIfMu + fTrk2SigIfMu*fTrk2SigIfMu < fTrk1SigIfEl*fTrk1SigIfEl + fTrk2SigIfEl*fTrk2SigIfEl)) return kFALSE;
+    // 8) SPD cluster matches FOhits
+    if(!(fMatchingSPD == kTRUE)) return kFALSE;
     counterMC[9]++;
 
-    // 9) Dilepton rapidity |y| < 0.8
-    if(!(abs(fY) < cut_fY)) return kFALSE;
+    // 9) Muon pairs only
+    if(!(fTrk1SigIfMu*fTrk1SigIfMu + fTrk2SigIfMu*fTrk2SigIfMu < fTrk1SigIfEl*fTrk1SigIfEl + fTrk2SigIfEl*fTrk2SigIfEl)) return kFALSE;
     counterMC[10]++;
 
-    // 10) Pseudorapidity of both tracks |eta| < 0.8
-    if(!(abs(fEta1) < cut_fEta && abs(fEta2) < cut_fEta)) return kFALSE;
+    // 10) Dilepton rapidity |y| < 0.8
+    if(!(abs(fY) < cut_fY)) return kFALSE;
     counterMC[11]++;
 
-    // 11) Tracks have opposite charges
-    if(!(fQ1 * fQ2 < 0)) return kFALSE;
+    // 11) Pseudorapidity of both tracks |eta| < 0.8
+    if(!(abs(fEta1) < cut_fEta && abs(fEta2) < cut_fEta)) return kFALSE;
     counterMC[12]++;
 
-    // 12) Invariant mass between 2.2 and 4.5 GeV/c^2
-    if(!(fM > 2.2 && fM < 4.5)) return kFALSE;
+    // 12) Tracks have opposite charges
+    if(!(fQ1 * fQ2 < 0)) return kFALSE;
     counterMC[13]++;
 
-    // 13) Transverse momentum cut
-    if(!(fPt > 0.20)) return kFALSE;
+    // 13) Invariant mass between 2.2 and 4.5 GeV/c^2
+    if(!(fM > 2.2 && fM < 4.5)) return kFALSE;
     counterMC[14]++;
 
-    // 14) Invariant mass between 3.0 and 3.2 GeV/c^2
-    if(!(fM > 3.0 && fM < 3.2)) return kFALSE;
+    // 14) Transverse momentum cut
+    if(!(fPt > 0.20)) return kFALSE;
     counterMC[15]++;
+
+    // 15) Invariant mass between 3.0 and 3.2 GeV/c^2
+    if(!(fM > 3.0 && fM < 3.2)) return kFALSE;
+    counterMC[16]++;
 
     if(isZNcut){
         Bool_t fZNA_hit = kFALSE;
@@ -175,13 +180,13 @@ Bool_t CountEvents_MC_EventPassed(){
             // hit in ZNC
             if(TMath::Abs(fZNC_time[i]) < 2) fZNC_hit = kTRUE;
         }    
-        // 15) If ZNA signal, then max 10.5 neutrons
+        // 16) If ZNA signal, then max 10.5 neutrons
         if(fZNA_hit && fZNA_n > cut_fZN_neutrons) return kFALSE;
-        counterMC[16]++;
-
-        // 16) If ZNC signal, then max 10.5 neutrons
-        if(fZNC_hit && fZNC_n > cut_fZN_neutrons) return kFALSE;
         counterMC[17]++;
+
+        // 17) If ZNC signal, then max 10.5 neutrons
+        if(fZNC_hit && fZNC_n > cut_fZN_neutrons) return kFALSE;
+        counterMC[18]++;
     }
 
     // Event passed all the selections =>

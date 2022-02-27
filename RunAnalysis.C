@@ -3,21 +3,24 @@
 // Run the whole analysis
 
 // my headers
-#include "AnalysisConfig.h"
-#include "SetPtBinning.h" // must be before InvMassFits and AnalysisManager header files as it contains ptBoundaries
+#include "AnalysisHeaders.h"
 #include "AnalysisManager.h"
+#include "AnalysisConfig.h"
 #include "CountEvents.h"
 #include "CountEvents_MC.h"
+#include "RunListCheck.h"
 #include "GetTriggerCounters.h"
 #include "IntegratedLuminosity.h"
 #include "InvMassFit_MC.h"
 #include "InvMassFit.h"
 #include "BinsThroughMassFit.h"
+#include "SetPtBinning.h"
+#include "AxE_PtBins.h"
 
-const Int_t nSteps = 9;
+const Int_t nSteps = 11;
 Bool_t AnalysisStepsDone[nSteps+1] = { kFALSE };
 Int_t iProgress = 0;
-ofstream progress_file;
+ofstream *progress_file = NULL;
 
 void CheckProgressFile(){
 
@@ -25,6 +28,7 @@ void CheckProgressFile(){
     ifs.open(("Results/" + str_subfolder + "progress_file.txt").Data());
     // if the file already exists, then check the progress
     if(!ifs.fail() && !START_FROM_CLEAN){
+        // file exists and progress was loaded
         for(Int_t i = 0; i < nSteps+1; i++){
             Int_t iStep;
             Int_t isDone = 0;
@@ -36,18 +40,16 @@ void CheckProgressFile(){
                 Printf("Step %i of the analysis: calculations will be performed.", i);
             }
         }
-        ifs.close(); 
     } else {
         // file doesn't exist
-        return;
     }
-    // file exists and progress was loaded
+    ifs.close(); 
     return;
 }
 
 void UpdateProgressFile(){
 
-    progress_file << iProgress << "\t" << "1" << "\n";
+    *progress_file << iProgress << "\t" << "1" << "\n";
     iProgress++;
 
     return;
@@ -62,7 +64,7 @@ void RunAnalysis(){
     CheckProgressFile();
 
     // create a new progress file
-    progress_file.open(("Results/" + str_subfolder + "progress_file.txt").Data());
+    progress_file = new ofstream(("Results/" + str_subfolder + "progress_file.txt").Data());
     UpdateProgressFile();
 
     // 1) Count events (data)
@@ -73,41 +75,47 @@ void RunAnalysis(){
     if(!AnalysisStepsDone[2] || START_FROM_CLEAN) CountEvents_MC_main();
     UpdateProgressFile();
 
-    // 3) Get trigger counters for both periods
-    if(!AnalysisStepsDone[3] || START_FROM_CLEAN) GetTriggerCounters_main();
+    // 3) Run list check
+    if(!AnalysisStepsDone[3] || START_FROM_CLEAN) RunListCheck_main();
     UpdateProgressFile();
 
-    // 4) Calculate the integrated luminosity
-    if(!AnalysisStepsDone[4] || START_FROM_CLEAN) IntegratedLuminosity_main();
+    // 4) Get trigger counters for both periods
+    if(!AnalysisStepsDone[4] || START_FROM_CLEAN) GetTriggerCounters_main();
     UpdateProgressFile();
 
-    // 5) MC invariant mass fits of coh, inc, all and allbins
-    if(!AnalysisStepsDone[5] || START_FROM_CLEAN) InvMassFit_MC_main(0);
+    // 5) Calculate the integrated luminosity
+    if(!AnalysisStepsDone[5] || START_FROM_CLEAN) IntegratedLuminosity_main();
     UpdateProgressFile();
 
-    // 6) Invariant mass fits of coh, inc, all and allbins
-    if(!AnalysisStepsDone[6] || START_FROM_CLEAN) InvMassFit_main(0);
+    // 6) MC invariant mass fits of coh, inc, all and allbins
+    if(!AnalysisStepsDone[6] || START_FROM_CLEAN) InvMassFit_MC_main(0);
     UpdateProgressFile();
 
-    // 7) Set pT binning via the invariant mass fitting
-    if(!AnalysisStepsDone[7] || START_FROM_CLEAN) BinsThroughMassFit_main();
+    // 7) Invariant mass fits of coh, inc, all and allbins
+    if(!AnalysisStepsDone[7] || START_FROM_CLEAN) InvMassFit_main(0);
+    UpdateProgressFile();
+
+    // 8) Set pT binning via the invariant mass fitting
+    if(!AnalysisStepsDone[8] || START_FROM_CLEAN) BinsThroughMassFit_main();
     UpdateProgressFile();
 
     // Set pT binning (must be always done as it is required in the following steps!)
     SetPtBinning_main();
 
-    // 8) MC invariant mass fits in pT bins
-    if(!AnalysisStepsDone[8] || START_FROM_CLEAN) InvMassFit_MC_main(1);
+    // 9) MC invariant mass fits in pT bins
+    if(!AnalysisStepsDone[9] || START_FROM_CLEAN) InvMassFit_MC_main(1);
     UpdateProgressFile();
 
-    // 9) Invariant mass fits in pT bins
-    if(!AnalysisStepsDone[9] || START_FROM_CLEAN) InvMassFit_main(1);
+    // 10) Invariant mass fits in pT bins
+    if(!AnalysisStepsDone[10] || START_FROM_CLEAN) InvMassFit_main(1);
     UpdateProgressFile();
 
-    // 10) 
+    // 11) AxE in pT bins
+    if(!AnalysisStepsDone[11] || START_FROM_CLEAN) AxE_PtBins_main();
+    UpdateProgressFile();
 
     // Save the progress to the file
-    progress_file.close();
+    progress_file->close();
     Printf("*** Analysis status printed to %s.***", ("Results/" + str_subfolder + "progress_file.txt").Data());
 
     Printf("\n******************");

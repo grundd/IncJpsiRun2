@@ -3,15 +3,16 @@
 2) vertex # contribs:	672219
 3) vertex Z distance:	671565
 4) CCUP31 trigger:   	122183
-5a) ADA offline veto:	122183
-5b) ADC offline veto:	122183
-6a) V0A offline veto:	122182
-6b) V0C offline veto:	122178
-7) SPD match FOhits: 	120800
-8) muon pairs only:  	75769
-9) dilept |y| < 0.8: 	75489
-10) trks |eta| < 0.8:	68273
-11) opposite charges:	68273
-12) mass 2.2 to 4.5: 	68273
-13) p_T 0.2 to 1.0:  	54328
-14) mass 3.0 to 3.2: 	54202
+5) good run numbers: 	120741
+6a) ADA offline veto:	120741
+6b) ADC offline veto:	120741
+7a) V0A offline veto:	120740
+7b) V0C offline veto:	120736
+8) SPD match FOhits: 	119376
+9) muon pairs only:  	74909
+10) dilept |y| < 0.8:	74634
+11) trks |eta| < 0.8:	67496
+12) opposite charges:	67496
+13) mass 2.2 to 4.5: 	67496
+14) p_T 0.2 to 1.0:  	53699
+15) mass 3.0 to 3.2: 	53575

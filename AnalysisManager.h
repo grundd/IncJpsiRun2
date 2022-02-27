@@ -2,7 +2,31 @@
 // David Grund, Feb 26, 2022
 // Functions to set branch addresses and to check if events pass selection criteria
 
-// variables for both pass1 and pass3
+// cpp headers
+#include <stdio.h> // printf
+// root headers
+#include "TTree.h"
+// my headers
+#include "ListsOfGoodRuns.h"
+
+// Selections to set:
+Int_t cut_fVertexContrib = 2;
+Double_t cut_fVertexZ = 15.;
+Double_t cut_fY = 0.8;
+Double_t cut_fEta = 0.8;
+Double_t cut_fZN_neutrons = 10.5;
+// Options that will be set by the choice of iAnalysis in InitAnalysis:
+vector<Int_t> runList_18q;
+vector<Int_t> runList_18r;
+Int_t nRuns_18q; 
+Int_t nRuns_18r; 
+Int_t nPtBins;
+Bool_t isPass3;
+Bool_t isZNcut;
+// Array containing pT bin boundaries (will be created in SetPtBinning.h):
+Double_t *ptBoundaries = NULL;
+
+// variables for both pass1 and pass3:
 Int_t fRunNumber;
 TString *fTriggerName = NULL;
 Bool_t fTriggerInputsMC[11];
@@ -149,7 +173,24 @@ void ConnectTreeVariablesMCGen(TTree *t){
     return;
 }
 
+Bool_t RunNumberInListOfGoodRuns(){
+
+    // Run number in the GoodHadronPID lists published by DPG
+    Bool_t GoodRunNumber = kFALSE;
+    if(std::count(runList_18q.begin(), runList_18q.end(), fRunNumber) > 0) GoodRunNumber = kTRUE;
+    if(std::count(runList_18r.begin(), runList_18r.end(), fRunNumber) > 0) GoodRunNumber = kTRUE;
+    if(!GoodRunNumber){
+        //Printf("Wrong run number: %i.", fRunNumber);
+        return kFALSE;
+    } else {
+        return kTRUE;
+    }
+}
+
 Bool_t EventPassed(Int_t iMassCut, Int_t iPtCut){
+
+    // Run number in the GoodHadronPID lists published by DPG
+    if(!RunNumberInListOfGoodRuns()) return kFALSE;
 
     // if pass1
     if(!isPass3){
@@ -269,6 +310,9 @@ Bool_t EventPassed(Int_t iMassCut, Int_t iPtCut){
 }
 
 Bool_t EventPassedMCRec(Int_t iMassCut, Int_t iPtCut, Int_t iPtBin = -1){
+
+    // Run number in the GoodHadronPID lists published by DPG
+    if(!RunNumberInListOfGoodRuns()) return kFALSE;
 
     // if pass1
     if(!isPass3){

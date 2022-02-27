@@ -1,7 +1,6 @@
 // SetPtBinning.h
 // David Grund, Feb 27, 2022
 
-Double_t *ptBoundaries = NULL;
 Double_t PtBins_4bins[5] = { 0 };
 Double_t PtBins_5bins[6] = { 0 };
 
