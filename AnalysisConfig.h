@@ -3,8 +3,8 @@
 // Configure values of the parameters
 
 // ******************************
-Bool_t START_FROM_CLEAN = kFALSE;
-Int_t iWhichAnalysisToRun = 11;
+Bool_t START_FROM_CLEAN = kTRUE;
+Int_t iWhichAnalysisToRun = 20;
 // ******************************
 
 TString str_subfolder = "";

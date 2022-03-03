@@ -11,6 +11,9 @@ void InvMassFit_PrepareData();
 
 void InvMassFit_main(Int_t optMain){
 
+    gSystem->Exec("mkdir -p Trees/" + str_subfolder + "InvMassFit/");
+    gSystem->Exec("mkdir -p Results/" + str_subfolder + "InvMassFit/");
+
     if(optMain == 0){
         InvMassFit_PrepareData();
         // inc
@@ -244,6 +247,18 @@ void InvMassFit_DoFit(Int_t opt){
     N_Jpsi_out[0] = iDSCB->getVal()*N_Jpsi.getVal();
     N_Jpsi_out[1] = iDSCB->getVal()*N_Jpsi.getError();
 
+    // Calculate the number of J/psi and bkg events with mass in 3.0 to 3.2 GeV/c^2
+    Double_t N_bkg_out[2];
+    Double_t N_Jpsi_out2[2];
+
+    fM.setRange("JpsiMassRange",3.0,3.2);
+    RooAbsReal *iBkg = BkgPdf.createIntegral(fM,NormSet(fM),Range("JpsiMassRange"));
+    N_bkg_out[0] = iBkg->getVal()*N_bkg.getVal();
+    N_bkg_out[1] = iBkg->getVal()*N_bkg.getError();
+    RooAbsReal *iDSCB2 = DoubleSidedCB.createIntegral(fM,NormSet(fM),Range("JpsiMassRange"));
+    N_Jpsi_out2[0] = iDSCB2->getVal()*N_Jpsi.getVal();
+    N_Jpsi_out2[1] = iDSCB2->getVal()*N_Jpsi.getError();
+
     // ##########################################################
     // Plot the results
     // Draw Correlation Matrix
@@ -295,7 +310,7 @@ void InvMassFit_DoFit(Int_t opt){
     } else if(opt == 3 || opt == 4 || opt == 5 || opt == 6 || opt == 7 || opt == 8){
         l1->AddEntry((TObject*)0,Form("#it{p}_{T} #in (%.2f,%.2f) GeV/#it{c}", fPtCutLow,fPtCutUpp),"");
     }
-    l1->SetTextSize(0.042);
+    l1->SetTextSize(0.040);
     l1->SetBorderSize(0); // no border
     l1->SetFillStyle(0);  // legend is transparent
     l1->Draw();
@@ -308,8 +323,8 @@ void InvMassFit_DoFit(Int_t opt){
     lTitle->Draw();
 
     // Legend2
-    TLegend *l2 = new TLegend(0.465,0.29,0.95,0.87);
-    //l2->SetHeader("ALICE, PbPb #sqrt{#it{s}_{NN}} = 5.02 TeV","r"); 
+    TLegend *l2 = new TLegend(0.52,0.29,0.95,0.87);
+    l2->SetMargin(0.14);
     l2->AddEntry("DSCBAndBkgPdf","sum","L");
     l2->AddEntry((TObject*)0,Form("#chi^{2}/NDF = %.3f",chi2),"");
     l2->AddEntry("DoubleSidedCB","J/#psi signal","L");
@@ -323,19 +338,26 @@ void InvMassFit_DoFit(Int_t opt){
         l2->AddEntry((TObject*)0,Form("#it{M}_{J/#psi} = %.4f #pm %.4f GeV/#it{c}^{2}", mass_Jpsi.getVal(), mass_Jpsi.getError()),"");
         l2->AddEntry((TObject*)0,Form("#sigma = %.4f #pm %.4f GeV/#it{c}^{2}", sigma_Jpsi.getVal(), sigma_Jpsi.getError()),"");
     }
-    l2->AddEntry((TObject*)0,Form("#alpha_{L} = %.3f", alpha_L.getVal()),"");
-    l2->AddEntry((TObject*)0,Form("#alpha_{R} = %.3f", (-1)*(alpha_R.getVal())),"");
-    l2->AddEntry((TObject*)0,Form("#it{n}_{L} = %.2f", n_L.getVal()),"");
-    l2->AddEntry((TObject*)0,Form("#it{n}_{R} = %.2f", n_R.getVal()),"");
+    l2->AddEntry((TObject*)0,Form("#alpha_{L} = %.2f", alpha_L.getVal()),"");
+    l2->AddEntry((TObject*)0,Form("#alpha_{R} = %.2f", (-1)*(alpha_R.getVal())),"");
     l2->AddEntry("BkgPdf","background","L");
-    l2->AddEntry((TObject*)0,Form("#lambda = %.3f #pm %.3f GeV^{-1}#it{c}^{2}",lambda.getVal(), lambda.getError()),"");
-    l2->SetTextSize(0.042);
+    l2->AddEntry((TObject*)0,Form("#lambda = %.2f #pm %.2f GeV^{-1}#it{c}^{2}",lambda.getVal(), lambda.getError()),"");
+    l2->AddEntry((TObject*)0,"with #it{m}_{#mu#mu} #in (3.0,3.2) GeV/#it{c}^{2}:","");
+    l2->AddEntry((TObject*)0,Form("#it{N}_{bkg} = %.0f #pm %.0f",N_bkg_out[0],N_bkg_out[1]),"");
+    l2->SetTextSize(0.040); // was 0.042
     l2->SetBorderSize(0);
     l2->SetFillStyle(0);
     l2->Draw();
 
+    TLegend *l3 = new TLegend(0.74,0.48,0.85,0.58);
+    l3->AddEntry((TObject*)0,Form("#it{n}_{L} = %.2f", n_L.getVal()),"");
+    l3->AddEntry((TObject*)0,Form("#it{n}_{R} = %.2f", n_R.getVal()),"");
+    l3->SetTextSize(0.040); // was 0.042
+    l3->SetBorderSize(0);
+    l3->SetFillStyle(0);
+    l3->Draw();
+
     // Prepare path
-    gSystem->Exec("mkdir -p Results/" + str_subfolder + "InvMassFit/");
     TString str = "Results/" + str_subfolder + "InvMassFit/";
 
     switch(opt){
@@ -377,25 +399,8 @@ void InvMassFit_DoFit(Int_t opt){
     }
     if(opt > 3 && nPtBins == 4) gSystem->Exec("mkdir -p Results/" + str_subfolder + "InvMassFit/4bins/");
     if(opt > 3 && nPtBins == 5) gSystem->Exec("mkdir -p Results/" + str_subfolder + "InvMassFit/5bins/");
-    // Print the plots
-    cHist->Print((str + ".pdf").Data());
-    cHist->Print((str + ".png").Data());
-    cCorrMat->Print((str + "_cm.pdf").Data());
-    cCorrMat->Print((str + "_cm.png").Data());    
 
-    // Calculate the number of signal and bkg events with mass in 3.0 to 3.2 GeV/c^2
-    Double_t N_bkg_out[2];
-    Double_t N_Jpsi_out2[2];
-
-    fM.setRange("JpsiMassRange",3.0,3.2);
-    RooAbsReal *iBkg = BkgPdf.createIntegral(fM,NormSet(fM),Range("JpsiMassRange"));
-    N_bkg_out[0] = iBkg->getVal()*N_bkg.getVal();
-    N_bkg_out[1] = iBkg->getVal()*N_bkg.getError();
-    RooAbsReal *iDSCB2 = DoubleSidedCB.createIntegral(fM,NormSet(fM),Range("JpsiMassRange"));
-    N_Jpsi_out2[0] = iDSCB2->getVal()*N_Jpsi.getVal();
-    N_Jpsi_out2[1] = iDSCB2->getVal()*N_Jpsi.getError();
-
-    // Print the number of events to text file
+    // Print the numbers of events to text file
     ofstream outfile((str + ".txt").Data());
     outfile << "Signal in whole mass region 2.2 < m < 4.5 GeV:" << endl;
     outfile << "N_J/psi:\t" << N_Jpsi_out[0] << " pm " << N_Jpsi_out[1] << endl;
@@ -404,16 +409,25 @@ void InvMassFit_DoFit(Int_t opt){
     outfile << "N_bkg:  \t" << N_bkg_out[0] << " pm " << N_bkg_out[1] << endl;
     outfile.close();
     Printf("*** Results printed to %s.***", (str + ".txt").Data());
-    // Print just the signal to text file
+    // Print the signal to text file
     ofstream outfile2((str + "_signal.txt").Data());
     outfile2 << N_Jpsi_out[0] << "\t" << N_Jpsi_out[1] << endl;
     outfile2.close();
     Printf("*** Results printed to %s.***", (str + "_signal.txt").Data());
-    // Print just the background to text file
+    // Print the background to text file
     ofstream outfile3((str + "_bkg.txt").Data());
     outfile3 << N_bkg_out[0] << "\t" << N_bkg_out[1] << endl;
     outfile3.close();
     Printf("*** Results printed to %s.***", (str + "_bkg.txt").Data());
+
+    // Print the plots
+    cHist->Print((str + ".pdf").Data());
+    cHist->Print((str + ".png").Data());
+    cCorrMat->Print((str + "_cm.pdf").Data());
+    cCorrMat->Print((str + "_cm.png").Data());    
+
+    //delete cHist;
+    //delete cCorrMat;
 
     return;
 }
@@ -467,52 +481,60 @@ void InvMassFit_SetCanvas(TCanvas *c, Bool_t bLogScale){
 
 void InvMassFit_PrepareData(){
 
-    gSystem->Exec("mkdir -p Trees/" + str_subfolder + "InvMassFit/");
     TString name = "Trees/" + str_subfolder + "InvMassFit/InvMassFit.root";
+    TFile *file = TFile::Open(name.Data(),"read");
+    if(file){
+        Printf("Data trees already created.");
+        return;
 
-    TFile *f_in = TFile::Open((str_in_DT_fldr + "AnalysisResults.root").Data(), "read");
-    if(f_in) Printf("Input data loaded.");
+    } else { 
 
-    TTree *t_in = dynamic_cast<TTree*> (f_in->Get(str_in_DT_tree.Data()));
-    if(t_in) Printf("Input tree loaded.");
+        Printf("Data trees will be created.");
 
-    ConnectTreeVariables(t_in);
+        TFile *f_in = TFile::Open((str_in_DT_fldr + "AnalysisResults.root").Data(), "read");
+        if(f_in) Printf("Input data loaded.");
 
-    // Create new data tree with applied cuts
-    TFile f_out(name.Data(),"RECREATE");
+        TTree *t_in = dynamic_cast<TTree*> (f_in->Get(str_in_DT_tree.Data()));
+        if(t_in) Printf("Input tree loaded.");
 
-    TTree *tIncEnrSample = new TTree("tIncEnrSample", "tIncEnrSample");
-    tIncEnrSample->Branch("fPt", &fPt, "fPt/D");
-    tIncEnrSample->Branch("fM", &fM, "fM/D");
-    tIncEnrSample->Branch("fY", &fY, "fY/D");
+        ConnectTreeVariables(t_in);
 
-    TTree *tCohEnrSample = new TTree("tCohEnrSample", "tCohEnrSample");
-    tCohEnrSample->Branch("fPt", &fPt, "fPt/D");
-    tCohEnrSample->Branch("fM", &fM, "fM/D");
-    tCohEnrSample->Branch("fY", &fY, "fY/D");
+        // Create new data tree with applied cuts
+        file = new TFile(name.Data(),"RECREATE");
 
-    TTree *tMixedSample = new TTree("tMixedSample", "tMixedSample");
-    tMixedSample->Branch("fPt", &fPt, "fPt/D");
-    tMixedSample->Branch("fM", &fM, "fM/D");
-    tMixedSample->Branch("fY", &fY, "fY/D");
+        TTree *tIncEnrSample = new TTree("tIncEnrSample", "tIncEnrSample");
+        tIncEnrSample->Branch("fPt", &fPt, "fPt/D");
+        tIncEnrSample->Branch("fM", &fM, "fM/D");
+        tIncEnrSample->Branch("fY", &fY, "fY/D");
 
-    Printf("%lli entries found in the tree.", t_in->GetEntries());
-    Int_t nEntriesAnalysed = 0;
+        TTree *tCohEnrSample = new TTree("tCohEnrSample", "tCohEnrSample");
+        tCohEnrSample->Branch("fPt", &fPt, "fPt/D");
+        tCohEnrSample->Branch("fM", &fM, "fM/D");
+        tCohEnrSample->Branch("fY", &fY, "fY/D");
 
-    for(Int_t iEntry = 0; iEntry < t_in->GetEntries(); iEntry++){
-        t_in->GetEntry(iEntry);
-        // no inv mass cut, pT cut: inc, coh, all
-        if(EventPassed(0, 0)) tIncEnrSample->Fill();
-        if(EventPassed(0, 1)) tCohEnrSample->Fill();
-        if(EventPassed(0, 2)) tMixedSample->Fill();
+        TTree *tMixedSample = new TTree("tMixedSample", "tMixedSample");
+        tMixedSample->Branch("fPt", &fPt, "fPt/D");
+        tMixedSample->Branch("fM", &fM, "fM/D");
+        tMixedSample->Branch("fY", &fY, "fY/D");
 
-        if((iEntry+1) % 100000 == 0){
-            nEntriesAnalysed += 100000;
-            Printf("%i entries analysed.", nEntriesAnalysed);
+        Printf("%lli entries found in the tree.", t_in->GetEntries());
+        Int_t nEntriesAnalysed = 0;
+
+        for(Int_t iEntry = 0; iEntry < t_in->GetEntries(); iEntry++){
+            t_in->GetEntry(iEntry);
+            // no inv mass cut, pT cut: inc, coh, all
+            if(EventPassed(0, 0)) tIncEnrSample->Fill();
+            if(EventPassed(0, 1)) tCohEnrSample->Fill();
+            if(EventPassed(0, 2)) tMixedSample->Fill();
+
+            if((iEntry+1) % 100000 == 0){
+                nEntriesAnalysed += 100000;
+                Printf("%i entries analysed.", nEntriesAnalysed);
+            }
         }
+
+        file->Write("",TObject::kWriteDelete);
+
+        return;
     }
-
-    f_out.Write("",TObject::kWriteDelete);
-
-    return;
 }

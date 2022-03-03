@@ -20,11 +20,14 @@ vector<Int_t> runList_18q;
 vector<Int_t> runList_18r;
 Int_t nRuns_18q; 
 Int_t nRuns_18r; 
-Int_t nPtBins;
 Bool_t isPass3;
 Bool_t isZNcut;
 // Array containing pT bin boundaries (will be created in SetPtBinning.h):
 Double_t *ptBoundaries = NULL;
+Int_t nPtBins;
+// Array containing pT bin boundaries for pT fit (will be created in PtFit_SubtractBackground.h):
+Double_t *ptBoundaries_PtFit = NULL;
+Int_t nPtBins_PtFit;
 
 // variables for both pass1 and pass3:
 Int_t fRunNumber;

@@ -214,6 +214,13 @@ void BinsThroughMassFit_DoFit(Double_t fPtCutLow, Double_t fPtCutUpp, Bool_t sav
     YieldJpsi_val = N_Jpsi_out[0];
     YieldJpsi_err = N_Jpsi_out[1];
 
+    // Calculate the number of bkg events with mass in 3.0 to 3.2 GeV/c^2
+    Double_t N_bkg_out[2];
+    fM.setRange("JpsiMassRange",3.0,3.2);
+    RooAbsReal *iBkg = BkgPdf.createIntegral(fM,NormSet(fM),Range("JpsiMassRange"));
+    N_bkg_out[0] = iBkg->getVal()*N_bkg.getVal();
+    N_bkg_out[1] = iBkg->getVal()*N_bkg.getError();
+
     // ##########################################################
     // Plot the results
     // Draw histogram with fit results
@@ -243,7 +250,12 @@ void BinsThroughMassFit_DoFit(Double_t fPtCutLow, Double_t fPtCutUpp, Bool_t sav
         fFrameM->Draw();
 
         // Get chi2 
-        Double_t chi2 = fFrameM->chiSquare("DSCBAndBkgPdf","data",fResFit->floatParsFinal().getSize());
+        Double_t chi2 = fFrameM->chiSquare("DSCBAndBkgPdf","fDataSet",fResFit->floatParsFinal().getSize()); // last argument = number of parameters
+        Printf("********************");
+        Printf("chi2/NDF = %.3f", chi2);
+        Printf("NDF = %i", fResFit->floatParsFinal().getSize());
+        Printf("chi2/NDF = %.3f/%i", chi2*fResFit->floatParsFinal().getSize(), fResFit->floatParsFinal().getSize());
+        Printf("********************");   
 
         // -------------------------------------------------------------------------------- 
         // Legend1
@@ -251,9 +263,8 @@ void BinsThroughMassFit_DoFit(Double_t fPtCutLow, Double_t fPtCutUpp, Bool_t sav
         //l1->SetHeader("ALICE, PbPb #sqrt{#it{s}_{NN}} = 5.02 TeV","r"); 
         l1->AddEntry((TObject*)0,Form("J/#psi #rightarrow #mu^{+}#mu^{-}"),"");
         l1->AddEntry((TObject*)0,Form("|#it{y}| < %.1f", fYCut),"");
-        // Print the pt cut
         l1->AddEntry((TObject*)0,Form("#it{p}_{T} #in (%.2f,%.2f) GeV/#it{c}", fPtCutLow,fPtCutUpp),"");
-        l1->SetTextSize(0.042);
+        l1->SetTextSize(0.040);
         l1->SetBorderSize(0); // no border
         l1->SetFillStyle(0);  // legend is transparent
         l1->Draw();
@@ -266,24 +277,32 @@ void BinsThroughMassFit_DoFit(Double_t fPtCutLow, Double_t fPtCutUpp, Bool_t sav
         lTitle->Draw();
 
         // Legend2
-        TLegend *l2 = new TLegend(0.465,0.29,0.95,0.87);
-        //l2->SetHeader("ALICE, PbPb #sqrt{#it{s}_{NN}} = 5.02 TeV","r"); 
+        TLegend *l2 = new TLegend(0.52,0.29,0.95,0.87);
+        l2->SetMargin(0.14);
         l2->AddEntry("DSCBAndBkgPdf","sum","L");
-        //l2->AddEntry((TObject*)0,Form("#chi^{2}/NDF = %.3f",chi2),"");
+        l2->AddEntry((TObject*)0,Form("#chi^{2}/NDF = %.3f",chi2),"");
         l2->AddEntry("DoubleSidedCB","J/#psi signal","L");
         l2->AddEntry((TObject*)0,Form("#it{N}_{J/#psi} = %.0f #pm %.0f",N_Jpsi_out[0],N_Jpsi_out[1]),"");
         l2->AddEntry((TObject*)0,Form("#it{M}_{J/#psi} = %.3f #pm %.3f GeV/#it{c}^{2}", mass_Jpsi.getVal(), mass_Jpsi.getError()),"");
         l2->AddEntry((TObject*)0,Form("#sigma = %.3f #pm %.3f GeV/#it{c}^{2}", sigma_Jpsi.getVal(), sigma_Jpsi.getError()),"");
-        l2->AddEntry((TObject*)0,Form("#alpha_{L} = %.3f", alpha_L.getVal()),"");
-        l2->AddEntry((TObject*)0,Form("#alpha_{R} = %.3f", (-1)*(alpha_R.getVal())),"");
-        l2->AddEntry((TObject*)0,Form("#it{n}_{L} = %.2f", n_L.getVal()),"");
-        l2->AddEntry((TObject*)0,Form("#it{n}_{R} = %.2f", n_R.getVal()),"");
+        l2->AddEntry((TObject*)0,Form("#alpha_{L} = %.2f", alpha_L.getVal()),"");
+        l2->AddEntry((TObject*)0,Form("#alpha_{R} = %.2f", (-1)*(alpha_R.getVal())),"");
         l2->AddEntry("BkgPdf","background","L");
-        l2->AddEntry((TObject*)0,Form("#lambda = %.3f #pm %.3f GeV^{-1}#it{c}^{2}",lambda.getVal(), lambda.getError()),"");
-        l2->SetTextSize(0.042);
+        l2->AddEntry((TObject*)0,Form("#lambda = %.2f #pm %.2f GeV^{-1}#it{c}^{2}",lambda.getVal(), lambda.getError()),"");
+        l2->AddEntry((TObject*)0,"with #it{m}_{#mu#mu} #in (3.0,3.2) GeV/#it{c}^{2}:","");
+        l2->AddEntry((TObject*)0,Form("#it{N}_{bkg} = %.0f #pm %.0f",N_bkg_out[0],N_bkg_out[1]),"");
+        l2->SetTextSize(0.040); // was 0.042
         l2->SetBorderSize(0);
         l2->SetFillStyle(0);
         l2->Draw();
+
+        TLegend *l3 = new TLegend(0.74,0.48,0.85,0.58);
+        l3->AddEntry((TObject*)0,Form("#it{n}_{L} = %.2f", n_L.getVal()),"");
+        l3->AddEntry((TObject*)0,Form("#it{n}_{R} = %.2f", n_R.getVal()),"");
+        l3->SetTextSize(0.040); // was 0.042
+        l3->SetBorderSize(0);
+        l3->SetFillStyle(0);
+        l3->Draw();
 
         // Prepare path
         TString str = Form("Results/" + str_subfolder + "BinsThroughMassFit/bin%i", bin);

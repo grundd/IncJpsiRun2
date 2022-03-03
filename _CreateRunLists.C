@@ -1,4 +1,4 @@
-// RunListCheck.C
+// _CreateRunLists.C
 // David Grund, Feb 27, 2022
 // To check if the run numbers of analysed data match the official list
 
