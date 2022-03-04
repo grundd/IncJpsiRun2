@@ -16,9 +16,11 @@
 #include "BinsThroughMassFit.h"
 #include "SetPtBinning.h"
 #include "AxE_PtBins.h"
-#include "PtFit_SubtractBackground.h"
+#include "PtFit_SubtractBkg.h"
+#include "PtFit_PrepareMCTemplates.h"
+#include "PtFit_NoBkg.h"
 
-const Int_t nSteps = 12;
+const Int_t nSteps = 14;
 Bool_t AnalysisStepsDone[nSteps+1] = { kFALSE };
 Int_t iProgress = 0;
 ofstream *progress_file = NULL;
@@ -116,8 +118,16 @@ void RunAnalysis(){
     UpdateProgressFile();
 
     // 12) Create pT bins for the fit of the pT distribution and subtract background in these bins
-    if(!AnalysisStepsDone[12] || START_FROM_CLEAN) PtFit_SubtractBackground_main();
+    if(!AnalysisStepsDone[12] || START_FROM_CLEAN) PtFit_SubtractBkg_main();
     UpdateProgressFile();    
+
+    // 13) Prepare MC templates (PDFs) to be used in pT fits
+    if(!AnalysisStepsDone[13] || START_FROM_CLEAN) PtFit_PrepareMCTemplates_main();
+    UpdateProgressFile();    
+
+    // 14) pT fits with background subtracted
+    if(!AnalysisStepsDone[14] || START_FROM_CLEAN) PtFit_NoBkg_main();
+    UpdateProgressFile();  
 
     // Save the progress to the file
     progress_file->close();
