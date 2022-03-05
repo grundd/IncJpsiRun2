@@ -74,6 +74,10 @@ void PtFit_NoBkg_main()
 
     PtFit_NoBkg_DoFit(3,0,kFALSE);
 
+    for(Int_t i = 1001; i < 1014; i++) PtFit_NoBkg_DoFit(i,0,kFALSE);
+
+    for(Int_t i = 1001; i < 1014; i++) PtFit_NoBkg_DoFit(i,0,kTRUE);
+
     return;
 }
 
@@ -102,26 +106,30 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD, Bool_t bStopWeigh)
     // if CohJ from SL with modified RA
     else if(iShapeCohJ == 1 || iShapeCohJ > 1000)
     {
-        /*
-        TString str_name = "";
-        if(bStopWeight) str_name = Form("%sPDFs_MC_modRA_Binning%i_StopWeight.root", OutputPDFs.Data(), BinningOpt);
-        else            str_name = Form("%sPDFs_MC_modRA_Binning%i.root", OutputPDFs.Data(), BinningOpt);
+        Double_t R_A = 0;
+        if(iShapeCohJ == 1) R_A = 7.53;
+        if(iShapeCohJ > 1000) R_A = 6.6 + (Double_t)(iShapeCohJ-1001) * 0.1;
 
-        TFile *f_modRA = TFile::Open(str_name.Data(),"read");
+        TString name_file = "";
+        TString name_hist = "";
+        if(!bStopWeigh){
+            name_file = "Trees/" + str_subfolder + "PtFit/MCTemplates_CohJmodRA.root";
+            name_hist = Form("hCohJmodRA_%.2f", R_A);
+        } else {
+            name_file = "Trees/" + str_subfolder + "PtFit/MCTemplates_CohJmodRA_StopWeigh.root";
+            name_hist = Form("hCohJmodRA_StopWeigh_%.2f", R_A);
+        }            
+
+        TFile *f_modRA = TFile::Open(name_file.Data(),"read");
         if(f_modRA) Printf("Input file %s loaded.", f_modRA->GetName()); 
 
         TList *l_modRA = (TList*) f_modRA->Get("HistList");
         if(l_modRA) Printf("List %s loaded.", l_modRA->GetName()); 
 
-        Double_t R_A = 0;
-        if(iShapeCohJ == 1) R_A = 7.53;
-        if(iShapeCohJ > 1000) R_A = 6.6 + (Double_t)(iShapeCohJ-1001) * 0.1;
-
-        hCohJ = (TH1D*)l_modRA->FindObject(Form("hCohJ_modRA_%.2f", R_A));
+        hCohJ = (TH1D*)l_modRA->FindObject(name_hist.Data());
         if(hCohJ) Printf("Histogram %s loaded.", hCohJ->GetName());
 
         f_modRA->Close();
-        */
     } 
     //###################################################################################
 

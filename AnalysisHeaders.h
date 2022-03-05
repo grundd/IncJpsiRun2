@@ -18,6 +18,8 @@
 #include "TLegend.h"
 #include "TStyle.h"
 #include "TMath.h"
+#include "TLine.h"
+#include "TGraph.h"
 // roofit headers
 #include "RooBinning.h"
 #include "RooRealVar.h"

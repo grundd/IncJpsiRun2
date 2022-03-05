@@ -19,8 +19,9 @@
 #include "PtFit_SubtractBkg.h"
 #include "PtFit_PrepareMCTemplates.h"
 #include "PtFit_NoBkg.h"
+#include "STARlight_OptimalRA.h"
 
-const Int_t nSteps = 14;
+const Int_t nSteps = 15;
 Bool_t AnalysisStepsDone[nSteps+1] = { kFALSE };
 Int_t iProgress = 0;
 ofstream *progress_file = NULL;
@@ -127,6 +128,10 @@ void RunAnalysis(){
 
     // 14) pT fits with background subtracted
     if(!AnalysisStepsDone[14] || START_FROM_CLEAN) PtFit_NoBkg_main();
+    UpdateProgressFile();  
+
+    // 15) Find the optimal RA (for which there is a minimum in chi2 of the pT fit)
+    if(!AnalysisStepsDone[15] || START_FROM_CLEAN) STARlight_OptimalRA_main();
     UpdateProgressFile();  
 
     // Save the progress to the file
