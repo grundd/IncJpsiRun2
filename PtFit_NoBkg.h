@@ -26,11 +26,14 @@
 // iNormFD: (not yet implemented !!!)
 // = 0 => FD normalization taken from STARlight (f_D^coh ~ 7%), the same way as Roman
 // = 1 => ratio of coherent cross sections fixed to the value from Michal's paper
+// bStopWeigh:
+// = kTRUE  => weighing of the coherent stopped at fPtStopWeigh (= 0.2 GeV/c)
+// = kFALSE => weighing over the whole pT range
 
 //###################################################################################
 
 // Main functions
-void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD);
+void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD, Bool_t bStopWeigh);
 void PtFit_NoBkg_DrawCorrMatrix(TCanvas *cCM, RooFitResult* ResFit, Int_t iShapeCohJ);
 
 //###################################################################################
@@ -42,7 +45,7 @@ Double_t VMD_model(Double_t *pT, Double_t *par)
 {
     // input and parameters
     Double_t q = pT[0];     // q = sqrt of transferred momentum |t|, unit is GeV 
-    if (q == 0.) return 0.; // protection against floating point exception
+    if (q <= 0.) return 0.; // protection against floating point exception
     //Double_t norm = par[2]; // normalization
     Double_t R_A = par[0];  // fm (radius of the lead nucleus, SL: R_A = 6.62 fm)
     Double_t a = par[1];    // fm (SL: a = 0.7 fm)
@@ -61,28 +64,24 @@ Double_t Zero_func(Double_t pT){ return 0.; }
 
 //###################################################################################
 
-TString OutputPtFitWithoutBkg = "Results/PtFitWithoutBkg/";
-TString OutputTrees = "Trees/PtFit/";
-
 void PtFit_NoBkg_main()
 {
     gSystem->Exec("mkdir -p Results/" + str_subfolder + "PtFit_NoBkg/");
 
-    PtFit_NoBkg_DoFit(0,0);
+    PtFit_NoBkg_DoFit(0,0,kFALSE);
 
-    /*
-    PtFit_NoBkg_DoFit(0);
-    PtFit_NoBkg_DoFit(1);
-    PtFit_NoBkg_DoFit(2);
-    PtFit_NoBkg_DoFit(3);
+    PtFit_NoBkg_DoFit(2,0,kFALSE);
 
-    for(Int_t i = 1001; i < 1014; i++) PtFit_NoBkg_DoFit(i);
-    */
+    PtFit_NoBkg_DoFit(3,0,kFALSE);
+
     return;
 }
 
-void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD)
+void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD, Bool_t bStopWeigh)
 {
+    Double_t fR_A;
+    if(iShapeCohJ > 1000) fR_A = 6.6 + (Double_t)(iShapeCohJ-1001) * 0.1;
+
     // Load the file with PDFs
     TFile *file = TFile::Open(("Trees/" + str_subfolder + "PtFit/MCTemplates.root").Data(),"read");
     if(file) Printf("Input file %s loaded.", file->GetName()); 
@@ -95,7 +94,7 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD)
     // 1) kCohJpsiToMu
     TH1D *hCohJ = NULL;
     // if CohJ from SL
-    if(iShapeCohJ == 0)
+    if(iShapeCohJ == 0 || iShapeCohJ == 2 || iShapeCohJ == 3)
     {
         hCohJ = (TH1D*)list->FindObject(NamesPDFs[0].Data());
         if(hCohJ) Printf("Histogram %s loaded.", hCohJ->GetName());
@@ -143,7 +142,7 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD)
     if(hDiss) Printf("Histogram %s loaded.", hDiss->GetName());
 
     // Definition of roofit variables
-    RooRealVar fPt("fPt", "fPt", fPtCutLow_PtFit, fPtCutUpp_PtFit);
+    RooRealVar fPt("fPt", "fPt", fPtCutLow_PtFit+0.001, fPtCutUpp_PtFit);
     RooArgSet fSetOfVariables(fPt);
 
     // Create PDFs
@@ -155,7 +154,10 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD)
 
     // iShapeCohJ == 2 => fit using the formula pT * exp(-b * pT^2)
     RooRealVar par_b("par_b","b",100.,1.,500.);
-    RooGenericPdf *gPDFCohJ = new RooGenericPdf("gPDFCohJ","gPDFCohJ","fPt*exp(-par_b*pow(fPt,2))",RooArgSet(fPt,par_b));
+    RooGenericPdf *gPDFCohJ = new RooGenericPdf("gPDFCohJ","gPDFCohJ","abs(fPt)*exp(-par_b*pow(fPt,2))",RooArgSet(fPt,par_b));
+    // use of abs(.) => so that the PDF is never negative (without abs, we get a WARNING)
+    // other option would be to define it through a C++ function Gaussian(), inside of which we put
+    // if (pT <= 0.) return 0.;
     
     // iShapeCohJ == 3 => fit using the STARlight form factor and R_A left free
     // https://root.cern.ch/download/doc/RooFit_Users_Manual_2.91-33.pdf
@@ -198,7 +200,7 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD)
     // Close the file with MC templates (PDFs)
     file->Close();
 
-    // Get the binned dataset
+    // 7) Get the binned dataset
     file = TFile::Open(("Trees/" + str_subfolder + "PtFit/SignalWithBkgSubtracted.root").Data(), "read");
     if(file) Printf("Input file %s loaded.", file->GetName()); 
 
@@ -218,13 +220,13 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD)
     Printf("Data contain %.0f entries in %i bins.", N_all, DHisData.numEntries());
     file->Close();
 
-    /*
     // 8) Create the model for fitting
     // 8.1) Normalizations:
     RooRealVar NCohJ("NCohJ","Number of coh J/psi events", 0.90*N_all,0.50*N_all,1.0*N_all);
     RooRealVar NIncJ("NIncJ","Number of inc J/psi events", 0.05*N_all,0.01*N_all,0.3*N_all);
     RooRealVar NDiss("NDiss","Number of dis J/psi events", 0.05*N_all,0.01*N_all,0.3*N_all);
 
+    /*
     // Load the values of fD coefficients
     Double_t fDCohCh, fDCohChErr, fDIncCh, fDIncChErr, fDCohNe, fDCohNeErr, fDIncNe, fDIncNeErr;
     char ch[8];
@@ -252,22 +254,30 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD)
     Printf("fD_coh = %.4f", fDCoh);
     Printf("fD_inc = %.4f", fDInc);
     Printf("********************");
-    
+    */
+
+    Double_t fDCoh = 0.0704;
+    Double_t fDInc = 0.0737;    
+
     RooGenericPdf NCohP("NCohP","Number of coh FD events",Form("NCohJ*%.4f", fDCoh),RooArgSet(NCohJ));
     RooGenericPdf NIncP("NIncP","Number of inc FD events",Form("NIncJ*%.4f", fDInc),RooArgSet(NIncJ));
 
+
     // 8.2) The model:
     RooAddPdf *Mod = NULL;
+    // if CohJ from SL => use hPDFCohJ
     if(iShapeCohJ == 0 || iShapeCohJ == 1 || iShapeCohJ > 1000){
         Mod = new RooAddPdf("Mod","Sum of all PDFs",
             RooArgList(hPDFCohJ, hPDFIncJ, hPDFCohP, hPDFIncP, hPDFDiss),
             RooArgList(NCohJ, NIncJ, NCohP, NIncP, NDiss)
         );
+    // if CohJ as a gaussian => use gPDFCohJ
     } else if(iShapeCohJ == 2){
         Mod = new RooAddPdf("Mod","Sum of all PDFs",
             RooArgList(*gPDFCohJ, hPDFIncJ, hPDFCohP, hPDFIncP, hPDFDiss),
             RooArgList(NCohJ, NIncJ, NCohP, NIncP, NDiss)
-        );        
+        );    
+    // if CohJ as the SL formfactor => use sumPdfCohJ
     } else if(iShapeCohJ == 3){
         Mod = new RooAddPdf("Mod","Sum of all PDFs",
             RooArgList(*sumPdfCohJ, hPDFIncJ, hPDFCohP, hPDFIncP, hPDFDiss),
@@ -276,52 +286,54 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD)
     }
 
     // 9) Perform fitting
-    RooFitResult *ResFit = Mod->fitTo(DHisData,Extended(kTRUE),Save(),Range(fPtLow,fPtUpp));
+    RooFitResult *ResFit = Mod->fitTo(DHisData,Extended(kTRUE),Range(""),SumW2Error(kTRUE),Save()); // Range("") => full range
 
     // ###############################################################################################################
-    // ###############################################################################################################
     // 10) Output to text file
-    TString *str = NULL;
-    str = new TString(Form("%s%ibins_Binn%i_CohSh%i", OutputPtFitWithoutBkg.Data(), nPtBins, BinningOpt, iShapeCohJ));
-    if(iShapeCohJ > 1000 && !bStopWeight){
-        Double_t R_A = 6.6 + (Double_t)(iShapeCohJ-1001) * 0.1;        
-        str = new TString(Form("%sOptimalRA/WeightOverAll/%ibins_coh_modRA_%.2f", OutputPtFitWithoutBkg.Data(), nPtBins, R_A));
-    } 
-    if(iShapeCohJ > 1000 && bStopWeight){
-        Double_t R_A = 6.6 + (Double_t)(iShapeCohJ-1001) * 0.1;        
-        str = new TString(Form("%sOptimalRA/StopWeight/%ibins_coh_modRA_%.2f", OutputPtFitWithoutBkg.Data(), nPtBins, R_A));
-    } 
-    // Integrals of the PDFs in the whole pt range 
-    fPt.setRange("fPtAll",0.0,2.0);
+    TString name;
+    // if not the study of an optimal value of R_A
+    if(iShapeCohJ < 1000) name = "Results/" + str_subfolder + Form("PtFit_NoBkg/CohJ%i", iShapeCohJ);
+    else {
+        if(bStopWeigh){
+            gSystem->Exec("mkdir -p Results/" + str_subfolder + "PtFit_NoBkg/OptimalRA/StopWeighing/");
+            name = "Results/" + str_subfolder + Form("PtFit_NoBkg/OptimalRA/StopWeighing/modRA_%.2f", fR_A);
+        } else {
+            gSystem->Exec("mkdir -p Results/" + str_subfolder + "PtFit_NoBkg/OptimalRA/WeighOverAll/");
+            name = "Results/" + str_subfolder + Form("PtFit_NoBkg/OptimalRA/WeighOverAll/modRA_%.2f", fR_A);
+        }            
+    }
+
+    // Integrals of the PDFs in the whole pT range 
+    fPt.setRange("fPt_all",fPtCutLow_PtFit,fPtCutUpp_PtFit);
     RooAbsReal *fN_CohJ_all = NULL;
-    if(iShapeCohJ == 0 || iShapeCohJ == 1 || iShapeCohJ > 1000) fN_CohJ_all = hPDFCohJ.createIntegral(fPt,NormSet(fPt),Range("fPtAll"));
-    else if(iShapeCohJ == 2) fN_CohJ_all = gPDFCohJ->createIntegral(fPt,NormSet(fPt),Range("fPtAll"));
-    else if(iShapeCohJ == 3) fN_CohJ_all = sumPdfCohJ->createIntegral(fPt,NormSet(fPt),Range("fPtAll"));
-    RooAbsReal *fN_IncJ_all = hPDFIncJ.createIntegral(fPt,NormSet(fPt),Range("fPtAll"));
-    RooAbsReal *fN_Diss_all = hPDFDiss.createIntegral(fPt,NormSet(fPt),Range("fPtAll"));  
-    RooAbsReal *fN_CohP_all = hPDFCohP.createIntegral(fPt,NormSet(fPt),Range("fPtAll")); 
-    RooAbsReal *fN_IncP_all = hPDFIncP.createIntegral(fPt,NormSet(fPt),Range("fPtAll"));
-    // Integrals of the PDFs in the incoherent-enriched sample (IES)
-    fPt.setRange("fPtIES",0.2,2.0);
-    RooAbsReal *fN_CohJ_ies = NULL;
-    if(iShapeCohJ == 0 || iShapeCohJ == 1 || iShapeCohJ > 1000) fN_CohJ_ies = hPDFCohJ.createIntegral(fPt,NormSet(fPt),Range("fPtIES"));
-    else if(iShapeCohJ == 2) fN_CohJ_ies = gPDFCohJ->createIntegral(fPt,NormSet(fPt),Range("fPtIES"));
-    else if(iShapeCohJ == 3) fN_CohJ_ies = sumPdfCohJ->createIntegral(fPt,NormSet(fPt),Range("fPtIES"));
-    RooAbsReal *fN_IncJ_ies = hPDFIncJ.createIntegral(fPt,NormSet(fPt),Range("fPtIES"));
-    RooAbsReal *fN_Diss_ies = hPDFDiss.createIntegral(fPt,NormSet(fPt),Range("fPtIES"));  
-    RooAbsReal *fN_CohP_ies = hPDFCohP.createIntegral(fPt,NormSet(fPt),Range("fPtIES")); 
-    RooAbsReal *fN_IncP_ies = hPDFIncP.createIntegral(fPt,NormSet(fPt),Range("fPtIES"));  
-    // Integrals of the PDFs with 0.2 < pt < 1.0 GeV/c
-    fPt.setRange("fPtTo1",0.2,1.0);
+    if(iShapeCohJ == 0 || iShapeCohJ == 1 || iShapeCohJ > 1000) fN_CohJ_all = hPDFCohJ.createIntegral(fPt,NormSet(fPt),Range("fPt_all"));
+    else if(iShapeCohJ == 2) fN_CohJ_all = gPDFCohJ->createIntegral(fPt,NormSet(fPt),Range("fPt_all"));
+    else if(iShapeCohJ == 3) fN_CohJ_all = sumPdfCohJ->createIntegral(fPt,NormSet(fPt),Range("fPt_all"));
+    RooAbsReal *fN_IncJ_all = hPDFIncJ.createIntegral(fPt,NormSet(fPt),Range("fPt_all"));
+    RooAbsReal *fN_Diss_all = hPDFDiss.createIntegral(fPt,NormSet(fPt),Range("fPt_all"));  
+    RooAbsReal *fN_CohP_all = hPDFCohP.createIntegral(fPt,NormSet(fPt),Range("fPt_all")); 
+    RooAbsReal *fN_IncP_all = hPDFIncP.createIntegral(fPt,NormSet(fPt),Range("fPt_all"));
+    // Integrals of the PDFs in the incoherent-enriched sample (IES, pT > 0.2 GeV/c)
+    fPt.setRange("fPt_inc",0.2,2.0);
+    RooAbsReal *fN_CohJ_inc = NULL;
+    if(iShapeCohJ == 0 || iShapeCohJ == 1 || iShapeCohJ > 1000) fN_CohJ_inc = hPDFCohJ.createIntegral(fPt,NormSet(fPt),Range("fPt_inc"));
+    else if(iShapeCohJ == 2) fN_CohJ_inc = gPDFCohJ->createIntegral(fPt,NormSet(fPt),Range("fPt_inc"));
+    else if(iShapeCohJ == 3) fN_CohJ_inc = sumPdfCohJ->createIntegral(fPt,NormSet(fPt),Range("fPt_inc"));
+    RooAbsReal *fN_IncJ_inc = hPDFIncJ.createIntegral(fPt,NormSet(fPt),Range("fPt_inc"));
+    RooAbsReal *fN_Diss_inc = hPDFDiss.createIntegral(fPt,NormSet(fPt),Range("fPt_inc"));  
+    RooAbsReal *fN_CohP_inc = hPDFCohP.createIntegral(fPt,NormSet(fPt),Range("fPt_inc")); 
+    RooAbsReal *fN_IncP_inc = hPDFIncP.createIntegral(fPt,NormSet(fPt),Range("fPt_inc"));  
+    // Integrals of the PDFs with 0.2 < pT < 1.0 GeV/c (allbins)
+    fPt.setRange("fPt_to1",0.2,1.0);
     RooAbsReal *fN_CohJ_to1 = NULL;
-    if(iShapeCohJ == 0 || iShapeCohJ == 1 || iShapeCohJ > 1000) fN_CohJ_to1 = hPDFCohJ.createIntegral(fPt,NormSet(fPt),Range("fPtTo1"));
-    else if(iShapeCohJ == 2) fN_CohJ_to1 = gPDFCohJ->createIntegral(fPt,NormSet(fPt),Range("fPtTo1"));
-    else if(iShapeCohJ == 3) fN_CohJ_to1 = sumPdfCohJ->createIntegral(fPt,NormSet(fPt),Range("fPtTo1"));
-    RooAbsReal *fN_IncJ_to1 = hPDFIncJ.createIntegral(fPt,NormSet(fPt),Range("fPtTo1"));
-    RooAbsReal *fN_Diss_to1 = hPDFDiss.createIntegral(fPt,NormSet(fPt),Range("fPtTo1"));  
-    RooAbsReal *fN_CohP_to1 = hPDFCohP.createIntegral(fPt,NormSet(fPt),Range("fPtTo1")); 
-    RooAbsReal *fN_IncP_to1 = hPDFIncP.createIntegral(fPt,NormSet(fPt),Range("fPtTo1"));  
-    // Number of events in the whole pt range
+    if(iShapeCohJ == 0 || iShapeCohJ == 1 || iShapeCohJ > 1000) fN_CohJ_to1 = hPDFCohJ.createIntegral(fPt,NormSet(fPt),Range("fPt_to1"));
+    else if(iShapeCohJ == 2) fN_CohJ_to1 = gPDFCohJ->createIntegral(fPt,NormSet(fPt),Range("fPt_to1"));
+    else if(iShapeCohJ == 3) fN_CohJ_to1 = sumPdfCohJ->createIntegral(fPt,NormSet(fPt),Range("fPt_to1"));
+    RooAbsReal *fN_IncJ_to1 = hPDFIncJ.createIntegral(fPt,NormSet(fPt),Range("fPt_to1"));
+    RooAbsReal *fN_Diss_to1 = hPDFDiss.createIntegral(fPt,NormSet(fPt),Range("fPt_to1"));  
+    RooAbsReal *fN_CohP_to1 = hPDFCohP.createIntegral(fPt,NormSet(fPt),Range("fPt_to1")); 
+    RooAbsReal *fN_IncP_to1 = hPDFIncP.createIntegral(fPt,NormSet(fPt),Range("fPt_to1"));  
+    // Number of events in the whole pT range
         // values
         Double_t N_CohJ_all_val = fN_CohJ_all->getVal()*NCohJ.getVal();
         Double_t N_IncJ_all_val = fN_IncJ_all->getVal()*NIncJ.getVal();
@@ -334,20 +346,20 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD)
         Double_t N_Diss_all_err = fN_Diss_all->getVal()*NDiss.getError();
         Double_t N_CohP_all_err = fN_CohP_all->getVal()*fDCoh*NCohJ.getError();
         Double_t N_IncP_all_err = fN_IncP_all->getVal()*fDInc*NIncJ.getError();
-    // Number of events with 0.2 < pt < 2.0 GeV/c
+    // Number of events with 0.2 < pT < 2.0 GeV/c
         // values
-        Double_t N_CohJ_ies_val = fN_CohJ_ies->getVal()*NCohJ.getVal();
-        Double_t N_IncJ_ies_val = fN_IncJ_ies->getVal()*NIncJ.getVal();
-        Double_t N_Diss_ies_val = fN_Diss_ies->getVal()*NDiss.getVal();
-        Double_t N_CohP_ies_val = fN_CohP_ies->getVal()*fDCoh*NCohJ.getVal();
-        Double_t N_IncP_ies_val = fN_IncP_ies->getVal()*fDInc*NIncJ.getVal();
+        Double_t N_CohJ_inc_val = fN_CohJ_inc->getVal()*NCohJ.getVal();
+        Double_t N_IncJ_inc_val = fN_IncJ_inc->getVal()*NIncJ.getVal();
+        Double_t N_Diss_inc_val = fN_Diss_inc->getVal()*NDiss.getVal();
+        Double_t N_CohP_inc_val = fN_CohP_inc->getVal()*fDCoh*NCohJ.getVal();
+        Double_t N_IncP_inc_val = fN_IncP_inc->getVal()*fDInc*NIncJ.getVal();
         // errors
-        Double_t N_CohJ_ies_err = fN_CohJ_ies->getVal()*NCohJ.getError();
-        Double_t N_IncJ_ies_err = fN_IncJ_ies->getVal()*NIncJ.getError();
-        Double_t N_Diss_ies_err = fN_Diss_ies->getVal()*NDiss.getError();
-        Double_t N_CohP_ies_err = fN_CohP_ies->getVal()*fDCoh*NCohJ.getError();
-        Double_t N_IncP_ies_err = fN_IncP_ies->getVal()*fDInc*NIncJ.getError();  
-    // Number of events with 0.2 < pt < 1.0 GeV/c
+        Double_t N_CohJ_inc_err = fN_CohJ_inc->getVal()*NCohJ.getError();
+        Double_t N_IncJ_inc_err = fN_IncJ_inc->getVal()*NIncJ.getError();
+        Double_t N_Diss_inc_err = fN_Diss_inc->getVal()*NDiss.getError();
+        Double_t N_CohP_inc_err = fN_CohP_inc->getVal()*fDCoh*NCohJ.getError();
+        Double_t N_IncP_inc_err = fN_IncP_inc->getVal()*fDInc*NIncJ.getError();  
+    // Number of events with 0.2 < pT < 1.0 GeV/c
         // values
         Double_t N_CohJ_to1_val = fN_CohJ_to1->getVal()*NCohJ.getVal();
         Double_t N_IncJ_to1_val = fN_IncJ_to1->getVal()*NIncJ.getVal();
@@ -360,54 +372,70 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD)
         Double_t N_Diss_to1_err = fN_Diss_to1->getVal()*NDiss.getError();
         Double_t N_CohP_to1_err = fN_CohP_to1->getVal()*fDCoh*NCohJ.getError();
         Double_t N_IncP_to1_err = fN_IncP_to1->getVal()*fDInc*NIncJ.getError();
-    // Total fC correction (for the whole IES, with 0.2 < pt < 2.0 GeV/c)
-    Double_t fC = N_CohJ_ies_val / (N_IncJ_ies_val + N_Diss_ies_val) * 100;
-    Double_t denominator_err = TMath::Sqrt(TMath::Power(N_IncJ_ies_err,2) + TMath::Power(N_Diss_ies_err,2));
-    Double_t fC_err = fC * TMath::Sqrt(TMath::Power((N_CohJ_ies_err/N_CohJ_ies_val),2) + TMath::Power((denominator_err/(N_IncJ_ies_val + N_Diss_ies_val)),2));
-    // Total fD correction (for the whole IES, with 0.2 < pt < 2.0 GeV/c)
-    Double_t fDCoh_val = N_CohP_ies_val / (N_IncJ_ies_val + N_Diss_ies_val) * 100;
-    Double_t fDInc_val = N_IncP_ies_val / (N_IncJ_ies_val + N_Diss_ies_val) * 100;
-    Double_t fDCoh_err = fDCoh_val * TMath::Sqrt(TMath::Power((N_CohP_ies_err/N_CohP_ies_val),2) + TMath::Power((denominator_err/(N_IncJ_ies_val + N_Diss_ies_val)),2));
-    Double_t fDInc_err = fDInc_val * TMath::Sqrt(TMath::Power((N_IncP_ies_err/N_IncP_ies_val),2) + TMath::Power((denominator_err/(N_IncJ_ies_val + N_Diss_ies_val)),2));
-    Double_t fD_val = fDCoh_val + fDInc_val;
-    Double_t fD_err = TMath::Sqrt(TMath::Power(fDCoh_err, 2) + TMath::Power(fDInc_err, 2));
-    // Integrals of the PDFs in the pt bins
-    RooAbsReal *fN_CohJ_bins[nPtBins] = { NULL };
-    RooAbsReal *fN_IncJ_bins[nPtBins] = { NULL };
-    RooAbsReal *fN_Diss_bins[nPtBins] = { NULL };
-    RooAbsReal *fN_CohP_bins[nPtBins] = { NULL };
-    RooAbsReal *fN_IncP_bins[nPtBins] = { NULL };
-    // values
-    Double_t N_CohJ_bins_val[nPtBins] = { 0 };
-    Double_t N_IncJ_bins_val[nPtBins] = { 0 };
-    Double_t N_Diss_bins_val[nPtBins] = { 0 };
-    Double_t N_CohP_bins_val[nPtBins] = { 0 };
-    Double_t N_IncP_bins_val[nPtBins] = { 0 };
-    // errors
-    Double_t N_CohJ_bins_err[nPtBins] = { 0 };
-    Double_t N_IncJ_bins_err[nPtBins] = { 0 };
-    Double_t N_Diss_bins_err[nPtBins] = { 0 };
-    Double_t N_CohP_bins_err[nPtBins] = { 0 };
-    Double_t N_IncP_bins_err[nPtBins] = { 0 };
+    // Total fC and fD corrections
+    // a) for the whole IES (0.2 < pT < 2.0 GeV/c)
+    // fC
+    Double_t fC_inc_val = N_CohJ_inc_val / (N_IncJ_inc_val + N_Diss_inc_val) * 100;
+    Double_t denominator_inc_err = TMath::Sqrt(TMath::Power(N_IncJ_inc_err,2) + TMath::Power(N_Diss_inc_err,2));
+    Double_t fC_inc_err = fC_inc_val * TMath::Sqrt(TMath::Power((N_CohJ_inc_err/N_CohJ_inc_val),2) + TMath::Power((denominator_inc_err/(N_IncJ_inc_val + N_Diss_inc_val)),2));
+    // fD
+    Double_t fDCoh_inc_val = N_CohP_inc_val / (N_IncJ_inc_val + N_Diss_inc_val) * 100;
+    Double_t fDInc_inc_val = N_IncP_inc_val / (N_IncJ_inc_val + N_Diss_inc_val) * 100;
+    Double_t fDCoh_inc_err = fDCoh_inc_val * TMath::Sqrt(TMath::Power((N_CohP_inc_err/N_CohP_inc_val),2) + TMath::Power((denominator_inc_err/(N_IncJ_inc_val + N_Diss_inc_val)),2));
+    Double_t fDInc_inc_err = fDInc_inc_val * TMath::Sqrt(TMath::Power((N_IncP_inc_err/N_IncP_inc_val),2) + TMath::Power((denominator_inc_err/(N_IncJ_inc_val + N_Diss_inc_val)),2));
+    Double_t fD_inc_val = fDCoh_inc_val + fDInc_inc_val;
+    Double_t fD_inc_err = TMath::Sqrt(TMath::Power(fDCoh_inc_err, 2) + TMath::Power(fDInc_inc_err, 2));
+    // b) for the allbins range (0.2 < pT < 1.0 GeV/c)
+    // fC
+    Double_t fC_to1_val = N_CohJ_to1_val / (N_IncJ_to1_val + N_Diss_to1_val) * 100;
+    Double_t denominator_to1_err = TMath::Sqrt(TMath::Power(N_IncJ_to1_err,2) + TMath::Power(N_Diss_to1_err,2));
+    Double_t fC_to1_err = fC_to1_val * TMath::Sqrt(TMath::Power((N_CohJ_to1_err/N_CohJ_to1_val),2) + TMath::Power((denominator_to1_err/(N_IncJ_to1_val + N_Diss_to1_val)),2));
+    // fD
+    Double_t fDCoh_to1_val = N_CohP_to1_val / (N_IncJ_to1_val + N_Diss_to1_val) * 100;
+    Double_t fDInc_to1_val = N_IncP_to1_val / (N_IncJ_to1_val + N_Diss_to1_val) * 100;
+    Double_t fDCoh_to1_err = fDCoh_to1_val * TMath::Sqrt(TMath::Power((N_CohP_to1_err/N_CohP_to1_val),2) + TMath::Power((denominator_to1_err/(N_IncJ_to1_val + N_Diss_to1_val)),2));
+    Double_t fDInc_to1_err = fDInc_to1_val * TMath::Sqrt(TMath::Power((N_IncP_to1_err/N_IncP_to1_val),2) + TMath::Power((denominator_to1_err/(N_IncJ_to1_val + N_Diss_to1_val)),2));
+    Double_t fD_to1_val = fDCoh_to1_val + fDInc_to1_val;
+    Double_t fD_to1_err = TMath::Sqrt(TMath::Power(fDCoh_to1_err, 2) + TMath::Power(fDInc_to1_err, 2));
+    // fC and fD corrections in the pT bins
+    // Integrals of the PDFs in the pT bins:
+    vector<RooAbsReal*> fN_CohJ_bins(nPtBins);
+    vector<RooAbsReal*> fN_IncJ_bins(nPtBins);
+    vector<RooAbsReal*> fN_Diss_bins(nPtBins);
+    vector<RooAbsReal*> fN_CohP_bins(nPtBins);
+    vector<RooAbsReal*> fN_IncP_bins(nPtBins);
+    // values of N
+    vector<Double_t> N_CohJ_bins_val(nPtBins);
+    vector<Double_t> N_IncJ_bins_val(nPtBins);
+    vector<Double_t> N_Diss_bins_val(nPtBins);
+    vector<Double_t> N_CohP_bins_val(nPtBins);
+    vector<Double_t> N_IncP_bins_val(nPtBins);
+    // errors of N
+    vector<Double_t> N_CohJ_bins_err(nPtBins);
+    vector<Double_t> N_IncJ_bins_err(nPtBins);
+    vector<Double_t> N_Diss_bins_err(nPtBins);
+    vector<Double_t> N_CohP_bins_err(nPtBins);
+    vector<Double_t> N_IncP_bins_err(nPtBins);
     // coefficients
-    Double_t fC_bins_val[nPtBins] = { 0 };
-    Double_t fC_bins_err[nPtBins] = { 0 };
-    Double_t fDCoh_bins_val[nPtBins] = { 0 };
-    Double_t fDCoh_bins_err[nPtBins] = { 0 };
-    Double_t fDInc_bins_val[nPtBins] = { 0 };
-    Double_t fDInc_bins_err[nPtBins] = { 0 };
-    Double_t fD_bins_val[nPtBins] = { 0 };
-    Double_t fD_bins_err[nPtBins] = { 0 };
+    vector<Double_t> fC_bins_val(nPtBins);
+    vector<Double_t> fC_bins_err(nPtBins);
+    vector<Double_t> fDCoh_bins_val(nPtBins);
+    vector<Double_t> fDCoh_bins_err(nPtBins);
+    vector<Double_t> fDInc_bins_val(nPtBins);
+    vector<Double_t> fDInc_bins_err(nPtBins);
+    vector<Double_t> fD_bins_val(nPtBins);
+    vector<Double_t> fD_bins_err(nPtBins);
+    // calculate the values of everything
     for(Int_t i = 0; i < nPtBins; i++){
-        fPt.setRange(Form("fPtBin%i",i+1), ptBoundaries[i], ptBoundaries[i+1]);
+        fPt.setRange(Form("fPt_bin%i",i+1), ptBoundaries[i], ptBoundaries[i+1]);
         Printf("Now calculating for bin %i, (%.3f, %.3f) GeV", i+1, ptBoundaries[i], ptBoundaries[i+1]);
-        if(iShapeCohJ == 0 || iShapeCohJ == 1 || iShapeCohJ > 1000) fN_CohJ_bins[i] = hPDFCohJ.createIntegral(fPt,NormSet(fPt),Range(Form("fPtBin%i",i+1)));
-        else if(iShapeCohJ == 2) fN_CohJ_bins[i] = gPDFCohJ->createIntegral(fPt,NormSet(fPt),Range(Form("fPtBin%i",i+1)));
-        else if(iShapeCohJ == 3) fN_CohJ_bins[i] = sumPdfCohJ->createIntegral(fPt,NormSet(fPt),Range(Form("fPtBin%i",i+1)));
-        fN_IncJ_bins[i] = hPDFIncJ.createIntegral(fPt,NormSet(fPt),Range(Form("fPtBin%i",i+1)));
-        fN_Diss_bins[i] = hPDFDiss.createIntegral(fPt,NormSet(fPt),Range(Form("fPtBin%i",i+1)));
-        fN_CohP_bins[i] = hPDFCohP.createIntegral(fPt,NormSet(fPt),Range(Form("fPtBin%i",i+1)));
-        fN_IncP_bins[i] = hPDFIncP.createIntegral(fPt,NormSet(fPt),Range(Form("fPtBin%i",i+1)));  
+        if(iShapeCohJ == 0 || iShapeCohJ == 1 || iShapeCohJ > 1000) fN_CohJ_bins[i] = hPDFCohJ.createIntegral(fPt,NormSet(fPt),Range(Form("fPt_bin%i",i+1)));
+        else if(iShapeCohJ == 2) fN_CohJ_bins[i] = gPDFCohJ->createIntegral(fPt,NormSet(fPt),Range(Form("fPt_bin%i",i+1)));
+        else if(iShapeCohJ == 3) fN_CohJ_bins[i] = sumPdfCohJ->createIntegral(fPt,NormSet(fPt),Range(Form("fPt_bin%i",i+1)));
+        fN_IncJ_bins[i] = hPDFIncJ.createIntegral(fPt,NormSet(fPt),Range(Form("fPt_bin%i",i+1)));
+        fN_Diss_bins[i] = hPDFDiss.createIntegral(fPt,NormSet(fPt),Range(Form("fPt_bin%i",i+1)));
+        fN_CohP_bins[i] = hPDFCohP.createIntegral(fPt,NormSet(fPt),Range(Form("fPt_bin%i",i+1)));
+        fN_IncP_bins[i] = hPDFIncP.createIntegral(fPt,NormSet(fPt),Range(Form("fPt_bin%i",i+1)));  
         // values  
         N_CohJ_bins_val[i] = fN_CohJ_bins[i]->getVal()*NCohJ.getVal();
         N_IncJ_bins_val[i] = fN_IncJ_bins[i]->getVal()*NIncJ.getVal();
@@ -425,6 +453,7 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD)
         Double_t denominator_err = TMath::Sqrt(TMath::Power(N_IncJ_bins_err[i],2) + TMath::Power(N_Diss_bins_err[i],2));
         if(N_CohJ_bins_val[i] != 0) fC_bins_err[i] = fC_bins_val[i] * TMath::Sqrt(TMath::Power((N_CohJ_bins_err[i]/N_CohJ_bins_val[i]),2) + TMath::Power((denominator_err/(N_IncJ_bins_val[i] + N_Diss_bins_val[i])),2));    
         else fC_bins_err[i] = 0.;
+        // fD correction
         fDCoh_bins_val[i] = N_CohP_bins_val[i] / (N_IncJ_bins_val[i] + N_Diss_bins_val[i]) * 100;
         fDInc_bins_val[i] = N_IncP_bins_val[i] / (N_IncJ_bins_val[i] + N_Diss_bins_val[i]) * 100;
         if(N_CohP_bins_val[i] != 0) fDCoh_bins_err[i] = fDCoh_bins_val[i] * TMath::Sqrt(TMath::Power((N_CohP_bins_err[i]/N_CohP_bins_val[i]),2) + TMath::Power((denominator_err/(N_IncJ_bins_val[i] + N_Diss_bins_val[i])),2));
@@ -434,74 +463,89 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD)
         fD_bins_val[i] = fDCoh_bins_val[i] + fDInc_bins_val[i];
         fD_bins_err[i] = TMath::Sqrt(TMath::Power(fDCoh_bins_err[i], 2) + TMath::Power(fDInc_bins_err[i], 2));
     }
-    Double_t sum_all = N_CohJ_all_val + N_IncJ_all_val + N_CohP_all_val + N_IncP_all_val + N_Diss_all_val;
-    Double_t sum_ies = N_CohJ_ies_val + N_IncJ_ies_val + N_CohP_ies_val + N_IncP_ies_val + N_Diss_ies_val;
-    Double_t sum_to1 = N_CohJ_to1_val + N_IncJ_to1_val + N_CohP_to1_val + N_IncP_to1_val + N_Diss_to1_val;
-    // Print to text file
-    ofstream outfile((*str + ".txt").Data());
-    outfile << std::fixed << std::setprecision(2);
+    // total sums of events
+    Double_t sum_all_val = N_CohJ_all_val + N_IncJ_all_val + N_CohP_all_val + N_IncP_all_val + N_Diss_all_val;
+    Double_t sum_inc_val = N_CohJ_inc_val + N_IncJ_inc_val + N_CohP_inc_val + N_IncP_inc_val + N_Diss_inc_val;
+    Double_t sum_to1_val = N_CohJ_to1_val + N_IncJ_to1_val + N_CohP_to1_val + N_IncP_to1_val + N_Diss_to1_val;
+    Double_t sum_all_err = TMath::Sqrt(TMath::Power(N_CohJ_all_err,2) + TMath::Power(N_IncJ_all_err,2) + 
+                                       TMath::Power(N_CohP_all_err,2) + TMath::Power(N_IncP_all_err,2) +
+                                       TMath::Power(N_Diss_all_err,2));
+    Double_t sum_inc_err = TMath::Sqrt(TMath::Power(N_CohJ_inc_err,2) + TMath::Power(N_IncJ_inc_err,2) + 
+                                       TMath::Power(N_CohP_inc_err,2) + TMath::Power(N_IncP_inc_err,2) +
+                                       TMath::Power(N_Diss_inc_err,2));
+    Double_t sum_to1_err = TMath::Sqrt(TMath::Power(N_CohJ_to1_err,2) + TMath::Power(N_IncJ_to1_err,2) + 
+                                       TMath::Power(N_CohP_to1_err,2) + TMath::Power(N_IncP_to1_err,2) +
+                                       TMath::Power(N_Diss_to1_err,2));
+    // sums over bins
+    vector<Double_t> sum_bins_val(nPtBins);
+    vector<Double_t> sum_bins_err(nPtBins);
+    for(Int_t i = 0; i < nPtBins; i++){
+        sum_bins_val[i] = N_CohJ_bins_val[i] + N_IncJ_bins_val[i] + N_CohP_bins_val[i] + N_IncP_bins_val[i] + N_Diss_bins_val[i];
+        sum_bins_err[i] = TMath::Sqrt(TMath::Power(N_CohJ_bins_err[i],2) + TMath::Power(N_IncJ_bins_err[i],2) + 
+                                      TMath::Power(N_CohP_bins_err[i],2) + TMath::Power(N_IncP_bins_err[i],2) +
+                                      TMath::Power(N_Diss_bins_err[i],2));
+    }    
+
+    // Print the numbers to the text file
+    ofstream outfile((name + ".txt").Data());
     outfile << Form("Dataset contains %.0f events.\n***\n", N_all);
-    outfile << "pT range\t\tNCohJ \terr \tNIncJ \terr \tNDiss \terr \tNCohP \terr \tNIncP \terr \tfC \terr \tfD coh\terr \tfD inc\terr \tfD \terr\n";
+    outfile << "pT range\t\tNCohJ \terr \tNIncJ \terr \tNDiss \terr \tNCohP \terr \tNIncP \terr \tsum \terr \tfC \terr \tfD coh\terr \tfD inc\terr \tfD \terr\n";
     outfile << "(0.000, 2.000) GeV/c\t"
+            << std::fixed << std::setprecision(1)
             << N_CohJ_all_val << "\t" << N_CohJ_all_err << "\t" 
             << N_IncJ_all_val << "\t" << N_IncJ_all_err << "\t" 
             << N_Diss_all_val << "\t" << N_Diss_all_err << "\t" 
             << N_CohP_all_val << "\t" << N_CohP_all_err << "\t" 
-            << N_IncP_all_val << "\t" << N_IncP_all_err << "\n";
+            << N_IncP_all_val << "\t" << N_IncP_all_err << "\t"
+            << sum_all_val << "\t" << sum_all_err << "\n";
     outfile << "(0.200, 2.000) GeV/c\t"
-            << N_CohJ_ies_val << "\t" << N_CohJ_ies_err << "\t" 
-            << N_IncJ_ies_val << "\t" << N_IncJ_ies_err << "\t" 
-            << N_Diss_ies_val << "\t" << N_Diss_ies_err << "\t" 
-            << N_CohP_ies_val << "\t" << N_CohP_ies_err << "\t" 
-            << N_IncP_ies_val << "\t" << N_IncP_ies_err << "\t"
-            << fC << "\t" << fC_err << "\t" 
-            << fDCoh_val << "\t" << fDCoh_err << "\t" 
-            << fDInc_val << "\t" << fDInc_err << "\t"
-            << fD_val << "\t" << fD_err << "\n";
+            << std::fixed << std::setprecision(1)
+            << N_CohJ_inc_val << "\t" << N_CohJ_inc_err << "\t" 
+            << N_IncJ_inc_val << "\t" << N_IncJ_inc_err << "\t" 
+            << N_Diss_inc_val << "\t" << N_Diss_inc_err << "\t" 
+            << N_CohP_inc_val << "\t" << N_CohP_inc_err << "\t" 
+            << N_IncP_inc_val << "\t" << N_IncP_inc_err << "\t"
+            << sum_inc_val    << "\t" << sum_inc_err << "\t"
+            << std::fixed << std::setprecision(2)
+            << fC_inc_val << "\t" << fC_inc_err << "\t" 
+            << fDCoh_inc_val << "\t" << fDCoh_inc_err << "\t" 
+            << fDInc_inc_val << "\t" << fDInc_inc_err << "\t"
+            << fD_inc_val << "\t" << fD_inc_err << "\n";
     outfile << "(0.200, 1.000) GeV/c\t"
+            << std::fixed << std::setprecision(1)
             << N_CohJ_to1_val << "\t" << N_CohJ_to1_err << "\t" 
             << N_IncJ_to1_val << "\t" << N_IncJ_to1_err << "\t" 
             << N_Diss_to1_val << "\t" << N_Diss_to1_err << "\t"  
             << N_CohP_to1_val << "\t" << N_CohP_to1_err << "\t" 
-            << N_IncP_to1_val << "\t" << N_IncP_to1_err << "\n";
+            << N_IncP_to1_val << "\t" << N_IncP_to1_err << "\t"
+            << sum_to1_val    << "\t" << sum_to1_err << "\t"
+            << std::fixed << std::setprecision(2)
+            << fC_to1_val << "\t" << fC_to1_err << "\t" 
+            << fDCoh_to1_val << "\t" << fDCoh_to1_err << "\t" 
+            << fDInc_to1_val << "\t" << fDInc_to1_err << "\t"
+            << fD_to1_val << "\t" << fD_to1_err << "\n";
     for(Int_t i = 0; i < nPtBins; i++){
         outfile << Form("(%.3f, %.3f) GeV/c\t", ptBoundaries[i], ptBoundaries[i+1])
+                << std::fixed << std::setprecision(1)
                 << N_CohJ_bins_val[i] << "\t" << N_CohJ_bins_err[i] << "\t"
                 << N_IncJ_bins_val[i] << "\t" << N_IncJ_bins_err[i] << "\t"
                 << N_Diss_bins_val[i] << "\t" << N_Diss_bins_err[i] << "\t"
                 << N_CohP_bins_val[i] << "\t" << N_CohP_bins_err[i] << "\t" 
                 << N_IncP_bins_val[i] << "\t" << N_IncP_bins_err[i] << "\t"
+                << sum_bins_val[i]    << "\t" << sum_bins_err[i] << "\t"
+                << std::fixed << std::setprecision(2)
                 << fC_bins_val[i] << "\t" << fC_bins_err[i] << "\t"
                 << fDCoh_bins_val[i] << "\t" << fDCoh_bins_err[i] << "\t"
                 << fDInc_bins_val[i] << "\t" << fDInc_bins_err[i] << "\t"
                 << fD_bins_val[i] << "\t" << fD_bins_err[i] << "\n";
     }
-    
-    // tady byl comment
-    outfile << "Sum over bins:\n";
-    outfile << "NCohJ \tNIncJ \tNCohP \tNIncP \tNDiss\n";
-    outfile << std::fixed << std::setprecision(2);
-    Double_t sum_bins[5] = { 0 };
-    for(Int_t i = 0; i < nPtBins; i++){
-        sum_bins[0] += N_CohJ_bins_val[i];
-        sum_bins[1] += N_IncJ_bins_val[i];
-        sum_bins[2] += N_CohP_bins_val[i];
-        sum_bins[3] += N_IncP_bins_val[i];
-        sum_bins[4] += N_Diss_bins_val[i];
-    }
-    for(Int_t i = 0; i < 4; i++){
-        outfile << sum_bins[i] << "\t";
-    }
-    outfile << sum_bins[4] << "\n***\n";
-    // tady konci comment
-
     outfile.close();
-    Printf("*** Results printed to %s. ***", (*str + ".txt").Data());
+    Printf("*** Results printed to %s. ***", (name + ".txt").Data());
 
     // Print the TeX table for fC
-    outfile.open((*str + "_fC_TeX.txt").Data());
+    outfile.open((name + "_fC_TeX.txt").Data());
     outfile << std::fixed << std::setprecision(1);
-    outfile << "$(0.2,1.0)$\t& $"
+    outfile << "$(0.200,1.000)$\t& $"
             << N_CohJ_to1_val << R"( \pm )" << N_CohJ_to1_err << "$\t& $"
             << N_IncJ_to1_val << R"( \pm )" << N_IncJ_to1_err << "$\t& $"
             << N_Diss_to1_val << R"( \pm )" << N_Diss_to1_err << "$\t& -" << R"( \\)" 
@@ -522,17 +566,17 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD)
                 << "\n";
     }
     outfile.close();
-    Printf("*** Results printed to %s. ***", (*str + "_fC_TeX.txt").Data());
+    Printf("*** Results printed to %s. ***", (name + "_fC_TeX.txt").Data());
 
     // Print the TeX table for fD
-    outfile.open((*str + "_fD_TeX.txt").Data());
+    outfile.open((name + "_fD_TeX.txt").Data());
     outfile << std::fixed << std::setprecision(1);
-    outfile << "$(0.2,1.0)$\t& $"
+    outfile << "$(0.200,1.000)$ & $"
             //<< N_CohJ_to1_val << R"( \pm )" << N_CohJ_to1_err << "$ \t& $"
             << N_IncJ_to1_val << R"( \pm )" << N_IncJ_to1_err << "$\t& $"
             << N_Diss_to1_val << R"( \pm )" << N_Diss_to1_err << "$\t& $"
             << N_CohP_to1_val << R"( \pm )" << N_CohP_to1_err << "$\t& $" 
-            << N_IncP_to1_val << R"( \pm )" << N_IncP_to1_err << "$\t& -" << R"( \\)" 
+            << N_IncP_to1_val << R"( \pm )" << N_IncP_to1_err << "$\t& - & - & - " << R"( \\)" 
             << "\n";
     for(Int_t i = 0; i < nPtBins; i++){
         outfile << std::fixed << std::setprecision(3)
@@ -550,35 +594,36 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD)
                 << "\n";
     }
     outfile.close();
-    Printf("*** Results printed to %s. ***", (*str + "_fD_TeX.txt").Data());
+    Printf("*** Results printed to %s. ***", (name + "_fD_TeX.txt").Data());
 
-    // Print to another file from which the values of fC for CalculateCrossSection.c will be loaded
-    str = new TString(Form("%sfC_%ibins_Binn%i_CohSh%i", OutputPtFitWithoutBkg.Data(), nPtBins, BinningOpt, iShapeCohJ));
-    ofstream outfile_fC((*str + ".txt").Data());
-    outfile_fC << std::fixed << std::setprecision(3);
-    outfile_fC << Form("Bin \tfC [%%]\terr \n");
+    // Print the values of fC to another file from which they will be loaded in CalculateCrossSection.h
+    outfile.open((name + "_fC.txt").Data());
+    outfile << std::fixed << std::setprecision(3);
+    outfile << Form("Bin \tfC [%%]\terr \n");
     for(Int_t i = 0; i < nPtBins; i++){
-        outfile_fC << i+1 << "\t" << fC_bins_val[i] << "\t" << fC_bins_err[i] << "\n";
+        outfile << i+1 << "\t" << fC_bins_val[i] << "\t" << fC_bins_err[i] << "\n";
     }
-    outfile_fC.close();
-    Printf("*** Results printed to %s. ***", (*str + ".txt").Data());
+    outfile.close();
+    Printf("*** Results printed to %s. ***", (name + "_fC.txt").Data());
 
-    // Print to another file from which the values of fD for CalculateCrossSection.c will be loaded
-    str = new TString(Form("%sfD_%ibins_Binn%i_CohSh%i", OutputPtFitWithoutBkg.Data(), nPtBins, BinningOpt, iShapeCohJ));
-    ofstream outfile_fD((*str + ".txt").Data());
-    outfile_fD << std::fixed << std::setprecision(1);
-    outfile_fD << Form("Bin \tfD [%%]\terr \n");
+    // Print the values of fD to another file from which they will be loaded in CalculateCrossSection.h
+    outfile.open((name + "_fD.txt").Data());
+    outfile << std::fixed << std::setprecision(3);
+    outfile << Form("Bin \tfD [%%]\terr \n");
     for(Int_t i = 0; i < nPtBins; i++){
-        outfile_fD << i+1 << "\t" << fD_bins_val[i] << "\t" << fD_bins_err[i] << "\n";
+        outfile << i+1 << "\t" << fD_bins_val[i] << "\t" << fD_bins_err[i] << "\n";
     }
-    outfile_fD.close();
-    Printf("*** Results printed to %s. ***", (*str + ".txt").Data());
+    outfile.close();
+    Printf("*** Results printed to %s. ***", (name + "_fD.txt").Data());
 
-    // ###############################################################################################################
     // ###############################################################################################################
 
     // 11) Plot the results
-    SetStyle();
+    gStyle->SetOptTitle(0); // suppress title
+    gStyle->SetOptStat(0);  // the type of information printed in the histogram statistics box
+                            // 0 = no information
+    gStyle->SetPalette(1);  // set color map
+    gStyle->SetPaintTextFormat("4.2f"); // precision if plotted with "TEXT"
 
     // 11.1) Draw the Correlation Matrix
     TCanvas *cCM = new TCanvas("cCM","cCM",600,500);
@@ -586,20 +631,20 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD)
 
     // 11.2) Draw the pt fit
     // Without log scale
-    RooPlot* PtFrame = fPt.frame(Title("Pt fit"));
-    DHisData.plotOn(PtFrame,Name("DSetData"),MarkerStyle(20), MarkerSize(1.),Binning(fPtBins));
+    RooPlot* PtFrame = fPt.frame(Title("pT fit"));
+    DHisData.plotOn(PtFrame,Name("DHisData"),MarkerStyle(20), MarkerSize(1.),Binning(fPtBins_PtFit));
     if(iShapeCohJ == 0 || iShapeCohJ == 1 || iShapeCohJ > 1000){
-        Mod->plotOn(PtFrame,Name("hPDFCohJ"),Components(hPDFCohJ), LineColor(222),   LineStyle(1),LineWidth(3),Normalization(sum_all,RooAbsReal::NumEvent));
+        Mod->plotOn(PtFrame,Name("hPDFCohJ"),Components(hPDFCohJ),     LineColor(222),LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
     } else if(iShapeCohJ == 2){
-        Mod->plotOn(PtFrame,Name("gPDFCohJ"),Components(*gPDFCohJ), LineColor(222),   LineStyle(1),LineWidth(3),Normalization(sum_all,RooAbsReal::NumEvent));
+        Mod->plotOn(PtFrame,Name("gPDFCohJ"),Components(*gPDFCohJ),    LineColor(222),LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
     } else if(iShapeCohJ == 3){
-        Mod->plotOn(PtFrame,Name("sumPdfCohJ"),Components(*sumPdfCohJ), LineColor(222),   LineStyle(1),LineWidth(3),Normalization(sum_all,RooAbsReal::NumEvent));
+        Mod->plotOn(PtFrame,Name("sumPdfCohJ"),Components(*sumPdfCohJ),LineColor(222),LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
     }
-    Mod->plotOn(PtFrame,Name("hPDFIncJ"),Components(hPDFIncJ), LineColor(kRed),  LineStyle(1),LineWidth(3),Normalization(sum_all,RooAbsReal::NumEvent));
-    Mod->plotOn(PtFrame,Name("hPDFCohP"),Components(hPDFCohP), LineColor(222),   LineStyle(7),LineWidth(3),Normalization(sum_all,RooAbsReal::NumEvent));
-    Mod->plotOn(PtFrame,Name("hPDFIncP"),Components(hPDFIncP), LineColor(kRed),  LineStyle(7),LineWidth(3),Normalization(sum_all,RooAbsReal::NumEvent));
-    Mod->plotOn(PtFrame,Name("hPDFDiss"),Components(hPDFDiss), LineColor(15),    LineStyle(1),LineWidth(3),Normalization(sum_all,RooAbsReal::NumEvent));
-    Mod->plotOn(PtFrame,Name("Mod"),                           LineColor(215),   LineStyle(1),LineWidth(3),Normalization(sum_all,RooAbsReal::NumEvent));
+    Mod->plotOn(PtFrame,Name("hPDFIncJ"),Components(hPDFIncJ),LineColor(kRed),LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
+    Mod->plotOn(PtFrame,Name("hPDFCohP"),Components(hPDFCohP),LineColor(222), LineStyle(7),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
+    Mod->plotOn(PtFrame,Name("hPDFIncP"),Components(hPDFIncP),LineColor(kRed),LineStyle(7),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
+    Mod->plotOn(PtFrame,Name("hPDFDiss"),Components(hPDFDiss),LineColor(15),  LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
+    Mod->plotOn(PtFrame,Name("Mod"),                          LineColor(215), LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
 
     PtFrame->SetAxisRange(0,1,"X");
     // Set X axis
@@ -617,26 +662,26 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD)
     PtFrame->GetYaxis()->SetDecimals(1);
     // Draw
     TCanvas *cPt = new TCanvas("cPt","cPt",900,600);
-    SetCanvas(cPt, kFALSE); 
+    PtFit_SetCanvas(cPt, kFALSE); 
     cPt->SetTopMargin(0.06);
     cPt->SetLeftMargin(0.10);
     PtFrame->Draw("]["); 
 
     // With log scale
-    RooPlot* PtFrameLog = fPt.frame(Title("Pt fit log"));
-    DHisData.plotOn(PtFrameLog,Name("DSetData"),MarkerStyle(20), MarkerSize(1.),Binning(fPtBins));
+    RooPlot* PtFrameLog = fPt.frame(Title("pT fit log scale"));
+    DHisData.plotOn(PtFrameLog,Name("DHisData"),MarkerStyle(20), MarkerSize(1.),Binning(fPtBins_PtFit));
     if(iShapeCohJ == 0 || iShapeCohJ == 1 || iShapeCohJ > 1000){
-        Mod->plotOn(PtFrameLog,Name("hPDFCohJ"),Components(hPDFCohJ), LineColor(222),   LineStyle(1),LineWidth(3),Normalization(sum_all,RooAbsReal::NumEvent));
+        Mod->plotOn(PtFrameLog,Name("hPDFCohJ"),Components(hPDFCohJ),     LineColor(222),LineStyle(1),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
     } else if(iShapeCohJ == 2){
-        Mod->plotOn(PtFrameLog,Name("gPDFCohJ"),Components(*gPDFCohJ), LineColor(222),   LineStyle(1),LineWidth(3),Normalization(sum_all,RooAbsReal::NumEvent));
+        Mod->plotOn(PtFrameLog,Name("gPDFCohJ"),Components(*gPDFCohJ),    LineColor(222),LineStyle(1),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
     } else if(iShapeCohJ == 3){
-        Mod->plotOn(PtFrameLog,Name("sumPdfCohJ"),Components(*sumPdfCohJ), LineColor(222),   LineStyle(1),LineWidth(3),Normalization(sum_all,RooAbsReal::NumEvent));
+        Mod->plotOn(PtFrameLog,Name("sumPdfCohJ"),Components(*sumPdfCohJ),LineColor(222),LineStyle(1),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
     }
-    Mod->plotOn(PtFrameLog,Name("hPDFIncJ"),Components(hPDFIncJ), LineColor(kRed),  LineStyle(1),LineWidth(3),Normalization(sum_all,RooAbsReal::NumEvent));
-    Mod->plotOn(PtFrameLog,Name("hPDFCohP"),Components(hPDFCohP), LineColor(222),   LineStyle(7),LineWidth(3),Normalization(sum_all,RooAbsReal::NumEvent));
-    Mod->plotOn(PtFrameLog,Name("hPDFIncP"),Components(hPDFIncP), LineColor(kRed),  LineStyle(7),LineWidth(3),Normalization(sum_all,RooAbsReal::NumEvent));
-    Mod->plotOn(PtFrameLog,Name("hPDFDiss"),Components(hPDFDiss), LineColor(15),    LineStyle(1),LineWidth(3),Normalization(sum_all,RooAbsReal::NumEvent));
-    Mod->plotOn(PtFrameLog,Name("Mod"),                           LineColor(215),   LineStyle(1),LineWidth(3),Normalization(sum_all,RooAbsReal::NumEvent));
+    Mod->plotOn(PtFrameLog,Name("hPDFIncJ"),Components(hPDFIncJ),LineColor(kRed),LineStyle(1),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
+    Mod->plotOn(PtFrameLog,Name("hPDFCohP"),Components(hPDFCohP),LineColor(222), LineStyle(7),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
+    Mod->plotOn(PtFrameLog,Name("hPDFIncP"),Components(hPDFIncP),LineColor(kRed),LineStyle(7),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
+    Mod->plotOn(PtFrameLog,Name("hPDFDiss"),Components(hPDFDiss),LineColor(15),  LineStyle(1),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
+    Mod->plotOn(PtFrameLog,Name("Mod"),                          LineColor(215), LineStyle(1),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
 
     PtFrameLog->SetAxisRange(0,2,"X");
     // Set X axis
@@ -654,11 +699,11 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD)
     PtFrameLog->GetYaxis()->SetDecimals(1);
     // Draw
     TCanvas *cPtLog = new TCanvas("cPtLog","cPtLog",900,600);
-    SetCanvas(cPtLog, kTRUE);
+    PtFit_SetCanvas(cPtLog, kTRUE);
     PtFrameLog->Draw("][");
 
     // 11.3) Get chi2 
-    Double_t chi2 = PtFrameLog->chiSquare("Mod","DSetData",ResFit->floatParsFinal().getSize()); // last argument = number of parameters
+    Double_t chi2 = PtFrameLog->chiSquare("Mod","DHisData",ResFit->floatParsFinal().getSize()); // last argument = number of parameters
     Printf("********************");
     Printf("chi2/ndof = %.3f", chi2);
     Printf("ndof = %i", ResFit->floatParsFinal().getSize());
@@ -679,7 +724,7 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD)
     // Legend 2
     TLegend *l2 = new TLegend(0.59,0.555,0.9,0.93);
     //leg2->SetTextSize(0.027);
-    l2->AddEntry("DSetData","Data", "EP");
+    l2->AddEntry("DHisData","Data", "EP");
     l2->AddEntry("Mod","sum","L");
     l2->AddEntry((TObject*)0,Form("#chi^{2}/NDF = %.3f = %.3f/%i",chi2,chi2*ResFit->floatParsFinal().getSize(), ResFit->floatParsFinal().getSize()),"");
     if(iShapeCohJ == 0 || iShapeCohJ == 1 || iShapeCohJ > 1000) l2->AddEntry("hPDFCohJ","coherent J/#psi", "L");
@@ -703,30 +748,23 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD)
     l2->Draw();
 
     // 13) Print the results to pdf and png
-    str = new TString(Form("%sBinn%i_CohSh%i", OutputPtFitWithoutBkg.Data(), BinningOpt, iShapeCohJ));
-    if(iShapeCohJ > 1000 && !bStopWeight){
-        Double_t R_A = 6.6 + (Double_t)(iShapeCohJ-1001) * 0.1;        
-        str = new TString(Form("%sOptimalRA/WeightOverAll/coh_modRA_%.2f", OutputPtFitWithoutBkg.Data(), R_A));
-    } 
-    if(iShapeCohJ > 1000 && bStopWeight){
-        Double_t R_A = 6.6 + (Double_t)(iShapeCohJ-1001) * 0.1;        
-        str = new TString(Form("%sOptimalRA/StopWeight/coh_modRA_%.2f", OutputPtFitWithoutBkg.Data(), R_A));
-    } 
-    cCM->Print((*str + "_CM.pdf").Data());
-    cCM->Print((*str + "_CM.png").Data());
-    cPt->Print((*str + ".pdf").Data());
-    cPt->Print((*str + ".png").Data());
-    cPtLog->Print((*str + "_log.pdf").Data());
-    cPtLog->Print((*str + "_log.png").Data());
-    // Print chi2 vs. R_A to text file
+    cCM->Print((name + "_CM.pdf").Data());
+    cCM->Print((name + "_CM.png").Data());
+    cPt->Print((name + ".pdf").Data());
+    cPt->Print((name + ".png").Data());
+    cPtLog->Print((name + "_log.pdf").Data());
+    cPtLog->Print((name + "_log.png").Data());
+    // If we study the optimal value of R_A, print chi2 vs. R_A to a text file
     if(iShapeCohJ > 1000){
-        outfile.open((*str + "_chi2.txt").Data());
+        outfile.open((name + "_chi2.txt").Data());
         outfile << std::fixed << std::setprecision(3);
-        Double_t R_A = 6.6 + (Double_t)(iShapeCohJ-1001) * 0.1;
-        outfile << R_A << "\t" << chi2;
+        outfile << fR_A << "\t" << chi2;
         outfile.close();
     }
-    */
+
+    delete cCM;
+    delete cPt;
+    delete cPtLog;
 
     return;
 }

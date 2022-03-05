@@ -40,8 +40,7 @@ void PtFit_SetPtBinning(){
     BinsWidths = {0.010, 0.020, 0.080, 0.400}; // GeV 
     BinsUpTo = {0.00, 0.20, 0.40, 1.20, 2.00}; // GeV 
 
-    // Create a vector containing the calculated boundaries
-    
+    // Fill the vector containing the calculated boundaries
     BinsBoundaries_PtFit.push_back(0.);
     Double_t fPtNow = 0.0;
     for(Int_t iBinType = 0; iBinType < nBinsTypes; iBinType++){
@@ -116,6 +115,7 @@ void PtFit_PrepareData()
         }
 
         file->Write("",TObject::kWriteDelete);
+        file->Close();
 
         return;
     }
@@ -173,6 +173,7 @@ void PtFit_SubtractBkg()
         file = new TFile(name.Data(),"RECREATE");
         l->Write("HistList", TObject::kSingleKey);
         file->ls();
+        file->Close();
 
         TString name = "Results/" + str_subfolder + "PtFit_SubtractBkg/";
         cHist_sig->Print((name + "hNSigPerBins.pdf").Data());
@@ -278,7 +279,7 @@ void PtFit_DoInvMassFit(Double_t fPtCutLow, Double_t fPtCutUpp, Int_t iBin)
     if(fPtCutLow < 0.20) sigma = 0.020;
     else                 sigma = 0.021;
     RooRealVar sigma_Jpsi("sigma_Jpsi","J/psi resolution",sigma,0.01,0.1);
-    sigma_Jpsi.setConstant(kTRUE);
+    //sigma_Jpsi.setConstant(kTRUE);
     RooGenericPdf mean_R("mean_R","J/psi mass","mass_Jpsi",RooArgSet(mass_Jpsi));
     RooGenericPdf sigma_R("sigma_R","J/psi resolution","sigma_Jpsi",RooArgSet(sigma_Jpsi));
     RooRealVar N_Jpsi("N_Jpsi","number of J/psi events",0.4*nEvents,0,nEvents);

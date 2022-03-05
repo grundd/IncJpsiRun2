@@ -3,8 +3,8 @@
 // Configure values of the parameters
 
 // ******************************
-Bool_t START_FROM_CLEAN = kFALSE;
-Int_t iWhichAnalysisToRun = 0;
+Bool_t START_FROM_CLEAN = kTRUE;
+Int_t iWhichAnalysisToRun = 21;
 // ******************************
 
 TString str_subfolder = "";
@@ -34,12 +34,6 @@ void SetReducedRunList(Bool_t pass3){
 }
 
 void InitAnalysis(Int_t iAnalysis){
-    // iAnalysis = 0:  reduced run list LHC18qr_pass1, 4 bins, isZNcut OFF
-    // iAnalysis = 1:  reduced run list LHC18qr_pass1, 5 bins, isZNcut OFF
-    // iAnalysis = 10: full run list LHC18qr_pass3, 4 bins, isZNcut OFF
-    // iAnalysis = 11: full run list LHC18qr_pass3, 5 bins, isZNcut OFF
-    // iAnalysis = 20: full run list LHC18qr_pass3, 4 bins, isZNcut ON
-    // iAnalysis = 21: full run list LHC18qr_pass3, 5 bins, isZNcut ON
     if(iAnalysis == 0){
         str_subfolder = "pass1_4bins/";
         nPtBins = 4;
