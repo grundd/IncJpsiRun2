@@ -61,7 +61,7 @@ void CountEvents_main(){
     outfile << "7b) V0C offline veto:\t" << counterData[7] << "\n";
     outfile << "8) SPD match FOhits: \t" << counterData[8] << "\n";
     outfile << "9) muon pairs only:  \t" << counterData[9] << "\n";
-    outfile << "10) dilept |y| < 0.8: \t" << counterData[10] << "\n";
+    outfile << "10) dilept |y| < 0.8:\t" << counterData[10] << "\n";
     outfile << "11) trks |eta| < 0.8:\t" << counterData[11] << "\n";
     outfile << "12) opposite charges:\t" << counterData[12] << "\n";
     outfile << "13) mass 2.2 to 4.5: \t" << counterData[13] << "\n";
@@ -72,6 +72,13 @@ void CountEvents_main(){
         outfile << "17) ZNC < 10.5 neut: \t" << counterData[17] << "\n";
     }
 
+    outfile.close();
+    Printf("*** Results printed to %s.***", name.Data());
+
+    // Print just the numbers (to be read by _CompareCountsPass1Pass3.C)
+    name = "Results/" + str_subfolder + "CountEvents/cuts_numbersOnly.txt";
+    outfile.open(name.Data());
+    for(Int_t i = 0; i < 18; i++) outfile << counterData[i] << "\n";
     outfile.close();
     Printf("*** Results printed to %s.***", name.Data());
 

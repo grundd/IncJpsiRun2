@@ -88,24 +88,24 @@ void PtFit_FillHistogramsMC(Int_t iMC, TH1D *hist){
     TFile *file = NULL;
     switch(iMC){
         case 0:
-            file = TFile::Open((str_in_MC_fldr + "AnalysisResults_MC_kCohJpsiToMu.root").Data(), "read");
+            file = TFile::Open((str_in_MC_fldr_rec + "AnalysisResults_MC_kCohJpsiToMu.root").Data(), "read");
             break;
         case 1:
-            file = TFile::Open((str_in_MC_fldr + "AnalysisResults_MC_kIncohJpsiToMu.root").Data(), "read");
+            file = TFile::Open((str_in_MC_fldr_rec + "AnalysisResults_MC_kIncohJpsiToMu.root").Data(), "read");
             break;
         case 2:
-            file = TFile::Open((str_in_MC_fldr + "AnalysisResults_MC_kCohPsi2sToMuPi.root").Data(), "read");
+            file = TFile::Open((str_in_MC_fldr_rec + "AnalysisResults_MC_kCohPsi2sToMuPi.root").Data(), "read");
             break;
         case 3:
-            file = TFile::Open((str_in_MC_fldr + "AnalysisResults_MC_kIncohPsi2sToMuPi.root").Data(), "read");
+            file = TFile::Open((str_in_MC_fldr_rec + "AnalysisResults_MC_kIncohPsi2sToMuPi.root").Data(), "read");
             break;
         case 4:
-            file = TFile::Open((str_in_MC_fldr + "AnalysisResults_MC_kTwoGammaToMuMedium.root").Data(), "read");
+            file = TFile::Open((str_in_MC_fldr_rec + "AnalysisResults_MC_kTwoGammaToMuMedium.root").Data(), "read");
             break;
     }
     if(file) Printf("File %s loaded.", file->GetName());
 
-    TTree *tRec = dynamic_cast<TTree*> (file->Get(str_in_MC_tree.Data()));
+    TTree *tRec = dynamic_cast<TTree*> (file->Get(str_in_MC_tree_rec.Data()));
     if(tRec) Printf("MC rec tree loaded.");
     
     ConnectTreeVariablesMCRec(tRec);

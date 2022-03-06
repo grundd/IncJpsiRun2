@@ -1,0 +1,4 @@
+fAvgShiftMu_pass1	0.354
+fAvgShiftMu_pass3	1.410
+fAvgShiftEl_pass1	0.000
+fAvgShiftEl_pass3	2.490

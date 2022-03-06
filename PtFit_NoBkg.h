@@ -150,7 +150,7 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD, Bool_t bStopWeigh)
     if(hDiss) Printf("Histogram %s loaded.", hDiss->GetName());
 
     // Definition of roofit variables
-    RooRealVar fPt("fPt", "fPt", fPtCutLow_PtFit+0.001, fPtCutUpp_PtFit);
+    RooRealVar fPt("fPt", "fPt", fPtCutLow_PtFit, fPtCutUpp_PtFit);
     RooArgSet fSetOfVariables(fPt);
 
     // Create PDFs

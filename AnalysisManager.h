@@ -22,6 +22,7 @@ Int_t nRuns_18q;
 Int_t nRuns_18r; 
 Bool_t isPass3;
 Bool_t isZNcut;
+Bool_t isPIDCalibrated; // if NSigmas in MC data were shifted to zeros
 // Array containing pT bin boundaries (will be created in SetPtBinning.h):
 Double_t *ptBoundaries = NULL;
 Int_t nPtBins;

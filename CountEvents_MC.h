@@ -8,10 +8,10 @@ Bool_t CountEvents_MC_EventPassed();
 
 void CountEvents_MC_main(){
 
-    TFile *f_in = TFile::Open((str_in_MC_fldr + "AnalysisResults_MC_kIncohJpsiToMu.root").Data(), "read");
+    TFile *f_in = TFile::Open((str_in_MC_fldr_rec + "AnalysisResults_MC_kIncohJpsiToMu.root").Data(), "read");
     if(f_in) Printf("Input data loaded.");
 
-    TTree *t_in = dynamic_cast<TTree*> (f_in->Get(str_in_MC_tree.Data()));
+    TTree *t_in = dynamic_cast<TTree*> (f_in->Get(str_in_MC_tree_rec.Data()));
     if(t_in) Printf("Input tree loaded.");
 
     ConnectTreeVariablesMCRec(t_in);
@@ -71,6 +71,13 @@ void CountEvents_MC_main(){
         outfile << "17) ZNC < 10.5 neut: \t" << counterMC[18] << "\n";
     }
 
+    outfile.close();
+    Printf("*** Results printed to %s.***", name.Data());
+
+    // Print just the numbers (to be read by _CompareCountsPass1Pass3.C)
+    name = "Results/" + str_subfolder + "CountEvents_MC/cuts_numbersOnly.txt";
+    outfile.open(name.Data());
+    for(Int_t i = 0; i < 19; i++) outfile << counterMC[i] << "\n";
     outfile.close();
     Printf("*** Results printed to %s.***", name.Data());
 

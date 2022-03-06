@@ -329,17 +329,17 @@ void InvMassFit_MC_PrepareData(){
     TString name = "Trees/" + str_subfolder + "InvMassFit_MC/InvMassFit_MC.root";
 
     // kCohJpsiToMu
-    TFile *f_in_coh = TFile::Open((str_in_MC_fldr + "AnalysisResults_MC_kCohJpsiToMu.root").Data(), "read");
+    TFile *f_in_coh = TFile::Open((str_in_MC_fldr_rec + "AnalysisResults_MC_kCohJpsiToMu.root").Data(), "read");
     if(f_in_coh) Printf("Input data loaded.");
 
-    TTree *t_in_coh = dynamic_cast<TTree*> (f_in_coh->Get(str_in_MC_tree.Data()));
+    TTree *t_in_coh = dynamic_cast<TTree*> (f_in_coh->Get(str_in_MC_tree_rec.Data()));
     if(t_in_coh) Printf("Input tree loaded.");
 
     // kIncohJpsiToMu
-    TFile *f_in_inc = TFile::Open((str_in_MC_fldr + "AnalysisResults_MC_kIncohJpsiToMu.root").Data(), "read");
+    TFile *f_in_inc = TFile::Open((str_in_MC_fldr_rec + "AnalysisResults_MC_kIncohJpsiToMu.root").Data(), "read");
     if(f_in_inc) Printf("Input data loaded.");
 
-    TTree *t_in_inc = dynamic_cast<TTree*> (f_in_inc->Get(str_in_MC_tree.Data()));
+    TTree *t_in_inc = dynamic_cast<TTree*> (f_in_inc->Get(str_in_MC_tree_rec.Data()));
     if(t_in_inc) Printf("Input tree loaded.");
     
     // Create new MC trees with applied cuts

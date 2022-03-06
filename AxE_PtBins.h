@@ -141,10 +141,10 @@ void AxE_PtBins_FillHistNRec(){
         // This configuration is yet to be calculated
         Printf("*** Calculating N rec per bin for %s... ***", file.Data());
 
-        TFile *fRec = TFile::Open((str_in_MC_fldr + "AnalysisResults_MC_kIncohJpsiToMu.root").Data(), "read");
+        TFile *fRec = TFile::Open((str_in_MC_fldr_rec + "AnalysisResults_MC_kIncohJpsiToMu.root").Data(), "read");
         if(fRec) Printf("MC rec file loaded.");
 
-        TTree *tRec = dynamic_cast<TTree*> (fRec->Get(str_in_MC_tree.Data()));
+        TTree *tRec = dynamic_cast<TTree*> (fRec->Get(str_in_MC_tree_rec.Data()));
         if(tRec) Printf("MC rec tree loaded.");
         
         ConnectTreeVariablesMCRec(tRec);
@@ -192,7 +192,7 @@ void AxE_PtBins_FillHistNGen(){
         // This configuration is yet to be calculated
         Printf("*** Calculating N gen per bin for %s... ***", file.Data());
 
-        TFile *fGen = TFile::Open((str_in_MC_fldr + "AnalysisResults_MC_kIncohJpsiToMu.root").Data(), "read");
+        TFile *fGen = TFile::Open((str_in_MC_fldr_gen + "AnalysisResults_MC_kIncohJpsiToMu.root").Data(), "read");
         if(fGen) Printf("MC gen file loaded.");
 
         TTree *tGen = dynamic_cast<TTree*> (fGen->Get(str_in_MC_tree_gen.Data()));
