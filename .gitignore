@@ -12,3 +12,6 @@ Trees/
 
 .token.txt
 
+# Ignore the STARlight folder
+STARlight_src/
+
