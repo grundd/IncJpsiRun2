@@ -6,7 +6,9 @@
 #include <stdio.h>
 // root headers
 #include "TFile.h"
+#include "TList.h"
 #include "TH1.h"
+#include "TAxis.h"
 #include "TString.h"
 #include "TROOT.h"
 #include "TSystem.h"
@@ -21,11 +23,13 @@
 Bool_t drawCheck(kFALSE);
 
 TString strMCArr[4] = {"CohJ","IncJ","CohP","IncP"};
+TString strMCFilesArr[4] = {"kCohJpsiToMu","kIncohJpsiToMu","kCohPsi2sToMuPi","kIncohPsi2sToMuPi"};
 Double_t fPtCutLowArr[4] = {0.0, 0.0, 0.0, 0.0}; // GeV/c
-Double_t fPtCutUppArr[4] = {0.4, 1.2, 0.0, 0.0}; // GeV/c
-Int_t nBinsArr[4] = {80, 240, 0, 0};
+Double_t fPtCutUppArr[4] = {0.4, 1.4, 0.6, 1.4}; // GeV/c
+Int_t nBinsArr[4] = {80, 280, 120, 280};
 
 TString strMC;
+TString strMCFiles;
 Double_t fPtCutLow;
 Double_t fPtCutUpp;
 Int_t nBins;
@@ -40,19 +44,37 @@ TH1D *hRecNew = NULL;
 
 void InitAnalysis(Int_t iMC, Bool_t pass3);
 void FillTreeGen(const char* folder_in, Double_t R_A);
-void FillHistRec();
+TTree* GetTreeRec();
 void CalcAndPlotRatios(const char* subfolder_out, Double_t R_A);
 void ConnectTreeVariables_tSL(TTree *tSL);
 
 
 void _STARlight_NewPtShapes()
 {
-    // IncJ, R_A = 6.624 vs. 7.350 fm, 6.000.000 gen events
-    InitAnalysis(1,kTRUE);
-    FillTreeGen("Trees/STARlight/IncJ_6.624/",6.624);
-    FillTreeGen("Trees/STARlight/IncJ_7.350/",7.350);
-    FillHistRec();
-    CalcAndPlotRatios("",7.350);
+    // no title in plots
+    gStyle->SetOptTitle(0);
+
+    if(kTRUE){
+        // IncJ, R_A = 6.624 vs. 7.350 fm, 6.000.000 gen events
+        InitAnalysis(1,kTRUE);
+        FillTreeGen("Trees/STARlight/IncJ_6.624/",6.624);
+        FillTreeGen("Trees/STARlight/IncJ_7.350/",7.350);
+        CalcAndPlotRatios("",7.350);
+    }
+    if(kTRUE){
+        // CohP, R_A = 6.624 vs. 7.350 fm, 6.000.000 gen events
+        InitAnalysis(2,kTRUE);
+        FillTreeGen("Trees/STARlight/CohP_6.624/",6.624);
+        FillTreeGen("Trees/STARlight/CohP_7.350/",7.350);
+        CalcAndPlotRatios("",7.350);
+    }
+    if(kTRUE){
+        // IncP, R_A = 6.624 vs. 7.350 fm, 6.000.000 gen events
+        InitAnalysis(3,kTRUE);
+        FillTreeGen("Trees/STARlight/IncP_6.624/",6.624);
+        FillTreeGen("Trees/STARlight/IncP_7.350/",7.350);
+        CalcAndPlotRatios("",7.350);
+    }
 
     return;
 }
@@ -67,8 +89,11 @@ void InitAnalysis(Int_t iMC, Bool_t pass3)
     // iMC == 3 => IncP
 
     isPass3 = pass3;
+    if(iMC <= 1) isPsi2sDataset = kFALSE;
+    else         isPsi2sDataset = kTRUE;
     SetReducedRunList(isPass3);
     strMC = strMCArr[iMC];
+    strMCFiles = strMCFilesArr[iMC];
     fPtCutLow = fPtCutLowArr[iMC];
     fPtCutUpp = fPtCutUppArr[iMC];
     nBins = nBinsArr[iMC];
@@ -85,7 +110,6 @@ void FillTreeGen(const char* folder_in, Double_t R_A)
     Printf("Process: %s", strMC.Data());
     Printf("Input folder: %s", folder_in);
     Printf("Filling the tree and histogram (generator level).");
-    Printf("*****");
 
     Double_t nEvOld = 0;
     Double_t nEvNew = 0;
@@ -103,12 +127,12 @@ void FillTreeGen(const char* folder_in, Double_t R_A)
     TString str_f_out = Form("Trees/STARlight/tGen_%s_RA_%.3f.root", strMC.Data(), R_A);
     TFile *fGen = TFile::Open(str_f_out.Data(),"read");
 
-    if(fGen){
-
+    if(fGen)
+    {
         Printf("File %s already created.", str_f_out.Data());
-
-    } else {
-
+    } 
+    else 
+    {
         TH1D *hGen = new TH1D("hGen","hGen",nBins,fPtCutLow,fPtCutUpp);
 
         gROOT->cd();
@@ -123,16 +147,19 @@ void FillTreeGen(const char* folder_in, Double_t R_A)
         Int_t nEntriesProgress = (Double_t)tSL->GetEntries() / 20.;
         Int_t nPercent = 0;
 
-        for(Int_t iEntry = 0; iEntry < tSL->GetEntries(); iEntry++){
+        for(Int_t iEntry = 0; iEntry < tSL->GetEntries(); iEntry++)
+        {
             tSL->GetEntry(iEntry);
-            if(TMath::Abs(fYGen) < 1.0){
+            if(TMath::Abs(fYGen) < 1.0)
+            {
                 nEvOld++;
                 fPtGenerated = parent->Pt();
                 hGen->Fill(fPtGenerated);
                 tGen->Fill();
             }
             // Update progress bar
-            if((iEntry+1) % nEntriesProgress == 0){
+            if((iEntry+1) % nEntriesProgress == 0)
+            {
                 nPercent += 5;
                 nEntriesAnalysed += nEntriesProgress;
                 Printf("[%i%%] %i entries analysed.", nPercent, nEntriesAnalysed);
@@ -152,7 +179,6 @@ void FillTreeGen(const char* folder_in, Double_t R_A)
         fGen->Close();
     }
 
-    Printf("*****");
     Printf("Done.");
     Printf("*****");
     Printf("\n");
@@ -167,7 +193,6 @@ void CalcAndPlotRatios(const char* subfolder_out, Double_t R_A)
     Printf("*****");
     Printf("Process: %s", strMC.Data());
     Printf("Calculating ratios of nGenNew/nGenOld.");
-    Printf("*****");
 
     // Load tGen with R_A = 6.624
     TString str_fGenOld = Form("Trees/STARlight/tGen_%s_RA_6.624.root", strMC.Data());
@@ -190,58 +215,124 @@ void CalcAndPlotRatios(const char* subfolder_out, Double_t R_A)
     // Load histograms with generated events
     TH1D *hGenOld = (TH1D*)fGenOld->Get("hGen");
     if(hGenOld) Printf("Histogram %sOld loaded.", hGenOld->GetName());
-    // draw hGenOld
-    if(drawCheck){
-        TCanvas *c1 = new TCanvas("c1","c1",900,600);
-        hGenOld->Draw();
-    } 
+
     TH1D *hGenNew = (TH1D*)fGenNew->Get("hGen");
     if(hGenNew) Printf("Histogram %sNew loaded.", hGenNew->GetName());
-    // draw hGenNew
-    if(drawCheck){
-        TCanvas *c2 = new TCanvas("c2","c2",900,600);
+
+    // Draw loaded histograms
+    if(drawCheck)
+    {
+        TCanvas *cGenOld = new TCanvas("cGenOld","cGenOld",900,600);
+        hGenOld->Draw();
+        TCanvas *cGenNew = new TCanvas("cGenNew","cGenNew",900,600);
         hGenNew->Draw();
     } 
+
+    // Calculate ratios
     hRatios = (TH1D*)hGenNew->Clone("hRatios");
     hRatios->SetTitle("hRatios");
     hRatios->Sumw2();
     hRatios->Divide(hGenOld);
-    // draw hRatios
-    if(drawCheck){
-        TCanvas *c3 = new TCanvas("c3","c3",900,600);
-        hRatios->Draw();
-    } 
-    // draw hRecOld
-    if(drawCheck){
-        TCanvas *c4 = new TCanvas("c4","c4",900,600);
-        hRecOld->Draw();
-    }    
-    hRecNew = (TH1D*)hRecOld->Clone("hRecNew");
-    hRecNew->SetTitle("hRecNew");
-    hRecNew->Multiply(hRatios);
-    // draw hRecNew
-    if(drawCheck){
-        TCanvas *c5 = new TCanvas("c5","c5",900,600);
-        hRecNew->Draw();
-    } 
 
-    // Print the results to the text file
+    // Print the ratios to the text file
     TString str_folder_out = Form("Results/_STARlight_NewPtShapes/%s/", subfolder_out);
     gSystem->Exec("mkdir -p " + str_folder_out);
     TString str_file_out = Form("%s%s_RA_%.3f.txt", str_folder_out.Data(), strMC.Data(), R_A);
     ofstream outfile(str_file_out.Data());
     outfile << "pT_low\tpT_upp\tnEvOld\tnEvNew\tratio\n";
-    for(Int_t iBin = 1; iBin <= nBins; iBin++){
+    for(Int_t iBin = 1; iBin <= nBins; iBin++)
+    {
         outfile << Form("%.3f\t%.3f\t%.0f\t%.0f\t%.3f\n",
             hRatios->GetBinLowEdge(iBin), hRatios->GetBinLowEdge(iBin+1), 
             hGenOld->GetBinContent(iBin), hGenNew->GetBinContent(iBin), hRatios->GetBinContent(iBin));
     }
     outfile.close();
 
-    gStyle->SetOptTitle(0);
-    gStyle->SetOptStat(0);
-    gStyle->SetPalette(1);
-    gStyle->SetPaintTextFormat("4.2f");
+    // define the tRec tree
+    TTree *tRec = GetTreeRec();
+    // define the integers showing the progress bar
+    Int_t nEntriesAnalysed = 0;
+    Int_t nEntriesProgress = (Double_t)tRec->GetEntries() / 20.;
+    Int_t nPercent = 0;
+    // if J/psi datasets
+    if (strncmp(strMC.Data(),"CohJ",4) == 0 || strncmp(strMC.Data(),"IncJ",4) == 0) 
+    {
+        // run over reconstructed events
+        for(Int_t iEntry = 0; iEntry < tRec->GetEntries(); iEntry++)
+        {
+            tRec->GetEntry(iEntry);
+            // m between 3.0 and 3.2 GeV/c^2, pT cut: all
+            if(EventPassedMCRec(1, 2))
+            {
+                // fill the histogram hRecOld
+                hRecOld->Fill(fPt);
+            } 
+            if((iEntry+1) % nEntriesProgress == 0)
+            {
+                nPercent += 5;
+                nEntriesAnalysed += nEntriesProgress;
+                Printf("[%i%%] %i entries analysed.", nPercent, nEntriesAnalysed);
+            }
+        } 
+        // draw hRecOld 
+        if(drawCheck)
+        {
+            TCanvas *cRecOld2 = new TCanvas("cRecOld2","cRecOld2",900,600);
+            hRecOld->Draw();
+        }
+        // create hRecNew by scaling hRecOld with ratios
+        hRecNew = (TH1D*)hRecOld->Clone("hRecNew");
+        hRecNew->SetTitle("hRecNew");
+        hRecNew->Multiply(hRatios);
+    }
+    // if Psi(2s) datasets
+    else if (strncmp(strMC.Data(),"CohP",4) == 0 || strncmp(strMC.Data(),"IncP",4) == 0) 
+    {
+        hRecNew = new TH1D("hRecNew","hRecNew",nBins,fPtCutLow,fPtCutUpp);
+        TAxis *xAxis = hRatios->GetXaxis();
+        // run over reconstructed events
+        Int_t iBinP = 0;
+        Int_t iBinJ = 0;
+        Double_t fJpsi = 0;
+        Printf("iBinP\tPtGenP\tiBinJ\tPtGenJ\tfJpsi\toldVal\tnewVal");
+        for(Int_t iEntry = 0; iEntry < tRec->GetEntries(); iEntry++)
+        {
+            tRec->GetEntry(iEntry);
+            // m between 3.0 and 3.2 GeV/c^2, pT cut: all
+            if(EventPassedMCRec(1, 2))
+            {
+                // find index of the bin to which the current fPtGen_Psi2s corresponds
+                iBinP = xAxis->FindBin(fPtGen_Psi2s);
+                // find index of the bin to which the current fPt corresponds
+                iBinJ = xAxis->FindBin(fPt);
+                // scale the J/psi entry by the ratio with the index iBinPsi2s
+                fJpsi = hRatios->GetBinContent(iBinP);
+                // add the entry to hRecNew
+                hRecNew->SetBinContent(iBinJ,hRecNew->GetBinContent(iBinJ)+fJpsi);
+                // print the values to the console
+                //Printf("%i\t%.3f\t%i\t%.3f\t%.3f\t%.3f\t%.3f", iBinP, fPtGen_Psi2s, iBinJ, fPtGen, fJpsi, hRecNew->GetBinContent(iBinJ), hRecNew->GetBinContent(iBinJ)+fJpsi);
+                // fill the histogram hRecOld
+                hRecOld->Fill(fPt);
+            }
+            if((iEntry+1) % nEntriesProgress == 0)
+            {
+                nPercent += 5;
+                nEntriesAnalysed += nEntriesProgress;
+                Printf("[%i%%] %i entries analysed.", nPercent, nEntriesAnalysed);
+            }
+        } 
+        // draw hRecOld 
+        if(drawCheck)
+        {
+            TCanvas *cRecOld2 = new TCanvas("cRecOld2","cRecOld2",900,600);
+            hRecOld->Draw();
+        }
+    } 
+    else 
+    {
+        Printf("This option is not supported. Terminating..."); 
+        return;
+    }
 
     // Plot the results
     TCanvas *cRatios = new TCanvas("cRatios", "cRatios", 900, 600);
@@ -295,63 +386,6 @@ void CalcAndPlotRatios(const char* subfolder_out, Double_t R_A)
     cRec->Print(Form("%s%s_RA_%.3f_recSpectra.pdf", str_folder_out.Data(), strMC.Data(), R_A));
     cRec->Print(Form("%s%s_RA_%.3f_recSpectra.png", str_folder_out.Data(), strMC.Data(), R_A));
 
-    return;
-}
-
-// #############################################################################################
-
-void FillHistRec()
-{
-    Printf("*****");
-    Printf("Process: %s", strMC.Data());
-    Printf("Filling the histogram (reconstructed level).");
-    Printf("*****");
-
-    TString str_f_in = "Trees/";
-    if(!isPass3) str_f_in += "AnalysisDataMC_pass1/";
-    else         str_f_in += "AnalysisDataMC_pass3/";
-    // choose MC dataset
-    // https://www.cplusplus.com/reference/cstring/strncmp/
-    if     (strncmp(strMC.Data(),"CohJ",4) == 0) str_f_in += "AnalysisResults_MC_kCohJpsiToMu.root";
-    else if(strncmp(strMC.Data(),"IncJ",4) == 0) str_f_in += "AnalysisResults_MC_kIncohJpsiToMu.root";
-    else if(strncmp(strMC.Data(),"CohP",4) == 0) str_f_in += "AnalysisResults_MC_kCohPsi2sToMuPi.root";
-    else if(strncmp(strMC.Data(),"IncP",4) == 0) str_f_in += "AnalysisResults_MC_kIncohPsi2sToMuPi.root";
-    // open the input file
-    TFile *fSL = NULL; 
-    fSL = TFile::Open(str_f_in.Data(), "read");
-    if(fSL) Printf("File %s loaded.", fSL->GetName());
-    // get the MCRec tree
-    TString str_t_in = "";
-    if(!isPass3) str_t_in = "AnalysisOutput/fTreeJPsiMCRec";
-    else         str_t_in = "AnalysisOutput/fTreeJpsi";
-    TTree *tRec = dynamic_cast<TTree*> (fSL->Get(str_t_in.Data()));
-    if(tRec) Printf("Tree %s loaded.", tRec->GetName());
-    // connect tree varibles, first set if pass3
-    ConnectTreeVariablesMCRec(tRec);
-
-    Int_t nEntriesAnalysed = 0;
-    Int_t nEntriesProgress = (Double_t)tRec->GetEntries() / 20.;
-    Int_t nPercent = 0;
-
-    // run over reconstructed events and fill the histogram hRecOld
-    for(Int_t iEntry = 0; iEntry < tRec->GetEntries(); iEntry++){
-        tRec->GetEntry(iEntry);
-        // m between 3.0 and 3.2 GeV/c^2, pT cut: all
-        if(EventPassedMCRec(1, 2)) hRecOld->Fill(fPt);
-
-        if((iEntry+1) % nEntriesProgress == 0){
-            nPercent += 5;
-            nEntriesAnalysed += nEntriesProgress;
-            Printf("[%i%%] %i entries analysed.", nPercent, nEntriesAnalysed);
-        }
-    } 
-
-    if(drawCheck){
-        TCanvas *c0 = new TCanvas("c0","c0",900,600);
-        hRecOld->Draw();
-    }
-
-    Printf("*****");
     Printf("Done.");
     Printf("*****");
     Printf("\n");
@@ -361,8 +395,69 @@ void FillHistRec()
 
 // #############################################################################################
 
-void ConnectTreeVariables_tSL(TTree *tSL){
+TTree* GetTreeRec()
+{
+    Printf("*****");
+    Printf("Process: %s", strMC.Data());
+    Printf("Getting the tRec.");
 
+    // define fRec and tRec
+    TFile *fRec = NULL;
+    TTree *tRec = NULL;
+    // define the paths to the file and tRec
+    TString str_f_in = "Trees/";
+    TString str_t_in = "AnalysisOutput/";
+    // if pass3 or not
+    if(!isPass3) str_f_in += "AnalysisDataMC_pass1/";
+    else         str_f_in += "AnalysisDataMC_pass3/";
+    // choose MC dataset
+    // if CohJ or IncJ
+    if(strncmp(strMC.Data(),"CohJ",4) == 0 || strncmp(strMC.Data(),"IncJ",4) == 0)
+    {
+        str_f_in += "AnalysisResults_MC_" + strMCFiles + ".root";
+        if(!isPass3) str_t_in += "fTreeJPsiMCRec";
+        else         str_t_in += "fTreeJpsi";
+        // open the input file
+        fRec = TFile::Open(str_f_in.Data(), "read");
+        if(fRec) Printf("File %s loaded.", fRec->GetName());
+        // get the MCRec tree
+        tRec = dynamic_cast<TTree*> (fRec->Get(str_t_in.Data()));
+        if(tRec) Printf("Tree %s loaded.", tRec->GetName());
+    }
+    // if CohP or IncP
+    if(strncmp(strMC.Data(),"CohP",4) == 0 || strncmp(strMC.Data(),"IncP",4) == 0) 
+    {
+        str_f_in += "AnalysisResults_MC_" + strMCFiles + "_2.root";
+        if(!isPass3)
+        {
+            Printf("This option is not supported. Terminating..."); 
+            return NULL;
+        }  
+        // open the input file
+        fRec = TFile::Open(str_f_in.Data(), "read");
+        if(fRec) Printf("File %s loaded.", fRec->GetName());
+        // get fOutputList
+        TList *l = (TList*) fRec->Get("AnalysisOutput/fOutputListcharged");
+        if(l) Printf("List %s loaded.", l->GetName()); 
+        // get the MCRec tree
+        tRec = (TTree*)l->FindObject("fTreeJpsi");
+        if(tRec) Printf("Tree %s loaded.", tRec->GetName());
+    }
+
+    // connect tree varibles
+    ConnectTreeVariablesMCRec(tRec);
+
+    Printf("Done.");
+    Printf("*****");
+    Printf("\n");
+
+    return tRec;
+}
+
+// #############################################################################################
+
+void ConnectTreeVariables_tSL(TTree *tSL)
+{
     tSL->SetBranchAddress("parent", &parent);
     tSL->SetBranchAddress("daughters", &daughters);
 

@@ -11,8 +11,8 @@ void PtFit_PreparePDFs();
 void PtFit_PreparePDFs_CohJmodRA(Bool_t bStopWeigh);
 void PtFit_SetCanvas(TCanvas *c, Bool_t isLogScale);
 
-void PtFit_PrepareMCTemplates_main(){
-
+void PtFit_PrepareMCTemplates_main()
+{
     // prepare histograms that will be normalized to PDFs
     // variable sized bins introduced in PtFit_SubtractBackground.h used
     // official STARlight data used for hCohJ, hIncJ, hCohP, hIncP and hBkgr
@@ -29,8 +29,8 @@ void PtFit_PrepareMCTemplates_main(){
     return;
 }
 
-void PtFit_PreparePDFs(){
-
+void PtFit_PreparePDFs()
+{
     TString name = "Trees/" + str_subfolder + "PtFit/MCTemplates.root";
     TFile *file = TFile::Open(name.Data(),"read");
     if(file){
@@ -82,8 +82,8 @@ void PtFit_PreparePDFs(){
     }
 }
 
-void PtFit_FillHistogramsMC(Int_t iMC, TH1D *hist){
-
+void PtFit_FillHistogramsMC(Int_t iMC, TH1D *hist)
+{
     // Load the data
     TFile *file = NULL;
     switch(iMC){
@@ -136,8 +136,8 @@ void PtFit_FillHistogramsMC(Int_t iMC, TH1D *hist){
     return;
 }
 
-void PtFit_PreparePDFs_CohJmodRA(Bool_t bStopWeigh){
-
+void PtFit_PreparePDFs_CohJmodRA(Bool_t bStopWeigh)
+{
     TString name;
     if(!bStopWeigh) name = "Trees/" + str_subfolder + "PtFit/MCTemplates_CohJmodRA.root";
     else            name = "Trees/" + str_subfolder + "PtFit/MCTemplates_CohJmodRA_StopWeigh.root";
@@ -253,8 +253,27 @@ void PtFit_PreparePDFs_CohJmodRA(Bool_t bStopWeigh){
     }   
 }
 
-void PtFit_SetCanvas(TCanvas *c, Bool_t isLogScale){
+void PtFit_PreparePDFs_AllmodRA(Bool_t bStopWeigh)
+{
+    TString name;
+    if(!bStopWeigh) name = "Trees/" + str_subfolder + "PtFit/MCTemplates_AllmodRA.root";
+    else            name = "Trees/" + str_subfolder + "PtFit/MCTemplates_AllmodRA_StopWeigh.root";
+    TFile *file = TFile::Open(name.Data(),"read");
+    if(file){
+        Printf("PDFs with R_A = 7.350 already created.");
+        return;
 
+    } else { 
+    
+        
+
+    }
+
+    return;
+}
+
+void PtFit_SetCanvas(TCanvas *c, Bool_t isLogScale)
+{
     if(isLogScale == kTRUE) c->SetLogy();
     c->SetTopMargin(0.05);
     c->SetBottomMargin(0.12);

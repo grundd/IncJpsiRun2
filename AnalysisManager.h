@@ -21,6 +21,7 @@ vector<Int_t> runList_18r;
 Int_t nRuns_18q; 
 Int_t nRuns_18r; 
 Bool_t isPass3;
+Bool_t isPsi2sDataset;
 Bool_t isZNcut;
 Bool_t isPIDCalibrated; // if NSigmas in MC data were shifted to zeros
 // Array containing pT bin boundaries (will be created in SetPtBinning.h):
@@ -47,6 +48,8 @@ Double_t fV0A_time, fV0C_time, fADA_time, fADC_time;
 // only for pass3:
 Double_t fTrk1dEdx, fTrk2dEdx, fVertexZ;
 Int_t fVertexContrib;
+// only for pass3 & psi(2s) datasets:
+Double_t fPtGen_Psi2s;
 
 void ConnectTreeVariables(TTree *t){
     // Set branch addresses
@@ -151,6 +154,9 @@ void ConnectTreeVariablesMCRec(TTree *t){
         t->SetBranchAddress("fVertexContrib", &fVertexContrib);
         t->SetBranchAddress("fTrk1dEdx", &fTrk1dEdx);
         t->SetBranchAddress("fTrk2dEdx", &fTrk2dEdx);
+        if(isPsi2sDataset){
+            t->SetBranchAddress("fPtGen_Psi2s", &fPtGen_Psi2s);
+        }
     // if not
     } else {
         t->SetBranchAddress("fV0A_time", &fV0A_time);
