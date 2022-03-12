@@ -179,7 +179,7 @@ void PtFit_PreparePDFs_CohJmodRA(Bool_t bStopWeigh){
             hGenNew[i] = new TH1D(Form("hGenNew%i",i), Form("hGenNew%i",i), nPtBins_PtFit, ptBoundaries_PtFit); 
 
             // Open fGenOld file and get the tree
-            TFile *fGenOld = TFile::Open("Trees/STARlight/tGenOld_RA_6.624.root","read");
+            TFile *fGenOld = TFile::Open("Trees/STARlight/tGen_CohJ_RA_6.624.root","read");
             if(!fGenOld){
                 Printf("File fGenOld not found! Terminating...");
                 return;
@@ -190,7 +190,7 @@ void PtFit_PreparePDFs_CohJmodRA(Bool_t bStopWeigh){
             tGenOld->SetBranchAddress("fPtGen", &fPtGenerated_PtFit);
 
             // Open fGenNew file and get the tree
-            TFile *fGenNew = TFile::Open(Form("Trees/STARlight/tGenNew_RA_%.3f.root", RA[i]),"read");
+            TFile *fGenNew = TFile::Open(Form("Trees/STARlight/tGen_CohJ_RA_%.3f.root", RA[i]),"read");
             if(!fGenNew){
                 Printf("File fGenNew not found! Terminating...");
                 return;

@@ -3,7 +3,7 @@
 // Configure values of the parameters
 
 // ******************************
-Bool_t START_FROM_CLEAN = kTRUE;
+Bool_t START_FROM_CLEAN = kFALSE;
 Int_t iWhichAnalysisToRun = 0;
 // ******************************
 
