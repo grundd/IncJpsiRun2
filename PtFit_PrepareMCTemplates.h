@@ -2,7 +2,7 @@
 // David Grund, Mar 04, 2022
 
 TString NamesPDFs[6] = {"CohJ","IncJ","CohP","IncP","Bkgr","Diss"};
-Double_t fPtStopWeigh[4] = {0.2, 1.2, 0.5, 1.2}; // GeV/c
+Double_t fPtStopWeigh[4] = {0.17, 1.2, 0.5, 1.2}; // GeV/c
 
 Double_t fPtGenerated_PtFit;
 
