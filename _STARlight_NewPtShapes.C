@@ -16,6 +16,7 @@
 #include "TClonesArray.h"
 #include "TStyle.h"
 #include "TCanvas.h"
+#include "TLegend.h"
 // my headers
 #include "AnalysisManager.h"
 #include "AnalysisConfig.h" // to be able to use SetReducedRunList()
@@ -53,7 +54,28 @@ void _STARlight_NewPtShapes()
 {
     // no title in plots
     gStyle->SetOptTitle(0);
+    gStyle->SetOptStat(0);
 
+    // to study which R_A is optimal for CohJ to describe the measured pT distribution
+    if(kTRUE){
+        // CohJ, 6.000.000 gen events,
+        // R_A = 6.624 vs. 6.600-7.800 fm (step = 0.100 fm)
+        for(Int_t i = 0; i < 13; i++){
+            Double_t R_A = 6.600 + i*0.100; // fm
+            InitAnalysis(0,kTRUE);
+            FillTreeGen("Trees/STARlight/CohJ_6.624/",6.624);
+            FillTreeGen(Form("Trees/STARlight/CohJ_%.3f/", R_A),R_A);
+            CalcAndPlotRatios("",R_A);
+        }
+    }
+
+    if(kTRUE){
+        // CohJ, R_A = 6.624 vs. 7.350 fm, 6.000.000 gen events
+        InitAnalysis(0,kTRUE);
+        FillTreeGen("Trees/STARlight/CohJ_6.624/",6.624);
+        FillTreeGen("Trees/STARlight/CohJ_7.350/",7.350);
+        CalcAndPlotRatios("",7.350);
+    }
     if(kTRUE){
         // IncJ, R_A = 6.624 vs. 7.350 fm, 6.000.000 gen events
         InitAnalysis(1,kTRUE);
@@ -375,10 +397,18 @@ void CalcAndPlotRatios(const char* subfolder_out, Double_t R_A)
     hRecOld->GetXaxis()->SetTitleOffset(1.2);
     hRecOld->GetXaxis()->SetLabelSize(0.05);
     // Draw
-    hRecOld->SetLineColor(210);
+    hRecOld->SetLineColor(kRed);
     hRecOld->Draw("E1");
     hRecNew->SetLineColor(215);
     hRecNew->Draw("E1 SAME");
+
+    TLegend *l = new TLegend(0.50,0.85,0.90,0.95);
+    l->AddEntry(hRecOld,Form("rec. events with #it{R}_{A} = 6.624 fm"),"L");
+    l->AddEntry(hRecNew,Form("rec. events with #it{R}_{A} = %.3f fm", R_A),"L");
+    l->SetTextSize(0.04);
+    l->SetBorderSize(0); // no border
+    l->SetFillStyle(0);  // legend is transparent
+    l->Draw();
 
     // Print plots
     cRatios->Print(Form("%s%s_RA_%.3f_ratios.pdf", str_folder_out.Data(), strMC.Data(), R_A));

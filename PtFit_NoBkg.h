@@ -113,11 +113,11 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD, Bool_t bStopWeigh)
         TString name_file = "";
         TString name_hist = "";
         if(!bStopWeigh){
-            name_file = "Trees/" + str_subfolder + "PtFit/MCTemplates_CohJmodRA.root";
-            name_hist = Form("hCohJmodRA_%.2f", R_A);
+            name_file = "Trees/" + str_subfolder + "PtFit/MCTemplates_modRA_CohJ.root";
+            name_hist = Form("hCohJ_modRA_%.2f", R_A);
         } else {
-            name_file = "Trees/" + str_subfolder + "PtFit/MCTemplates_CohJmodRA_StopWeigh.root";
-            name_hist = Form("hCohJmodRA_StopWeigh_%.2f", R_A);
+            name_file = "Trees/" + str_subfolder + "PtFit/MCTemplates_modRA_CohJ_stopWeigh.root";
+            name_hist = Form("hCohJ_modRA_%.2f_stopWeigh", R_A);
         }            
 
         TFile *f_modRA = TFile::Open(name_file.Data(),"read");

@@ -1,14 +1,15 @@
 // PtFit_PrepareMCTemplates.h
 // David Grund, Mar 04, 2022
 
-TString NamesPDFs[6] = {"hCohJ","hIncJ","hCohP","hIncP","hBkgr","hDiss"};
-Double_t fPtStopWeigh = 0.2; // GeV/c
+TString NamesPDFs[6] = {"CohJ","IncJ","CohP","IncP","Bkgr","Diss"};
+Double_t fPtStopWeigh[4] = {0.2, 1.2, 0.5, 1.2}; // GeV/c
 
 Double_t fPtGenerated_PtFit;
 
 void PtFit_FillHistogramsMC(Int_t iMC, TH1D *hist);
 void PtFit_PreparePDFs();
-void PtFit_PreparePDFs_CohJmodRA(Bool_t bStopWeigh);
+void PtFit_PreparePDFs_modRA_CohJ(Bool_t bStopWeigh);
+void PtFit_PreparePDFs_modRA_all(Bool_t bStopWeigh);
 void PtFit_SetCanvas(TCanvas *c, Bool_t isLogScale);
 
 void PtFit_PrepareMCTemplates_main()
@@ -19,12 +20,19 @@ void PtFit_PrepareMCTemplates_main()
     // H1 parametrization used for hDiss
     PtFit_PreparePDFs();
 
-    gSystem->Exec("mkdir -p Results/" + str_subfolder + "PtFit_NoBkg/CohJmodRA_ratios/");
+    gSystem->Exec("mkdir -p Results/" + str_subfolder + "PtFit_NoBkg/modRA_CohJ_ratios/");
     // prepare PDFs for CohJ from STARlight data generated with modified values of R_A
     // weigh hRec over the whole pT range:
-    PtFit_PreparePDFs_CohJmodRA(kFALSE);
-    // stop weighing at fPtStopWeigh = 0.2 GeV/c
-    PtFit_PreparePDFs_CohJmodRA(kTRUE);
+    PtFit_PreparePDFs_modRA_CohJ(kFALSE);
+    // stop weighing at fPtStopWeigh[0] = 0.2 GeV/c
+    PtFit_PreparePDFs_modRA_CohJ(kTRUE);
+
+    gSystem->Exec("mkdir -p Results/" + str_subfolder + "PtFit_NoBkg/modRA_all_ratios/");
+    // prepare PDFs for CohJ, IncJ, CohP and IncP from STARlight data generated with R_A = 7.350 fm (optimal value)
+    // weigh hRec over the whole pT range:
+    PtFit_PreparePDFs_modRA_all(kFALSE);
+    // stop weighing at fPtStopWeigh[iMC]
+    PtFit_PreparePDFs_modRA_all(kTRUE);
 
     return;
 }
@@ -44,11 +52,11 @@ void PtFit_PreparePDFs()
         // Define output histograms with predefined binning to create PDFs
         TList *l = new TList();
         TH1D *HistPDFs[6] = { NULL };
-        HistPDFs[0] = new TH1D(NamesPDFs[0].Data(), NamesPDFs[0].Data(), nPtBins_PtFit, ptBoundaries_PtFit);
-        HistPDFs[1] = new TH1D(NamesPDFs[1].Data(), NamesPDFs[1].Data(), nPtBins_PtFit, ptBoundaries_PtFit);
-        HistPDFs[2] = new TH1D(NamesPDFs[2].Data(), NamesPDFs[2].Data(), nPtBins_PtFit, ptBoundaries_PtFit);
-        HistPDFs[3] = new TH1D(NamesPDFs[3].Data(), NamesPDFs[3].Data(), nPtBins_PtFit, ptBoundaries_PtFit);
-        HistPDFs[4] = new TH1D(NamesPDFs[4].Data(), NamesPDFs[4].Data(), nPtBins_PtFit, ptBoundaries_PtFit);
+        HistPDFs[0] = new TH1D(("h" + NamesPDFs[0]).Data(), ("h" + NamesPDFs[0]).Data(), nPtBins_PtFit, ptBoundaries_PtFit);
+        HistPDFs[1] = new TH1D(("h" + NamesPDFs[1]).Data(), ("h" + NamesPDFs[1]).Data(), nPtBins_PtFit, ptBoundaries_PtFit);
+        HistPDFs[2] = new TH1D(("h" + NamesPDFs[2]).Data(), ("h" + NamesPDFs[2]).Data(), nPtBins_PtFit, ptBoundaries_PtFit);
+        HistPDFs[3] = new TH1D(("h" + NamesPDFs[3]).Data(), ("h" + NamesPDFs[3]).Data(), nPtBins_PtFit, ptBoundaries_PtFit);
+        HistPDFs[4] = new TH1D(("h" + NamesPDFs[4]).Data(), ("h" + NamesPDFs[4]).Data(), nPtBins_PtFit, ptBoundaries_PtFit);
 
         for(Int_t i = 0; i < 5; i++){
             PtFit_FillHistogramsMC(i, HistPDFs[i]);
@@ -56,7 +64,7 @@ void PtFit_PreparePDFs()
         }
         // ***************************************************************
         // Create the dissociative PDF
-        HistPDFs[5] = new TH1D(NamesPDFs[5].Data(), NamesPDFs[5].Data(), nPtBins_PtFit, ptBoundaries_PtFit);
+        HistPDFs[5] = new TH1D(("h" + NamesPDFs[5]).Data(), ("h" + NamesPDFs[5]).Data(), nPtBins_PtFit, ptBoundaries_PtFit);
         TF1 *fDissH1 = new TF1("fDissH1","x*pow((1 + x*x*[0]/[1]),-[1])",fPtCutLow_PtFit,fPtCutUpp_PtFit);
         Double_t b_pd = 1.79;
         Double_t n_pd = 3.58;
@@ -136,11 +144,11 @@ void PtFit_FillHistogramsMC(Int_t iMC, TH1D *hist)
     return;
 }
 
-void PtFit_PreparePDFs_CohJmodRA(Bool_t bStopWeigh)
+void PtFit_PreparePDFs_modRA_CohJ(Bool_t bStopWeigh)
 {
     TString name;
-    if(!bStopWeigh) name = "Trees/" + str_subfolder + "PtFit/MCTemplates_CohJmodRA.root";
-    else            name = "Trees/" + str_subfolder + "PtFit/MCTemplates_CohJmodRA_StopWeigh.root";
+    if(!bStopWeigh) name = "Trees/" + str_subfolder + "PtFit/MCTemplates_modRA_CohJ.root";
+    else            name = "Trees/" + str_subfolder + "PtFit/MCTemplates_modRA_CohJ_stopWeigh.root";
     TFile *file = TFile::Open(name.Data(),"read");
     if(file){
         Printf("PDFs for CohJ with modified R_A already created.");
@@ -158,10 +166,10 @@ void PtFit_PreparePDFs_CohJmodRA(Bool_t bStopWeigh)
         TString str_modRA[14] = { "" };
         RA[0] = 7.53;
         for(Int_t i = 0; i < 13; i++) RA[i+1] = 6.60 + i*0.10;
-        if(!bStopWeigh) for(Int_t i = 0; i < 14; i++) str_modRA[i] = Form("hCohJmodRA_%.2f", RA[i]);
-        else            for(Int_t i = 0; i < 14; i++) str_modRA[i] = Form("hCohJmodRA_StopWeigh_%.2f", RA[i]);
+        if(!bStopWeigh) for(Int_t i = 0; i < 14; i++) str_modRA[i] = Form("hCohJ_modRA_%.2f", RA[i]);
+        else            for(Int_t i = 0; i < 14; i++) str_modRA[i] = Form("hCohJ_modRA_%.2f_stopWeigh", RA[i]);
         
-        TH1D *hCohJmodRA[14] = { NULL };
+        TH1D *hCohJ_modRA[14] = { NULL };
         TH1D *hGenOld[14] = { NULL };
         TH1D *hGenNew[14] = { NULL };
         TH1D *hRatios[14] = { NULL };
@@ -171,8 +179,8 @@ void PtFit_PreparePDFs_CohJmodRA(Bool_t bStopWeigh)
         for(Int_t i = 1; i < 14; i++){
             Printf("Now calculating hRec for R_A = %.2f fm.", RA[i]);
 
-            hCohJmodRA[i] = (TH1D*)hRec->Clone(str_modRA[i].Data());
-            hCohJmodRA[i]->SetTitle(str_modRA[i].Data());
+            hCohJ_modRA[i] = (TH1D*)hRec->Clone(str_modRA[i].Data());
+            hCohJ_modRA[i]->SetTitle(str_modRA[i].Data());
 
             // Correct the shape => calculate the ratios
             hGenOld[i] = new TH1D(Form("hGenOld%i",i), Form("hGenOld%i",i), nPtBins_PtFit, ptBoundaries_PtFit);
@@ -185,7 +193,7 @@ void PtFit_PreparePDFs_CohJmodRA(Bool_t bStopWeigh)
                 return;
             }
 
-            TTree *tGenOld = (TTree*)fGenOld->Get("tGenOld");
+            TTree *tGenOld = (TTree*)fGenOld->Get("tGen");
             if(tGenOld) Printf("Tree %s loaded.", tGenOld->GetName());
             tGenOld->SetBranchAddress("fPtGen", &fPtGenerated_PtFit);
 
@@ -196,7 +204,7 @@ void PtFit_PreparePDFs_CohJmodRA(Bool_t bStopWeigh)
                 return;
             }
 
-            TTree *tGenNew = (TTree*)fGenNew->Get("tGenNew");
+            TTree *tGenNew = (TTree*)fGenNew->Get("tGen");
             if(tGenNew) Printf("Tree %s loaded.", tGenNew->GetName());
             tGenNew->SetBranchAddress("fPtGen", &fPtGenerated_PtFit);
 
@@ -216,18 +224,17 @@ void PtFit_PreparePDFs_CohJmodRA(Bool_t bStopWeigh)
             hRatios[i]->Sumw2();
             hRatios[i]->Divide(hGenOld[i]);
 
-            // If we want to stop weighing at fPtStopWeigh, set all ratios above this value to 1.0
+            // If we want to stop weighing at fPtStopWeigh[0] (for CohJ), set all ratios above this value to 1.0
             if(bStopWeigh){
                 for(Int_t iBin = 1; iBin <= nPtBins_PtFit; iBin++){
-                    if(hRatios[i]->GetBinCenter(iBin) > fPtStopWeigh) hRatios[i]->SetBinContent(iBin, 1.0);
+                    if(hRatios[i]->GetBinCenter(iBin) > fPtStopWeigh[0]) hRatios[i]->SetBinContent(iBin, 1.0);
                 }  
-
             }
 
             // Print the results to the text file
             TString name_out = "";
-            if(!bStopWeigh) name_out = "Results/" + str_subfolder + Form("PtFit_NoBkg/CohJmodRA_ratios/RA_%.3f.txt", RA[i]);
-            else            name_out = "Results/" + str_subfolder + Form("PtFit_NoBkg/CohJmodRA_ratios/RA_StopWeigh_%.3f.txt", RA[i]);
+            if(!bStopWeigh) name_out = "Results/" + str_subfolder + Form("PtFit_NoBkg/modRA_CohJ_ratios/RA_%.3f.txt", RA[i]);
+            else            name_out = "Results/" + str_subfolder + Form("PtFit_NoBkg/modRA_CohJ_ratios/RA_%.3f_stopWeigh.txt", RA[i]);
             ofstream outfile(name_out.Data());
             outfile << "pT_low\tpT_upp\tnEvOld\tnEvNew\tratio\n";
             for(Int_t iBin = 1; iBin <= nPtBins_PtFit; iBin++){
@@ -238,9 +245,9 @@ void PtFit_PreparePDFs_CohJmodRA(Bool_t bStopWeigh)
             outfile.close();
 
             // Correct the shape of reconstructed events by the ratios
-            hCohJmodRA[i]->Multiply(hRatios[i]);
+            hCohJ_modRA[i]->Multiply(hRatios[i]);
             // Add the histogram to the list
-            l->Add(hCohJmodRA[i]);
+            l->Add(hCohJ_modRA[i]);
         }
         // Save results to the output file
         // Create the output file
@@ -253,11 +260,12 @@ void PtFit_PreparePDFs_CohJmodRA(Bool_t bStopWeigh)
     }   
 }
 
-void PtFit_PreparePDFs_AllmodRA(Bool_t bStopWeigh)
+void PtFit_PreparePDFs_modRA_all(Bool_t bStopWeigh)
 {
+    // Here the PDFs with R_A = 7.350 fm (optimal value) are created
     TString name;
-    if(!bStopWeigh) name = "Trees/" + str_subfolder + "PtFit/MCTemplates_AllmodRA.root";
-    else            name = "Trees/" + str_subfolder + "PtFit/MCTemplates_AllmodRA_StopWeigh.root";
+    if(!bStopWeigh) name = "Trees/" + str_subfolder + "PtFit/MCTemplates_modRA_all.root";
+    else            name = "Trees/" + str_subfolder + "PtFit/MCTemplates_modRA_all_stopWeigh.root";
     TFile *file = TFile::Open(name.Data(),"read");
     if(file){
         Printf("PDFs with R_A = 7.350 already created.");
@@ -265,11 +273,123 @@ void PtFit_PreparePDFs_AllmodRA(Bool_t bStopWeigh)
 
     } else { 
     
-        
+        TString str_modRA[4] = {"hCohJ_modRA_7.350",
+                                "hIncJ_modRA_7.350",
+                                "hCohP_modRA_7.350",
+                                "hIncP_modRA_7.350"};
+        if(bStopWeigh) for(Int_t iMC = 0; iMC < 4; iMC++) str_modRA[iMC] += "_stopWeigh";
 
+        TList *l = new TList();
+        TH1D *hRec[2] = { NULL };
+        TH1D *h_modRA[4] = { NULL };
+        TH1D *hGenOld[4] = { NULL };
+        TH1D *hGenNew[4] = { NULL };
+        TH1D *hRatios[4] = { NULL };
+     
+        for(Int_t iMC = 0; iMC < 4; iMC++)
+        {
+            Printf("Now calculating h_modRA for %s.", str_modRA[iMC].Data());
+
+            // Correct the shape => calculate the ratios
+            // Load hGenOld, hGenNew
+            hGenOld[iMC] = new TH1D(Form("hGenOld%i",iMC), Form("hGenOld%i",iMC), nPtBins_PtFit, ptBoundaries_PtFit);
+            hGenNew[iMC] = new TH1D(Form("hGenNew%i",iMC), Form("hGenNew%i",iMC), nPtBins_PtFit, ptBoundaries_PtFit); 
+
+            // Open fGenOld file and get the tree
+            TString str_in_old = Form("Trees/STARlight/tGen_%s_RA_6.624.root", NamesPDFs[iMC].Data());
+            TFile *fGenOld = TFile::Open(str_in_old.Data(),"read");
+            if(!fGenOld){
+                Printf("File fGenOld not found! Terminating...");
+                return;
+            }
+
+            TTree *tGenOld = (TTree*)fGenOld->Get("tGen");
+            if(tGenOld) Printf("Tree %s loaded.", tGenOld->GetName());
+            tGenOld->SetBranchAddress("fPtGen", &fPtGenerated_PtFit);
+
+            // Open fGenNew file and get the tree
+            TString str_in_new = Form("Trees/STARlight/tGen_%s_RA_7.350.root", NamesPDFs[iMC].Data());
+            TFile *fGenNew = TFile::Open(str_in_new.Data(),"read");
+            if(!fGenNew){
+                Printf("File fGenNew not found! Terminating...");
+                return;
+            }
+
+            TTree *tGenNew = (TTree*)fGenNew->Get("tGen");
+            if(tGenNew) Printf("Tree %s loaded.", tGenNew->GetName());
+            tGenNew->SetBranchAddress("fPtGen", &fPtGenerated_PtFit);
+
+            // Loop over tGenOld entries
+            for(Int_t iEntry = 0; iEntry < tGenOld->GetEntries(); iEntry++){
+                tGenOld->GetEntry(iEntry);
+                hGenOld[iMC]->Fill(fPtGenerated_PtFit);
+            }
+            // Loop over tGenNew entries
+            for(Int_t iEntry = 0; iEntry < tGenNew->GetEntries(); iEntry++){
+                tGenNew->GetEntry(iEntry);
+                hGenNew[iMC]->Fill(fPtGenerated_PtFit);
+            }
+            // Calculate the ratios
+            hRatios[iMC] = (TH1D*)hGenNew[iMC]->Clone(Form("hRatios%i",iMC));
+            hRatios[iMC]->SetTitle(Form("hRatios%i",iMC));
+            hRatios[iMC]->Sumw2();
+            hRatios[iMC]->Divide(hGenOld[iMC]);
+
+            // CohJ and IncJ (iMC == 0,1)
+            if(iMC == 0 || iMC == 1)
+            {
+                // Define the histogram with reconstructed events and fill it
+                hRec[iMC] = new TH1D("hRec","hRec",nPtBins_PtFit,ptBoundaries_PtFit);
+                PtFit_FillHistogramsMC(iMC, hRec[iMC]);
+
+                h_modRA[iMC] = (TH1D*)hRec[iMC]->Clone(str_modRA[iMC].Data());
+                h_modRA[iMC]->SetTitle(str_modRA[iMC].Data());   
+
+                // If we want to stop weighing at fPtStopWeigh[iMC], set all ratios above this value to 1.0
+                if(bStopWeigh){
+                    for(Int_t iBin = 1; iBin <= nPtBins_PtFit; iBin++){
+                        if(hRatios[iMC]->GetBinCenter(iBin) > fPtStopWeigh[iMC]) hRatios[iMC]->SetBinContent(iBin, 1.0);
+                    }  
+                }
+
+                // Correct the shape of reconstructed events by the ratios
+                h_modRA[iMC]->Multiply(hRatios[iMC]);
+                // Add the histogram to the list
+                l->Add(h_modRA[iMC]);
+            }
+            // CohP and IncP (iMC == 2,3)
+            if(iMC == 2 || iMC == 3)
+            {
+                if(!isPass3){
+                    Printf("This option is not supported. Skipping..."); 
+                    continue;
+                }
+
+                // ... finish ...
+            }
+
+            // Print the results to the text file
+            TString name_out = "Results/" + str_subfolder + Form("PtFit_NoBkg/modRA_all_ratios/%s_RA_7.350", str_modRA[iMC].Data());
+            if(!bStopWeigh) name_out += ".txt";
+            else            name_out += "_stopWeigh.txt"; 
+            ofstream outfile(name_out.Data());
+            outfile << "pT_low\tpT_upp\tnEvOld\tnEvNew\tratio\n";
+            for(Int_t iBin = 1; iBin <= nPtBins_PtFit; iBin++){
+                outfile << Form("%.3f\t%.3f\t%.0f\t%.0f\t%.3f\n",
+                                hRatios[iMC]->GetBinLowEdge(iBin), hRatios[iMC]->GetBinLowEdge(iBin+1), 
+                                hGenOld[iMC]->GetBinContent(iBin), hGenNew[iMC]->GetBinContent(iBin), hRatios[iMC]->GetBinContent(iBin));
+            }
+            outfile.close();
+        }
+        // Save results to the output file
+        // Create the output file
+        TFile *f = new TFile(name.Data(),"RECREATE");
+        l->Write("HistList", TObject::kSingleKey);
+        f->ls();
+        f->Close();
+
+        return;
     }
-
-    return;
 }
 
 void PtFit_SetCanvas(TCanvas *c, Bool_t isLogScale)
@@ -281,46 +401,3 @@ void PtFit_SetCanvas(TCanvas *c, Bool_t isLogScale)
 
     return;
 }
-
-/*
-void PreparePDFs_modRA_all(){
-
-    return;
-}
-
-void ConnectTreeVariablesPt(TTree *t){
-
-    t->SetBranchAddress("fPt", &fPt);
-
-    Printf("Variables from %s connected.", t->GetName());
-
-    return;
-}
-
-void DrawCorrelationMatrix(TCanvas *cCM, RooFitResult* ResFit){
-
-    // Set margins
-    cCM->SetTopMargin(0.03);
-    cCM->SetBottomMargin(0.11);
-    cCM->SetRightMargin(0.17);
-    cCM->SetLeftMargin(0.15);
-    // Get 2D corr hist
-    TH2* hCorr = ResFit->correlationHist();
-    // Set X axis
-    hCorr->GetXaxis()->SetBinLabel(1,"#it{N}_{coh}");
-    hCorr->GetXaxis()->SetBinLabel(2,"#it{N}_{diss}");
-    hCorr->GetXaxis()->SetBinLabel(3,"#it{N}_{inc}");
-    // Set Y axis
-    hCorr->GetYaxis()->SetBinLabel(1,"#it{N}_{inc}");
-    hCorr->GetYaxis()->SetBinLabel(2,"#it{N}_{diss}");
-    hCorr->GetYaxis()->SetBinLabel(3,"#it{N}_{coh}");
-    // Set corr hist and draw it
-    hCorr->SetMarkerSize(3.6);
-    hCorr->GetXaxis()->SetLabelSize(0.13);
-    hCorr->GetYaxis()->SetLabelSize(0.13);
-    hCorr->GetZaxis()->SetLabelSize(0.08);
-    hCorr->Draw("colz,text");
-
-    return;
-}
-*/
