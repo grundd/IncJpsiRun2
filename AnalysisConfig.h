@@ -4,7 +4,7 @@
 
 // ******************************
 Bool_t START_FROM_CLEAN = kFALSE;
-Int_t iWhichAnalysisToRun = 0;
+Int_t iWhichAnalysisToRun = 12;
 // ******************************
 
 TString str_subfolder = "";

@@ -1,42 +1,47 @@
 // PtFit_NoBkg.h
 // David Grund, Mar 04, 2022
 
-//###################################################################################
+// #############################################################################################
 
 // Options of pT fit without background:
-// iShapeCohJ:
-// = 0 => classic histogram from STARlight (R_A = 6.624 fm)
-// = 1 => histogram from STARlight data generated with R_A = 7.53 fm (~ Roman)
-// = 2 => fit using a "Gaussian shape" pT * exp(-b * pT^2)
-// = 3 => fit using a pure STARlight formfactor, R_A left free
+// iRecShape:
+// different shapes of CohJ:
+//  = 0 => classic histogram from STARlight (R_A = 6.624 fm)
+//  = 1 => histogram from STARlight data generated with R_A = 7.53 fm (~ Roman)
+//  = 2 => fit using a "Gaussian shape" pT * exp(-b * pT^2)
+//  = 3 => fit using a pure STARlight formfactor, R_A left free
 // to study which value of R_A is optimal (finding a minimum chi2):
-// = 1001 => R_A = 6.60 fm
-// = 1002 => R_A = 6.70 fm
-// = 1003 => R_A = 6.80 fm
-// = 1004 => R_A = 6.90 fm
-// = 1005 => R_A = 7.00 fm
-// = 1006 => R_A = 7.10 fm
-// = 1007 => R_A = 7.20 fm
-// = 1008 => R_A = 7.30 fm
-// = 1009 => R_A = 7.40 fm
-// = 1010 => R_A = 7.50 fm
-// = 1011 => R_A = 7.60 fm
-// = 1012 => R_A = 7.70 fm
-// = 1013 => R_A = 7.80 fm
+//  = 1001 => R_A = 6.60 fm
+//  = 1002 => R_A = 6.70 fm
+//  = 1003 => R_A = 6.80 fm
+//  = 1004 => R_A = 6.90 fm
+//  = 1005 => R_A = 7.00 fm
+//  = 1006 => R_A = 7.10 fm
+//  = 1007 => R_A = 7.20 fm
+//  = 1008 => R_A = 7.30 fm
+//  = 1009 => R_A = 7.40 fm
+//  = 1010 => R_A = 7.50 fm
+//  = 1011 => R_A = 7.60 fm
+//  = 1012 => R_A = 7.70 fm
+//  = 1013 => R_A = 7.80 fm
+// from the above study of various CohJ shapes, it was found that the value of R_A = 7.350 fm is optimal
+// all shapes modified accordingly: CohJ, IncJ, CohP, IncP (~ no effect at the last three)
+//  = 4 => R_A = 7.350 fm for all shapes
 // iNormFD: (not yet implemented !!!)
-// = 0 => FD normalization taken from STARlight (f_D^coh ~ 7%), the same way as Roman
-// = 1 => ratio of coherent cross sections fixed to the value from Michal's paper
+//  = 0 => FD normalization taken from STARlight (f_D^coh ~ 7%), the same way as Roman
+//  = 1 => ratio of coherent cross sections fixed to the value from Michal's paper
 // bStopWeigh:
-// = kTRUE  => weighing of the coherent stopped at fPtStopWeigh (= 0.2 GeV/c)
-// = kFALSE => weighing over the whole pT range
+//  = kTRUE  => weighing stopped at fPtStopWeigh[iMC] (see PtFit_PrepareMCTemplates.h)
+//  = kFALSE => weighing over the whole pT range
 
-//###################################################################################
+// #############################################################################################
 
 // Main functions
-void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD, Bool_t bStopWeigh);
-void PtFit_NoBkg_DrawCorrMatrix(TCanvas *cCM, RooFitResult* ResFit, Int_t iShapeCohJ);
+void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iNormFD, Bool_t bStopWeigh);
+void PtFit_NoBkg_DrawCorrMatrix(TCanvas *cCM, RooFitResult* ResFit, Int_t iRecShape);
+void PtFit_SetCanvas(TCanvas *c, Bool_t isLogScale);
 
-//###################################################################################
+// #############################################################################################
 
 // Functions and variables needed to define STARlight formfactor
 const Double_t hbarC = 0.197; // GeV*fm
@@ -62,7 +67,7 @@ Double_t VMD_model(Double_t *pT, Double_t *par)
 }
 Double_t Zero_func(Double_t pT){ return 0.; }
 
-//###################################################################################
+// #############################################################################################
 
 void PtFit_NoBkg_main()
 {
@@ -78,13 +83,21 @@ void PtFit_NoBkg_main()
 
     for(Int_t i = 1001; i < 1014; i++) PtFit_NoBkg_DoFit(i,0,kTRUE);
 
+    PtFit_NoBkg_DoFit(4,0,kFALSE);
+
+    PtFit_NoBkg_DoFit(4,0,kTRUE);
+
     return;
 }
 
-void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD, Bool_t bStopWeigh)
+// #############################################################################################
+
+void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iNormFD, Bool_t bStopWeigh)
 {
-    Double_t fR_A;
-    if(iShapeCohJ > 1000) fR_A = 6.6 + (Double_t)(iShapeCohJ-1001) * 0.1;
+    Double_t fR_A = 0;
+    if(iRecShape == 1) fR_A = 7.53;
+    if(iRecShape == 4) fR_A = 7.35;
+    if(iRecShape > 1000) fR_A = 6.6 + (Double_t)(iRecShape-1001) * 0.1;
 
     // Load the file with PDFs
     TFile *file = TFile::Open(("Trees/" + str_subfolder + "PtFit/MCTemplates.root").Data(),"read");
@@ -93,32 +106,69 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD, Bool_t bStopWeigh)
     TList *list = (TList*) file->Get("HistList");
     if(list) Printf("List %s loaded.", list->GetName()); 
 
-    // Load histograms
     //###################################################################################
-    // 1) kCohJpsiToMu
+    // Load histograms
     TH1D *hCohJ = NULL;
-    // if CohJ from SL
-    if(iShapeCohJ == 0 || iShapeCohJ == 2 || iShapeCohJ == 3)
+    TH1D *hIncJ = NULL;
+    TH1D *hCohP = NULL;
+    TH1D *hIncP = NULL;
+
+    // if hIncJ, hCohP and hIncP taken from SL with R_A = 6.624 fm
+    if(iRecShape == 0 || iRecShape == 1 || iRecShape == 2 || iRecShape == 3 || iRecShape > 1000)
     {
-        hCohJ = (TH1D*)list->FindObject(NamesPDFs[0].Data());
-        if(hCohJ) Printf("Histogram %s loaded.", hCohJ->GetName());
+        // if CohJ from SL with regular R_A = 6.624 fm
+        if(iRecShape == 0 || iRecShape == 2 || iRecShape == 3)
+        {
+            // 1) kCohJpsiToMu
+            hCohJ = (TH1D*)list->FindObject(("h" + NamesPDFs[0]).Data());
+            if(hCohJ) Printf("Histogram %s loaded.", hCohJ->GetName());
+        }
+        // if CohJ from SL with modified RA
+        else if(iRecShape == 1 || iRecShape > 1000)
+        {
+            TString name_file = "";
+            TString name_hist = "";
+            if(!bStopWeigh){
+                name_file = "Trees/" + str_subfolder + "PtFit/MCTemplates_modRA_CohJ.root";
+                name_hist = Form("hCohJ_modRA_%.2f", fR_A);
+            } else {
+                name_file = "Trees/" + str_subfolder + "PtFit/MCTemplates_modRA_CohJ_stopWeigh.root";
+                name_hist = Form("hCohJ_modRA_%.2f_stopWeigh", fR_A);
+            }            
+
+            TFile *f_modRA = TFile::Open(name_file.Data(),"read");
+            if(f_modRA) Printf("Input file %s loaded.", f_modRA->GetName()); 
+
+            TList *l_modRA = (TList*) f_modRA->Get("HistList");
+            if(l_modRA) Printf("List %s loaded.", l_modRA->GetName()); 
+            // 1) kCohJpsiToMu
+            hCohJ = (TH1D*)l_modRA->FindObject(name_hist.Data());
+            if(hCohJ) Printf("Histogram %s loaded.", hCohJ->GetName());
+
+            f_modRA->Close();
+        }
+        // 2) kIncohJpsiToMu
+        hIncJ = (TH1D*)list->FindObject(("h" + NamesPDFs[1]).Data());
+        if(hIncJ) Printf("Histogram %s loaded.", hIncJ->GetName());
+        // 3) kCohPsi2sToMuPi
+        hCohP = (TH1D*)list->FindObject(("h" + NamesPDFs[2]).Data());
+        if(hCohP) Printf("Histogram %s loaded.", hCohP->GetName());
+        // 4) kincohPsi2sToMuPi
+        hIncP = (TH1D*)list->FindObject(("h" + NamesPDFs[3]).Data());
+        if(hIncP) Printf("Histogram %s loaded.", hIncP->GetName());
     } 
-    // if CohJ from SL with modified RA
-    else if(iShapeCohJ == 1 || iShapeCohJ > 1000)
+    // if all CohJ hIncJ, hCohP and hIncP taken with R_A = 7.350 fm
+    else if(iRecShape == 4)
     {
-        Double_t R_A = 0;
-        if(iShapeCohJ == 1) R_A = 7.53;
-        if(iShapeCohJ > 1000) R_A = 6.6 + (Double_t)(iShapeCohJ-1001) * 0.1;
+        if(!isPass3)
+        {
+            Printf("This option is not supported. Terminating..."); 
+            return;
+        }
 
         TString name_file = "";
-        TString name_hist = "";
-        if(!bStopWeigh){
-            name_file = "Trees/" + str_subfolder + "PtFit/MCTemplates_modRA_CohJ.root";
-            name_hist = Form("hCohJ_modRA_%.2f", R_A);
-        } else {
-            name_file = "Trees/" + str_subfolder + "PtFit/MCTemplates_modRA_CohJ_stopWeigh.root";
-            name_hist = Form("hCohJ_modRA_%.2f_stopWeigh", R_A);
-        }            
+        if(!bStopWeigh) name_file = "Trees/" + str_subfolder + "PtFit/MCTemplates_modRA_all.root";
+        else            name_file = "Trees/" + str_subfolder + "PtFit/MCTemplates_modRA_all_stopWeigh.root";
 
         TFile *f_modRA = TFile::Open(name_file.Data(),"read");
         if(f_modRA) Printf("Input file %s loaded.", f_modRA->GetName()); 
@@ -126,48 +176,52 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD, Bool_t bStopWeigh)
         TList *l_modRA = (TList*) f_modRA->Get("HistList");
         if(l_modRA) Printf("List %s loaded.", l_modRA->GetName()); 
 
-        hCohJ = (TH1D*)l_modRA->FindObject(name_hist.Data());
+        l_modRA->ls();
+
+        TString hNames_modRA[4] = {"hCohJ_modRA_7.350",
+                                   "hIncJ_modRA_7.350",
+                                   "hCohP_modRA_7.350",
+                                   "hIncP_modRA_7.350"};
+        if(bStopWeigh) for(Int_t i = 0; i < 4; i++) hNames_modRA[i] += "_stopWeigh";
+
+        // 1) kCohJpsiToMu
+        hCohJ = (TH1D*)l_modRA->FindObject(hNames_modRA[0].Data());
         if(hCohJ) Printf("Histogram %s loaded.", hCohJ->GetName());
+        // 2) kIncohJpsiToMu
+        hIncJ = (TH1D*)l_modRA->FindObject(hNames_modRA[1].Data());
+        if(hIncJ) Printf("Histogram %s loaded.", hIncJ->GetName());
+        // 3) kCohPsi2sToMuPi
+        hCohP = (TH1D*)l_modRA->FindObject(hNames_modRA[2].Data());
+        if(hCohP) Printf("Histogram %s loaded.", hCohP->GetName());
+        // 4) kincohPsi2sToMuPi
+        hIncP = (TH1D*)l_modRA->FindObject(hNames_modRA[3].Data());
+        if(hIncP) Printf("Histogram %s loaded.", hIncP->GetName());
 
         f_modRA->Close();
     } 
-    //###################################################################################
-
-    // 2) kIncohJpsiToMu
-    TH1D *hIncJ = (TH1D*)list->FindObject(NamesPDFs[1].Data());
-    if(hIncJ) Printf("Histogram %s loaded.", hIncJ->GetName());
-
-    // 3) kCohPsi2sToMuPi
-    TH1D *hCohP = (TH1D*)list->FindObject(NamesPDFs[2].Data());
-    if(hCohP) Printf("Histogram %s loaded.", hCohP->GetName());
-
-    // 4) kincohPsi2sToMuPi
-    TH1D *hIncP = (TH1D*)list->FindObject(NamesPDFs[3].Data());
-    if(hIncP) Printf("Histogram %s loaded.", hIncP->GetName());
-
-    // 6) Dissociative
-    TH1D *hDiss = (TH1D*)list->FindObject(NamesPDFs[5].Data());
+    // 5) Dissociative
+    TH1D *hDiss = (TH1D*)list->FindObject(("h" + NamesPDFs[5]).Data());
     if(hDiss) Printf("Histogram %s loaded.", hDiss->GetName());
 
+    //###################################################################################
+    // Create PDFs
     // Definition of roofit variables
     RooRealVar fPt("fPt", "fPt", fPtCutLow_PtFit, fPtCutUpp_PtFit);
     RooArgSet fSetOfVariables(fPt);
 
-    // Create PDFs
-    //###################################################################################
     // 1) kCohJpsiToMu
-    // iShapeCohJ == 0, 1, >1000
+    // iRecShape == 0, 1, 4, >1000
     RooDataHist DHisCohJ("DHisCohJ","DHisCohJ",fPt,hCohJ);
     RooHistPdf  hPDFCohJ("hPDFCohJ","hPDFCohJ",fSetOfVariables,DHisCohJ,0);
 
-    // iShapeCohJ == 2 => fit using the formula pT * exp(-b * pT^2)
+    // iRecShape == 2 => fit using the formula pT * exp(-b * pT^2)
     RooRealVar par_b("par_b","b",100.,1.,500.);
     RooGenericPdf *gPDFCohJ = new RooGenericPdf("gPDFCohJ","gPDFCohJ","abs(fPt)*exp(-par_b*pow(fPt,2))",RooArgSet(fPt,par_b));
     // use of abs(.) => so that the PDF is never negative (without abs, we get a WARNING)
     // other option would be to define it through a C++ function Gaussian(), inside of which we put
     // if (pT <= 0.) return 0.;
     
-    // iShapeCohJ == 3 => fit using the STARlight form factor and R_A left free
+    // iRecShape == 3 => fit using the STARlight form factor and R_A left free
     // https://root.cern.ch/download/doc/RooFit_Users_Manual_2.91-33.pdf
     // https://root-forum.cern.ch/t/bind-tf1-into-roofit-pdf-using-bindpdf/26623
     // https://root-forum.cern.ch/t/defining-a-roogenericpdf-from-a-rooaddition-or-any-rooabsreal/20483 
@@ -187,7 +241,6 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD, Bool_t bStopWeigh)
     RooRealVar coef("coef","coef",1.,1.,1.);
     coef.setConstant(kTRUE);
     RooRealSumPdf *sumPdfCohJ = new RooRealSumPdf("sumPdfCohJ","sumPdfCohJ",RooArgList(*absRealCohJ,*absRealZero),RooArgList(coef));
-    //###################################################################################
 
     // 2) kIncohJpsiToMu
     RooDataHist DHisIncJ("DHisIncJ","DHisIncJ",fPt,hIncJ);
@@ -201,12 +254,13 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD, Bool_t bStopWeigh)
     RooDataHist DHisIncP("DHisIncP","DHisIncP",fPt,hIncP);
     RooHistPdf  hPDFIncP("hPDFIncP","hPDFIncP",fSetOfVariables,DHisIncP,0);
 
-    // 6) Dissociative
+    // 5) Dissociative
     RooDataHist DHisDiss("DHisDiss","DHisDiss",fPt,hDiss);
     RooHistPdf  hPDFDiss("hPDFDiss","hPDFDiss",fSetOfVariables,DHisDiss,0);
 
     // Close the file with MC templates (PDFs)
     file->Close();
+    //###################################################################################
 
     // 7) Get the binned dataset
     file = TFile::Open(("Trees/" + str_subfolder + "PtFit/SignalWithBkgSubtracted.root").Data(), "read");
@@ -274,19 +328,19 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD, Bool_t bStopWeigh)
     // 8.2) The model:
     RooAddPdf *Mod = NULL;
     // if CohJ from SL => use hPDFCohJ
-    if(iShapeCohJ == 0 || iShapeCohJ == 1 || iShapeCohJ > 1000){
+    if(iRecShape == 0 || iRecShape == 1 || iRecShape == 4 || iRecShape > 1000){
         Mod = new RooAddPdf("Mod","Sum of all PDFs",
             RooArgList(hPDFCohJ, hPDFIncJ, hPDFCohP, hPDFIncP, hPDFDiss),
             RooArgList(NCohJ, NIncJ, NCohP, NIncP, NDiss)
         );
     // if CohJ as a gaussian => use gPDFCohJ
-    } else if(iShapeCohJ == 2){
+    } else if(iRecShape == 2){
         Mod = new RooAddPdf("Mod","Sum of all PDFs",
             RooArgList(*gPDFCohJ, hPDFIncJ, hPDFCohP, hPDFIncP, hPDFDiss),
             RooArgList(NCohJ, NIncJ, NCohP, NIncP, NDiss)
         );    
     // if CohJ as the SL formfactor => use sumPdfCohJ
-    } else if(iShapeCohJ == 3){
+    } else if(iRecShape == 3){
         Mod = new RooAddPdf("Mod","Sum of all PDFs",
             RooArgList(*sumPdfCohJ, hPDFIncJ, hPDFCohP, hPDFIncP, hPDFDiss),
             RooArgList(NCohJ, NIncJ, NCohP, NIncP, NDiss)
@@ -300,8 +354,14 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD, Bool_t bStopWeigh)
     // 10) Output to text file
     TString name;
     // if not the study of an optimal value of R_A
-    if(iShapeCohJ < 1000) name = "Results/" + str_subfolder + Form("PtFit_NoBkg/CohJ%i", iShapeCohJ);
-    else {
+    if(iRecShape == 0 || iRecShape == 1 || iRecShape == 2 || iRecShape == 3) name = "Results/" + str_subfolder + Form("PtFit_NoBkg/CohJ%i", iRecShape);
+    else if(iRecShape == 4)
+    {
+        if(bStopWeigh) name = "Results/" + str_subfolder + Form("PtFit_NoBkg/RecSh%i_stopWeigh", iRecShape);
+        else           name = "Results/" + str_subfolder + Form("PtFit_NoBkg/RecSh%i", iRecShape);
+    }
+    else 
+    {
         if(bStopWeigh){
             gSystem->Exec("mkdir -p Results/" + str_subfolder + "PtFit_NoBkg/OptimalRA/StopWeighing/");
             name = "Results/" + str_subfolder + Form("PtFit_NoBkg/OptimalRA/StopWeighing/modRA_%.2f", fR_A);
@@ -314,9 +374,9 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD, Bool_t bStopWeigh)
     // Integrals of the PDFs in the whole pT range 
     fPt.setRange("fPt_all",fPtCutLow_PtFit,fPtCutUpp_PtFit);
     RooAbsReal *fN_CohJ_all = NULL;
-    if(iShapeCohJ == 0 || iShapeCohJ == 1 || iShapeCohJ > 1000) fN_CohJ_all = hPDFCohJ.createIntegral(fPt,NormSet(fPt),Range("fPt_all"));
-    else if(iShapeCohJ == 2) fN_CohJ_all = gPDFCohJ->createIntegral(fPt,NormSet(fPt),Range("fPt_all"));
-    else if(iShapeCohJ == 3) fN_CohJ_all = sumPdfCohJ->createIntegral(fPt,NormSet(fPt),Range("fPt_all"));
+    if(iRecShape == 0 || iRecShape == 1 || iRecShape == 4 || iRecShape > 1000) fN_CohJ_all = hPDFCohJ.createIntegral(fPt,NormSet(fPt),Range("fPt_all"));
+    else if(iRecShape == 2) fN_CohJ_all = gPDFCohJ->createIntegral(fPt,NormSet(fPt),Range("fPt_all"));
+    else if(iRecShape == 3) fN_CohJ_all = sumPdfCohJ->createIntegral(fPt,NormSet(fPt),Range("fPt_all"));
     RooAbsReal *fN_IncJ_all = hPDFIncJ.createIntegral(fPt,NormSet(fPt),Range("fPt_all"));
     RooAbsReal *fN_Diss_all = hPDFDiss.createIntegral(fPt,NormSet(fPt),Range("fPt_all"));  
     RooAbsReal *fN_CohP_all = hPDFCohP.createIntegral(fPt,NormSet(fPt),Range("fPt_all")); 
@@ -324,9 +384,9 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD, Bool_t bStopWeigh)
     // Integrals of the PDFs in the incoherent-enriched sample (IES, pT > 0.2 GeV/c)
     fPt.setRange("fPt_inc",0.2,2.0);
     RooAbsReal *fN_CohJ_inc = NULL;
-    if(iShapeCohJ == 0 || iShapeCohJ == 1 || iShapeCohJ > 1000) fN_CohJ_inc = hPDFCohJ.createIntegral(fPt,NormSet(fPt),Range("fPt_inc"));
-    else if(iShapeCohJ == 2) fN_CohJ_inc = gPDFCohJ->createIntegral(fPt,NormSet(fPt),Range("fPt_inc"));
-    else if(iShapeCohJ == 3) fN_CohJ_inc = sumPdfCohJ->createIntegral(fPt,NormSet(fPt),Range("fPt_inc"));
+    if(iRecShape == 0 || iRecShape == 1 || iRecShape == 4 || iRecShape > 1000) fN_CohJ_inc = hPDFCohJ.createIntegral(fPt,NormSet(fPt),Range("fPt_inc"));
+    else if(iRecShape == 2) fN_CohJ_inc = gPDFCohJ->createIntegral(fPt,NormSet(fPt),Range("fPt_inc"));
+    else if(iRecShape == 3) fN_CohJ_inc = sumPdfCohJ->createIntegral(fPt,NormSet(fPt),Range("fPt_inc"));
     RooAbsReal *fN_IncJ_inc = hPDFIncJ.createIntegral(fPt,NormSet(fPt),Range("fPt_inc"));
     RooAbsReal *fN_Diss_inc = hPDFDiss.createIntegral(fPt,NormSet(fPt),Range("fPt_inc"));  
     RooAbsReal *fN_CohP_inc = hPDFCohP.createIntegral(fPt,NormSet(fPt),Range("fPt_inc")); 
@@ -334,9 +394,9 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD, Bool_t bStopWeigh)
     // Integrals of the PDFs with 0.2 < pT < 1.0 GeV/c (allbins)
     fPt.setRange("fPt_to1",0.2,1.0);
     RooAbsReal *fN_CohJ_to1 = NULL;
-    if(iShapeCohJ == 0 || iShapeCohJ == 1 || iShapeCohJ > 1000) fN_CohJ_to1 = hPDFCohJ.createIntegral(fPt,NormSet(fPt),Range("fPt_to1"));
-    else if(iShapeCohJ == 2) fN_CohJ_to1 = gPDFCohJ->createIntegral(fPt,NormSet(fPt),Range("fPt_to1"));
-    else if(iShapeCohJ == 3) fN_CohJ_to1 = sumPdfCohJ->createIntegral(fPt,NormSet(fPt),Range("fPt_to1"));
+    if(iRecShape == 0 || iRecShape == 1 || iRecShape == 4 || iRecShape > 1000) fN_CohJ_to1 = hPDFCohJ.createIntegral(fPt,NormSet(fPt),Range("fPt_to1"));
+    else if(iRecShape == 2) fN_CohJ_to1 = gPDFCohJ->createIntegral(fPt,NormSet(fPt),Range("fPt_to1"));
+    else if(iRecShape == 3) fN_CohJ_to1 = sumPdfCohJ->createIntegral(fPt,NormSet(fPt),Range("fPt_to1"));
     RooAbsReal *fN_IncJ_to1 = hPDFIncJ.createIntegral(fPt,NormSet(fPt),Range("fPt_to1"));
     RooAbsReal *fN_Diss_to1 = hPDFDiss.createIntegral(fPt,NormSet(fPt),Range("fPt_to1"));  
     RooAbsReal *fN_CohP_to1 = hPDFCohP.createIntegral(fPt,NormSet(fPt),Range("fPt_to1")); 
@@ -437,9 +497,9 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD, Bool_t bStopWeigh)
     for(Int_t i = 0; i < nPtBins; i++){
         fPt.setRange(Form("fPt_bin%i",i+1), ptBoundaries[i], ptBoundaries[i+1]);
         Printf("Now calculating for bin %i, (%.3f, %.3f) GeV", i+1, ptBoundaries[i], ptBoundaries[i+1]);
-        if(iShapeCohJ == 0 || iShapeCohJ == 1 || iShapeCohJ > 1000) fN_CohJ_bins[i] = hPDFCohJ.createIntegral(fPt,NormSet(fPt),Range(Form("fPt_bin%i",i+1)));
-        else if(iShapeCohJ == 2) fN_CohJ_bins[i] = gPDFCohJ->createIntegral(fPt,NormSet(fPt),Range(Form("fPt_bin%i",i+1)));
-        else if(iShapeCohJ == 3) fN_CohJ_bins[i] = sumPdfCohJ->createIntegral(fPt,NormSet(fPt),Range(Form("fPt_bin%i",i+1)));
+        if(iRecShape == 0 || iRecShape == 1 || iRecShape == 4 || iRecShape > 1000) fN_CohJ_bins[i] = hPDFCohJ.createIntegral(fPt,NormSet(fPt),Range(Form("fPt_bin%i",i+1)));
+        else if(iRecShape == 2) fN_CohJ_bins[i] = gPDFCohJ->createIntegral(fPt,NormSet(fPt),Range(Form("fPt_bin%i",i+1)));
+        else if(iRecShape == 3) fN_CohJ_bins[i] = sumPdfCohJ->createIntegral(fPt,NormSet(fPt),Range(Form("fPt_bin%i",i+1)));
         fN_IncJ_bins[i] = hPDFIncJ.createIntegral(fPt,NormSet(fPt),Range(Form("fPt_bin%i",i+1)));
         fN_Diss_bins[i] = hPDFDiss.createIntegral(fPt,NormSet(fPt),Range(Form("fPt_bin%i",i+1)));
         fN_CohP_bins[i] = hPDFCohP.createIntegral(fPt,NormSet(fPt),Range(Form("fPt_bin%i",i+1)));
@@ -635,17 +695,17 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD, Bool_t bStopWeigh)
 
     // 11.1) Draw the Correlation Matrix
     TCanvas *cCM = new TCanvas("cCM","cCM",600,500);
-    PtFit_NoBkg_DrawCorrMatrix(cCM,ResFit,iShapeCohJ);
+    PtFit_NoBkg_DrawCorrMatrix(cCM,ResFit,iRecShape);
 
     // 11.2) Draw the pt fit
     // Without log scale
     RooPlot* PtFrame = fPt.frame(Title("pT fit"));
     DHisData.plotOn(PtFrame,Name("DHisData"),MarkerStyle(20), MarkerSize(1.),Binning(fPtBins_PtFit));
-    if(iShapeCohJ == 0 || iShapeCohJ == 1 || iShapeCohJ > 1000){
+    if(iRecShape == 0 || iRecShape == 1 || iRecShape == 4 || iRecShape > 1000){
         Mod->plotOn(PtFrame,Name("hPDFCohJ"),Components(hPDFCohJ),     LineColor(222),LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
-    } else if(iShapeCohJ == 2){
+    } else if(iRecShape == 2){
         Mod->plotOn(PtFrame,Name("gPDFCohJ"),Components(*gPDFCohJ),    LineColor(222),LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
-    } else if(iShapeCohJ == 3){
+    } else if(iRecShape == 3){
         Mod->plotOn(PtFrame,Name("sumPdfCohJ"),Components(*sumPdfCohJ),LineColor(222),LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
     }
     Mod->plotOn(PtFrame,Name("hPDFIncJ"),Components(hPDFIncJ),LineColor(kRed),LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
@@ -678,11 +738,11 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD, Bool_t bStopWeigh)
     // With log scale
     RooPlot* PtFrameLog = fPt.frame(Title("pT fit log scale"));
     DHisData.plotOn(PtFrameLog,Name("DHisData"),MarkerStyle(20), MarkerSize(1.),Binning(fPtBins_PtFit));
-    if(iShapeCohJ == 0 || iShapeCohJ == 1 || iShapeCohJ > 1000){
+    if(iRecShape == 0 || iRecShape == 1 || iRecShape == 4 || iRecShape > 1000){
         Mod->plotOn(PtFrameLog,Name("hPDFCohJ"),Components(hPDFCohJ),     LineColor(222),LineStyle(1),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
-    } else if(iShapeCohJ == 2){
+    } else if(iRecShape == 2){
         Mod->plotOn(PtFrameLog,Name("gPDFCohJ"),Components(*gPDFCohJ),    LineColor(222),LineStyle(1),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
-    } else if(iShapeCohJ == 3){
+    } else if(iRecShape == 3){
         Mod->plotOn(PtFrameLog,Name("sumPdfCohJ"),Components(*sumPdfCohJ),LineColor(222),LineStyle(1),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
     }
     Mod->plotOn(PtFrameLog,Name("hPDFIncJ"),Components(hPDFIncJ),LineColor(kRed),LineStyle(1),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
@@ -735,9 +795,9 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD, Bool_t bStopWeigh)
     l2->AddEntry("DHisData","Data", "EP");
     l2->AddEntry("Mod","sum","L");
     l2->AddEntry((TObject*)0,Form("#chi^{2}/NDF = %.3f = %.3f/%i",chi2,chi2*ResFit->floatParsFinal().getSize(), ResFit->floatParsFinal().getSize()),"");
-    if(iShapeCohJ == 0 || iShapeCohJ == 1 || iShapeCohJ > 1000) l2->AddEntry("hPDFCohJ","coherent J/#psi", "L");
-    else if(iShapeCohJ == 2) l2->AddEntry("gPDFCohJ","coherent J/#psi", "L");
-    else if(iShapeCohJ == 3) l2->AddEntry("sumPdfCohJ","coherent J/#psi", "L");
+    if(iRecShape == 0 || iRecShape == 1 || iRecShape == 4 || iRecShape > 1000) l2->AddEntry("hPDFCohJ","coherent J/#psi", "L");
+    else if(iRecShape == 2) l2->AddEntry("gPDFCohJ","coherent J/#psi", "L");
+    else if(iRecShape == 3) l2->AddEntry("sumPdfCohJ","coherent J/#psi", "L");
     l2->AddEntry("hPDFIncJ","incoherent J/#psi", "L");
     l2->AddEntry("hPDFDiss","inc. J/#psi with nucl. diss.", "L");
     l2->AddEntry("hPDFCohP","J/#psi from coh. #psi(2#it{S}) decay", "L");
@@ -763,7 +823,7 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD, Bool_t bStopWeigh)
     cPtLog->Print((name + "_log.pdf").Data());
     cPtLog->Print((name + "_log.png").Data());
     // If we study the optimal value of R_A, print chi2 vs. R_A to a text file
-    if(iShapeCohJ > 1000){
+    if(iRecShape > 1000){
         outfile.open((name + "_chi2.txt").Data());
         outfile << std::fixed << std::setprecision(3);
         outfile << fR_A << "\t" << chi2;
@@ -777,7 +837,9 @@ void PtFit_NoBkg_DoFit(Int_t iShapeCohJ, Int_t iNormFD, Bool_t bStopWeigh)
     return;
 }
 
-void PtFit_NoBkg_DrawCorrMatrix(TCanvas *cCM, RooFitResult* ResFit, Int_t iShapeCohJ)
+// #############################################################################################
+
+void PtFit_NoBkg_DrawCorrMatrix(TCanvas *cCM, RooFitResult* ResFit, Int_t iRecShape)
 {
     // Set margins
     cCM->SetTopMargin(0.03);
@@ -788,7 +850,7 @@ void PtFit_NoBkg_DrawCorrMatrix(TCanvas *cCM, RooFitResult* ResFit, Int_t iShape
     TH2* hCorr = ResFit->correlationHist();
 
     // Set X and Y axes
-    if(iShapeCohJ == 0 || iShapeCohJ == 1 || iShapeCohJ > 1000){
+    if(iRecShape == 0 || iRecShape == 1 || iRecShape == 4 || iRecShape > 1000){
         // CohJ from STARlight
         // x axis
         hCorr->GetXaxis()->SetBinLabel(1,"#it{N}_{coh}");
@@ -798,7 +860,7 @@ void PtFit_NoBkg_DrawCorrMatrix(TCanvas *cCM, RooFitResult* ResFit, Int_t iShape
         hCorr->GetYaxis()->SetBinLabel(1,"#it{N}_{inc}");
         hCorr->GetYaxis()->SetBinLabel(2,"#it{N}_{diss}");
         hCorr->GetYaxis()->SetBinLabel(3,"#it{N}_{coh}");
-    } else if(iShapeCohJ == 2){
+    } else if(iRecShape == 2){
         // Fit with a Gaussian
         // x axis
         hCorr->GetXaxis()->SetBinLabel(1,"#it{N}_{coh}");
@@ -810,7 +872,7 @@ void PtFit_NoBkg_DrawCorrMatrix(TCanvas *cCM, RooFitResult* ResFit, Int_t iShape
         hCorr->GetYaxis()->SetBinLabel(2,"#it{N}_{inc}");
         hCorr->GetYaxis()->SetBinLabel(3,"#it{N}_{diss}");
         hCorr->GetYaxis()->SetBinLabel(4,"#it{N}_{coh}");        
-    } else if(iShapeCohJ == 3){
+    } else if(iRecShape == 3){
         // Fit with the STARlight formfactor
         // x axis
         hCorr->GetXaxis()->SetBinLabel(1,"#it{N}_{coh}");
@@ -833,3 +895,17 @@ void PtFit_NoBkg_DrawCorrMatrix(TCanvas *cCM, RooFitResult* ResFit, Int_t iShape
 
     return;
 }
+
+// #############################################################################################
+
+void PtFit_SetCanvas(TCanvas *c, Bool_t isLogScale)
+{
+    if(isLogScale == kTRUE) c->SetLogy();
+    c->SetTopMargin(0.05);
+    c->SetBottomMargin(0.12);
+    c->SetRightMargin(0.02);
+
+    return;
+}
+
+// #############################################################################################

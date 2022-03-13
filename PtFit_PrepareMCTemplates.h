@@ -11,6 +11,7 @@ void PtFit_PreparePDFs();
 void PtFit_PreparePDFs_modRA_CohJ(Bool_t bStopWeigh);
 void PtFit_PreparePDFs_modRA_all(Bool_t bStopWeigh);
 void PtFit_SetCanvas(TCanvas *c, Bool_t isLogScale);
+TTree* PtFit_GetTreeMCRecPsi2s(Int_t iMC);
 
 void PtFit_PrepareMCTemplates_main()
 {
@@ -36,6 +37,8 @@ void PtFit_PrepareMCTemplates_main()
 
     return;
 }
+
+// #############################################################################################
 
 void PtFit_PreparePDFs()
 {
@@ -90,6 +93,8 @@ void PtFit_PreparePDFs()
     }
 }
 
+// #############################################################################################
+
 void PtFit_FillHistogramsMC(Int_t iMC, TH1D *hist)
 {
     // Load the data
@@ -143,6 +148,8 @@ void PtFit_FillHistogramsMC(Int_t iMC, TH1D *hist)
 
     return;
 }
+
+// #############################################################################################
 
 void PtFit_PreparePDFs_modRA_CohJ(Bool_t bStopWeigh)
 {
@@ -247,6 +254,7 @@ void PtFit_PreparePDFs_modRA_CohJ(Bool_t bStopWeigh)
             // Correct the shape of reconstructed events by the ratios
             hCohJ_modRA[i]->Multiply(hRatios[i]);
             // Add the histogram to the list
+            Printf("Adding %s to the list.", hCohJ_modRA[i]->GetName());
             l->Add(hCohJ_modRA[i]);
         }
         // Save results to the output file
@@ -259,6 +267,8 @@ void PtFit_PreparePDFs_modRA_CohJ(Bool_t bStopWeigh)
         return;
     }   
 }
+
+// #############################################################################################
 
 void PtFit_PreparePDFs_modRA_all(Bool_t bStopWeigh)
 {
@@ -354,8 +364,6 @@ void PtFit_PreparePDFs_modRA_all(Bool_t bStopWeigh)
 
                 // Correct the shape of reconstructed events by the ratios
                 h_modRA[iMC]->Multiply(hRatios[iMC]);
-                // Add the histogram to the list
-                l->Add(h_modRA[iMC]);
             }
             // CohP and IncP (iMC == 2,3)
             if(iMC == 2 || iMC == 3)
@@ -364,12 +372,62 @@ void PtFit_PreparePDFs_modRA_all(Bool_t bStopWeigh)
                     Printf("This option is not supported. Skipping..."); 
                     continue;
                 }
+                // detine the output histogram with rec. events
+                h_modRA[iMC] = new TH1D(str_modRA[iMC].Data(),str_modRA[iMC].Data(),nPtBins_PtFit,ptBoundaries_PtFit);
+                // define the paths to the file and tRec
+                TString str_f_in = "Trees/AnalysisDataMC_pass3/AnalysisResults_MC_";
+                // choose MC dataset
+                if(iMC == 2) str_f_in += "kCohPsi2sToMuPi_2.root";
+                if(iMC == 3) str_f_in += "kIncohPsi2sToMuPi_2.root";
+                // open the input file
+                TFile *fRec = TFile::Open(str_f_in.Data(), "read");
+                if(fRec) Printf("File %s loaded.", fRec->GetName());
+                // get fOutputList
+                TList *l = (TList*) fRec->Get("AnalysisOutput/fOutputListcharged");
+                if(l) Printf("List %s loaded.", l->GetName()); 
+                // get the MCRec tree
+                TTree *tRec = (TTree*)l->FindObject("fTreeJpsi");
+                if(tRec) Printf("Tree %s loaded.", tRec->GetName());
+                // connect tree varibles
+                ConnectTreeVariablesMCRec(tRec, kTRUE);
 
-                // ... finish ...
+                TAxis *xAxis = hRatios[iMC]->GetXaxis();
+                // run over reconstructed feed-down events
+                Int_t iBinP = 0;
+                Int_t iBinJ = 0;
+                Double_t fJpsi = 0;
+                // counters
+                Int_t nEntriesAnalysed = 0;
+                for(Int_t iEntry = 0; iEntry < tRec->GetEntries(); iEntry++)
+                {
+                    tRec->GetEntry(iEntry);
+                    // m between 3.0 and 3.2 GeV/c^2, pT cut: all
+                    if(EventPassedMCRec(1, 2))
+                    {
+                        // find index of the bin to which the current fPtGen_Psi2s corresponds
+                        iBinP = xAxis->FindBin(fPtGen_Psi2s);
+                        // find index of the bin to which the current fPt corresponds
+                        iBinJ = xAxis->FindBin(fPt);
+                        // scale the J/psi entry by the ratio with the index iBinPsi2s
+                        fJpsi = hRatios[iMC]->GetBinContent(iBinP);
+                        // add the entry to h_modRA[iMC]
+                        h_modRA[iMC]->SetBinContent(iBinJ,h_modRA[iMC]->GetBinContent(iBinJ)+fJpsi);
+                        // fill the histogram hRecOld
+                        h_modRA[iMC]->Fill(fPt);
+                    }
+                    if((iEntry+1) % 100000 == 0)
+                    {
+                        nEntriesAnalysed += 100000;
+                        Printf("%i entries analysed.", nEntriesAnalysed);
+                    }
+                } 
             }
+            // Add the histogram to the list
+            Printf("Adding %s to the list.", h_modRA[iMC]->GetName());
+            l->Add(h_modRA[iMC]);
 
             // Print the results to the text file
-            TString name_out = "Results/" + str_subfolder + Form("PtFit_NoBkg/modRA_all_ratios/%s_RA_7.350", str_modRA[iMC].Data());
+            TString name_out = "Results/" + str_subfolder + Form("PtFit_NoBkg/modRA_all_ratios/%s_RA_7.350", NamesPDFs[iMC].Data());
             if(!bStopWeigh) name_out += ".txt";
             else            name_out += "_stopWeigh.txt"; 
             ofstream outfile(name_out.Data());
@@ -385,6 +443,7 @@ void PtFit_PreparePDFs_modRA_all(Bool_t bStopWeigh)
         // Create the output file
         TFile *f = new TFile(name.Data(),"RECREATE");
         l->Write("HistList", TObject::kSingleKey);
+        l->ls();
         f->ls();
         f->Close();
 
@@ -392,12 +451,4 @@ void PtFit_PreparePDFs_modRA_all(Bool_t bStopWeigh)
     }
 }
 
-void PtFit_SetCanvas(TCanvas *c, Bool_t isLogScale)
-{
-    if(isLogScale == kTRUE) c->SetLogy();
-    c->SetTopMargin(0.05);
-    c->SetBottomMargin(0.12);
-    c->SetRightMargin(0.02);
-
-    return;
-}
+// #############################################################################################

@@ -316,7 +316,7 @@ void CalcAndPlotRatios(const char* subfolder_out, Double_t R_A)
         Int_t iBinP = 0;
         Int_t iBinJ = 0;
         Double_t fJpsi = 0;
-        Printf("iBinP\tPtGenP\tiBinJ\tPtGenJ\tfJpsi\toldVal\tnewVal");
+        //Printf("iBinP\tPtGenP\tiBinJ\tPtGenJ\tfJpsi\toldVal\tnewVal");
         for(Int_t iEntry = 0; iEntry < tRec->GetEntries(); iEntry++)
         {
             tRec->GetEntry(iEntry);
@@ -441,6 +441,7 @@ TTree* GetTreeRec()
     if(!isPass3) str_f_in += "AnalysisDataMC_pass1/";
     else         str_f_in += "AnalysisDataMC_pass3/";
     // choose MC dataset
+    Bool_t isPsi2sDataset = kFALSE;
     // if CohJ or IncJ
     if(strncmp(strMC.Data(),"CohJ",4) == 0 || strncmp(strMC.Data(),"IncJ",4) == 0)
     {
@@ -457,6 +458,7 @@ TTree* GetTreeRec()
     // if CohP or IncP
     if(strncmp(strMC.Data(),"CohP",4) == 0 || strncmp(strMC.Data(),"IncP",4) == 0) 
     {
+        isPsi2sDataset = kTRUE;
         str_f_in += "AnalysisResults_MC_" + strMCFiles + "_2.root";
         if(!isPass3)
         {
@@ -475,7 +477,7 @@ TTree* GetTreeRec()
     }
 
     // connect tree varibles
-    ConnectTreeVariablesMCRec(tRec);
+    ConnectTreeVariablesMCRec(tRec, isPsi2sDataset);
 
     Printf("Done.");
     Printf("*****");

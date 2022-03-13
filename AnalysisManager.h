@@ -21,7 +21,6 @@ vector<Int_t> runList_18r;
 Int_t nRuns_18q; 
 Int_t nRuns_18r; 
 Bool_t isPass3;
-Bool_t isPsi2sDataset;
 Bool_t isZNcut;
 Bool_t isPIDCalibrated; // if NSigmas in MC data were shifted to zeros
 // Array containing pT bin boundaries (will be created in SetPtBinning.h):
@@ -106,7 +105,7 @@ void ConnectTreeVariables(TTree *t){
     return;
 }
 
-void ConnectTreeVariablesMCRec(TTree *t){
+void ConnectTreeVariablesMCRec(TTree *t, Bool_t isPsi2sDataset = kFALSE){
     // Set branch addresses
     // Basic things:
     t->SetBranchAddress("fRunNumber", &fRunNumber);
