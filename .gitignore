@@ -15,3 +15,6 @@ Trees/
 # Ignore the STARlight folder
 STARlight_src/
 
+# Ignore the Documents folder
+Documents/
+

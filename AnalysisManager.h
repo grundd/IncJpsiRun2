@@ -50,6 +50,25 @@ Int_t fVertexContrib;
 // only for pass3 & psi(2s) datasets:
 Double_t fPtGen_Psi2s;
 
+void SetReducedRunList(Bool_t pass3){
+
+    if(!pass3){
+        nRuns_18q = sizeof(DPG_LHC18q_pass1_reduced) / sizeof(DPG_LHC18q_pass1_reduced[0]); // 123 runs
+        for(Int_t i = 0; i < nRuns_18q; i++) runList_18q.push_back(DPG_LHC18q_pass1_reduced[i]);
+        nRuns_18r = sizeof(DPG_LHC18r_pass1_reduced) / sizeof(DPG_LHC18r_pass1_reduced[0]); // 96 runs
+        for(Int_t i = 0; i < nRuns_18r; i++) runList_18r.push_back(DPG_LHC18r_pass1_reduced[i]);
+    } else {
+        nRuns_18q = sizeof(DPG_LHC18q_pass3_reduced) / sizeof(DPG_LHC18q_pass3_reduced[0]); // 122 runs
+        for(Int_t i = 0; i < nRuns_18q; i++) runList_18q.push_back(DPG_LHC18q_pass3_reduced[i]);
+        nRuns_18r = sizeof(DPG_LHC18r_pass3_reduced) / sizeof(DPG_LHC18r_pass3_reduced[0]); // 96 runs
+        for(Int_t i = 0; i < nRuns_18r; i++) runList_18r.push_back(DPG_LHC18r_pass3_reduced[i]);
+    }
+    Printf("Number of runs in LHC18q run list: %i (%i)", nRuns_18q, (Int_t)runList_18q.size());
+    Printf("Number of runs in LHC18r run list: %i (%i)", nRuns_18r, (Int_t)runList_18r.size());
+
+    return;
+}
+
 void ConnectTreeVariables(TTree *t){
     // Set branch addresses
     // Basic things:

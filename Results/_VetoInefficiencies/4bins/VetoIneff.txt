@@ -1,0 +1,9 @@
+total value:
+directly calculated: 0.2219 = 22.19%
+weighted avg over pT bins: 0.2219 = 22.19%
+in pT bins:
+pT_low	pT_upp	ineff
+0.200	0.282	0.149
+0.282	0.381	0.176
+0.381	0.571	0.230
+0.571	1.000	0.306
