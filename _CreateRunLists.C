@@ -2,7 +2,7 @@
 // David Grund, Feb 27, 2022
 // To check if the run numbers of analysed data match the official list
 
-#include "TFile.h"
+#include "TSystem.h"
 #include <fstream> // print output to txt file
 #include <vector>
 
@@ -94,7 +94,9 @@ Int_t RunList_18r_ExcludedRuns[nRuns_18r_ExcludedRuns] = {
 void CreateAndSortRunLists();
 void PrintRunList(ofstream &ofs, vector<Int_t>runList);
 
-void _CreateRunLists(){
+void _CreateRunLists()
+{
+    gSystem->Exec("mkdir -p Results/_CreateRunLists/");
 
     CreateAndSortRunLists();
 

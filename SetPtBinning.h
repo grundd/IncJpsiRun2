@@ -1,11 +1,11 @@
 // SetPtBinning.h
-// David Grund, Feb 27, 2022
+// David Grund, Mar 20, 2022
 
 Double_t PtBins_4bins[5] = { 0 };
 Double_t PtBins_5bins[6] = { 0 };
 
-void SetPtBinning_main(){
-
+void SetPtBinning()
+{
     Double_t YieldPerBin_val[5] = { 0 };
     Double_t YieldPerBin_err[5] = { 0 };    
 

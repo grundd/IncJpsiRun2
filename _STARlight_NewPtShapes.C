@@ -111,8 +111,6 @@ void InitAnalysis(Int_t iMC, Bool_t pass3)
     // iMC == 3 => IncP
 
     isPass3 = pass3;
-    if(iMC <= 1) isPsi2sDataset = kFALSE;
-    else         isPsi2sDataset = kTRUE;
     SetReducedRunList(isPass3);
     strMC = strMCArr[iMC];
     strMCFiles = strMCFilesArr[iMC];

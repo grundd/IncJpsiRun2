@@ -14,14 +14,12 @@ Int_t cut_fVertexContrib = 2;
 Double_t cut_fVertexZ = 15.;
 Double_t cut_fY = 0.8;
 Double_t cut_fEta = 0.8;
-Double_t cut_fZN_neutrons = 10.5;
 // Options that will be set by the choice of iAnalysis in InitAnalysis:
 vector<Int_t> runList_18q;
 vector<Int_t> runList_18r;
 Int_t nRuns_18q; 
 Int_t nRuns_18r; 
 Bool_t isPass3;
-Bool_t isZNcut;
 Bool_t isPIDCalibrated; // if NSigmas in MC data were shifted to zeros
 // Array containing pT bin boundaries (will be created in SetPtBinning.h):
 Double_t *ptBoundaries = NULL;
@@ -315,24 +313,6 @@ Bool_t EventPassed(Int_t iMassCut, Int_t iPtCut){
     }
     if(!bPtCut) return kFALSE;
 
-    if(isZNcut){
-        Bool_t fZNA_hit = kFALSE;
-        Bool_t fZNC_hit = kFALSE;
-        Double_t fZNA_n = fZNA_energy / 2510.;
-        Double_t fZNC_n = fZNC_energy / 2510.;
-        for(Int_t i = 0; i < 4; i++){
-            // hit in ZNA
-            if(TMath::Abs(fZNA_time[i]) < 2) fZNA_hit = kTRUE;
-            // hit in ZNC
-            if(TMath::Abs(fZNC_time[i]) < 2) fZNC_hit = kTRUE;
-        }    
-        // 14) If ZNA signal, then max 10.5 neutrons
-        if(fZNA_hit && fZNA_n > cut_fZN_neutrons) return kFALSE;
-
-        // 15) If ZNC signal, then max 10.5 neutrons
-        if(fZNC_hit && fZNC_n > cut_fZN_neutrons) return kFALSE;
-    }
-
     // Event passed all the selections =>
     return kTRUE;
 }
@@ -440,24 +420,6 @@ Bool_t EventPassedMCRec(Int_t iMassCut, Int_t iPtCut, Int_t iPtBin = -1){
             break;
     }
     if(!bPtCut) return kFALSE;
-
-    if(isZNcut){
-        Bool_t fZNA_hit = kFALSE;
-        Bool_t fZNC_hit = kFALSE;
-        Double_t fZNA_n = fZNA_energy / 2510.;
-        Double_t fZNC_n = fZNC_energy / 2510.;
-        for(Int_t i = 0; i < 4; i++){
-            // hit in ZNA
-            if(TMath::Abs(fZNA_time[i]) < 2) fZNA_hit = kTRUE;
-            // hit in ZNC
-            if(TMath::Abs(fZNC_time[i]) < 2) fZNC_hit = kTRUE;
-        }    
-        // 14) If ZNA signal, then max 10.5 neutrons
-        if(fZNA_hit && fZNA_n > cut_fZN_neutrons) return kFALSE;
-
-        // 15) If ZNC signal, then max 10.5 neutrons
-        if(fZNC_hit && fZNC_n > cut_fZN_neutrons) return kFALSE;
-    }
 
     // Event passed all the selections =>
     return kTRUE;

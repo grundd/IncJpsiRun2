@@ -1,5 +1,5 @@
 // _VetoInefficiencies.C
-// David Grund, Mar 17, 2022
+// David Grund, Mar 20, 2022
 // use pass3 data and defined pT boundaries (to be found in Results/pass3_4bins_calibPID/)
 // then calculate a weighted veto inefficiency for each neutron class and neutron bin number
 // use the values from Guillermo's presentation in Documents/VetoIncoherent.pdf
@@ -27,6 +27,8 @@ Double_t fNumberOfN[6] = {0.0, 1.5, 5.5, 10.5, 20.5, 50.5};
 TString sNumberOfN[5] = {"0-1", "2-5", "6-10", "11-20", "21-50"};
 Double_t fVetoIneff_A[5] = {0.085, 0.157, 0.265, 0.413, 0.579};
 Double_t fVetoIneff_C[5] = {0.146, 0.333, 0.425, 0.542, 0.844};
+Double_t fVetoEff_A[5] = { 0 };
+Double_t fVetoEff_C[5] = { 0 };
 
 Bool_t fZNA_hit, fZNC_hit;
 Double_t fZNA_n, fZNC_n;
@@ -63,6 +65,11 @@ Double_t fVetoIneff_direct = 0.;
 Double_t fVetoIneff_weight = 0.;
 // veto inefficiencies per pT bins
 Double_t fVetoIneff_BinsPt[5] = { 0 };
+// the total veto efficiency
+Double_t fVetoEff_direct = 0.;
+Double_t fVetoEff_weight = 0.;
+// veto efficiencies per pT bins
+Double_t fVetoEff_BinsPt[5] = { 0 };
 
 // veto inefficiency
 void VetoIneff_Calculate(Int_t nPtBins); // 4 or 5
@@ -367,6 +374,7 @@ void VetoIneff_Calculate(Int_t nPtBins)
         }
     }
     fVetoIneff_direct = (Ineff_Xn0n + Ineff_0nXn + Ineff_XnXn) / nEv_tot;
+    // ##########################################################################################################
     // print the results
     outfile.open(Form("Results/_VetoInefficiencies/%ibins/VetoIneff.txt", nPtBins));
     outfile << "total value:\n"
@@ -383,6 +391,60 @@ void VetoIneff_Calculate(Int_t nPtBins)
     }
     outfile.close();
     Printf("*** Results printed to Results/_VetoInefficiencies/%ibins/VetoIneff.txt.***", nPtBins); 
+    // ##########################################################################################################
+    // calculate veto efficiencies from Guillermo's numbers
+    // in pT bins
+    // and the total number as a weighted average over pT bins
+    for(Int_t i = 0; i < 5; i++)
+    {
+        fVetoEff_A[i] = 1 - fVetoIneff_A[i];
+        fVetoEff_C[i] = 1 - fVetoIneff_C[i];
+    }
+
+    for(Int_t iBinPt = 0; iBinPt < nPtBins; iBinPt++)
+    {
+        Double_t Eff_0n0n(0), Eff_Xn0n(0), Eff_0nXn(0), Eff_XnXn(0);
+        for(Int_t iBinN1 = 0; iBinN1 < 5; iBinN1++){
+            Eff_Xn0n += fVetoEff_A[iBinN1] * nEv_Xn0n_BinsPtN[iBinPt][iBinN1];
+            Eff_0nXn += fVetoEff_C[iBinN1] * nEv_0nXn_BinsPtN[iBinPt][iBinN1];
+            for(Int_t iBinN2 = 0; iBinN2 < 5; iBinN2++){
+                Eff_XnXn += fVetoEff_A[iBinN1] * fVetoEff_C[iBinN2] * nEv_XnXn_BinsPtN[iBinPt][iBinN1][iBinN2];
+            }
+        }
+        Eff_0n0n = 1.0 * nEv_0n0n_BinsPt[iBinPt];
+        fVetoEff_BinsPt[iBinPt] = (Eff_0n0n + Eff_Xn0n + Eff_0nXn + Eff_XnXn) / nEv_BinsPt[iBinPt];
+        fVetoEff_weight += fVetoEff_BinsPt[iBinPt] * nEv_BinsPt[iBinPt];
+    }
+    fVetoEff_weight = fVetoEff_weight / (Double_t)nEv_tot;
+    // the total number: direct calculation
+    Double_t Eff_0n0n(0), Eff_Xn0n(0), Eff_0nXn(0), Eff_XnXn(0);
+    for(Int_t iBinN1 = 0; iBinN1 < 5; iBinN1++){
+        Eff_Xn0n += fVetoEff_A[iBinN1] * nEv_Xn0n_BinsN[iBinN1];
+        Eff_0nXn += fVetoEff_C[iBinN1] * nEv_0nXn_BinsN[iBinN1];
+        for(Int_t iBinN2 = 0; iBinN2 < 5; iBinN2++){
+            Eff_XnXn += fVetoEff_A[iBinN1] * fVetoEff_C[iBinN2] * nEv_XnXn_BinsN[iBinN1][iBinN2];
+        }
+    }
+    Eff_0n0n = 1.0 * nEv_0n0n;
+    fVetoEff_direct = (Eff_0n0n + Eff_Xn0n + Eff_0nXn + Eff_XnXn) / nEv_tot;
+    // ##########################################################################################################
+    // print the results
+    outfile.open(Form("Results/_VetoInefficiencies/%ibins/VetoEff.txt", nPtBins));
+    outfile << "total value:\n"
+            << Form("directly calculated: %.4f = %.2f%%\n", fVetoEff_direct, fVetoEff_direct*100)
+            << Form("weighted avg over pT bins: %.4f = %.2f%%\n", fVetoEff_weight, fVetoEff_weight*100)
+            << "in pT bins:\n"
+            << "pT_low\tpT_upp\teff\n";
+    for(Int_t iBinPt = 0; iBinPt < nPtBins; iBinPt++)
+    {
+        outfile << std::fixed << std::setprecision(3)
+                << fPtBins[iBinPt] << "\t" 
+                << fPtBins[iBinPt+1] << "\t"
+                << fVetoEff_BinsPt[iBinPt] << "\n";
+    }
+    outfile.close();
+    Printf("*** Results printed to Results/_VetoInefficiencies/%ibins/VetoEff.txt.***", nPtBins); 
+    // ##########################################################################################################
 
     for(Int_t i = 0; i < 6; i++) delete c[i];
 
@@ -423,7 +485,6 @@ void VetoIneff_PrintNumbers()
 void VetoIneff_PrepareTree()
 {
     isPass3 = kTRUE;
-    isZNcut = kFALSE;
 
     SetReducedRunList(kTRUE);
 
@@ -499,7 +560,6 @@ void VetoIneff_PrepareTree()
 void SameSignEv_PrepareTree()
 {
     isPass3 = kTRUE;
-    isZNcut = kFALSE;
 
     SetReducedRunList(kTRUE);
 
@@ -667,7 +727,6 @@ void SameSignEv_MakePlots()
 void LowPt_PrepareTree()
 {
     isPass3 = kTRUE;
-    isZNcut = kFALSE;
 
     SetReducedRunList(kTRUE);
 
