@@ -22,7 +22,7 @@
 
 Double_t *fPtBins = NULL;
 Double_t fPtBins_4[5] = {0.200, 0.282, 0.381, 0.571, 1.000};
-//Double_t fPtBins_5[6] = {0.200, 1.000};
+Double_t fPtBins_5[6] = {0.200, 0.265, 0.336, 0.453, 0.659, 1.000};
 
 Double_t fNumberOfN[6] = {0.0, 1.5, 5.5, 10.5, 20.5, 50.5};
 TString sNumberOfN[5] = {"0-1", "2-5", "6-10", "11-20", "21-50"};
@@ -41,43 +41,6 @@ Double_t fZNA_n, fZNC_n;
 const Int_t nBins = 100;
 Double_t n_low = 0.0; // number of neutrons
 Double_t n_upp = 20.0;
-
-// total number of events
-Int_t nEv_tot(0); 
-// cross-check: total number of events per ZN channel summing over the corresponding bin types
-Int_t nEv_ch_Pt[4] = { 0 };
-Int_t nEv_ch_N[4] = { 0 };
-Int_t nEv_ch_PtN[4] = { 0 };
-// total numbers per pT bin
-Int_t nEv_BinsPt[5] = { 0 };
-// total numbers per neutron class
-Int_t nEv_0n0n(0), nEv_Xn0n(0), nEv_0nXn(0), nEv_XnXn(0);
-// numbers per neutron class and pT bin
-Int_t nEv_0n0n_BinsPt[5] = { 0 }; // 0n0n class, index = pT bin
-Int_t nEv_Xn0n_BinsPt[5] = { 0 }; // Xn0n class, index = pT bin
-Int_t nEv_0nXn_BinsPt[5] = { 0 }; // 0nXn class, index = pT bin
-Int_t nEv_XnXn_BinsPt[5] = { 0 }; // XnXn class, index = pT bin
-// numbers per neutron class and neutron bin
-Int_t nEv_Xn0n_BinsN[5] = { 0 };    // Xn0n class, index = neutron bin
-Int_t nEv_0nXn_BinsN[5] = { 0 };    // 0nXn class, index = neutron bin
-Int_t nEv_XnXn_BinsN[5][5] = { 0 }; // XnXn class, first index = neutron bin (A), second index = neutron bin (C)
-// numbers per neutron class, pT bin and neutron bin
-Int_t nEv_Xn0n_BinsPtN[5][5] = { 0 };   // Xn0n class, first index = pT bin, second index = neutron bin (A)
-Int_t nEv_0nXn_BinsPtN[5][5] = { 0 };   // 0nXn class, first index = pT bin, second index = neutron bin (C)
-Int_t nEv_XnXn_BinsPtN[5][5][5] = { 0 };// XnXn class, first index = pT bin, second index = neutron bin (A), third index = neutron bin (C)
-// the total veto inefficiency
-Double_t fVetoIneff_direct = 0.;
-Double_t fVetoIneff_weight = 0.;
-// veto inefficiencies per pT bins
-Double_t fVetoIneff_BinsPt[5] = { 0 };
-// the total veto efficiency
-Double_t fVetoEff_direct_val = 0.;
-Double_t fVetoEff_direct_err = 0.;
-Double_t fVetoEff_weight_val = 0.;
-Double_t fVetoEff_weight_err = 0.;
-// veto efficiencies per pT bins
-Double_t fVetoEff_BinsPt_val[5] = { 0 };
-Double_t fVetoEff_BinsPt_err[5] = { 0 };
 
 // veto inefficiency
 void VetoIneff_Calculate(Int_t nPtBins); // 4 or 5
@@ -106,7 +69,7 @@ void _VetoInefficiencies()
 
         VetoIneff_Calculate(4);
 
-        //VetoIneff_Calculate(5);
+        VetoIneff_Calculate(5);
 
         //SameSignEv_PrepareTree();
 
@@ -122,8 +85,45 @@ void _VetoInefficiencies()
 
 void VetoIneff_Calculate(Int_t nPtBins)
 {
+    // total number of events
+    Int_t nEv_tot(0); 
+    // cross-check: total number of events per ZN channel summing over the corresponding bin types
+    Int_t nEv_ch_Pt[4] = { 0 };
+    Int_t nEv_ch_N[4] = { 0 };
+    Int_t nEv_ch_PtN[4] = { 0 };
+    // total numbers per pT bin
+    Int_t nEv_BinsPt[5] = { 0 };
+    // total numbers per neutron class
+    Int_t nEv_0n0n(0), nEv_Xn0n(0), nEv_0nXn(0), nEv_XnXn(0);
+    // numbers per neutron class and pT bin
+    Int_t nEv_0n0n_BinsPt[5] = { 0 }; // 0n0n class, index = pT bin
+    Int_t nEv_Xn0n_BinsPt[5] = { 0 }; // Xn0n class, index = pT bin
+    Int_t nEv_0nXn_BinsPt[5] = { 0 }; // 0nXn class, index = pT bin
+    Int_t nEv_XnXn_BinsPt[5] = { 0 }; // XnXn class, index = pT bin
+    // numbers per neutron class and neutron bin
+    Int_t nEv_Xn0n_BinsN[5] = { 0 };    // Xn0n class, index = neutron bin
+    Int_t nEv_0nXn_BinsN[5] = { 0 };    // 0nXn class, index = neutron bin
+    Int_t nEv_XnXn_BinsN[5][5] = { 0 }; // XnXn class, first index = neutron bin (A), second index = neutron bin (C)
+    // numbers per neutron class, pT bin and neutron bin
+    Int_t nEv_Xn0n_BinsPtN[5][5] = { 0 };   // Xn0n class, first index = pT bin, second index = neutron bin (A)
+    Int_t nEv_0nXn_BinsPtN[5][5] = { 0 };   // 0nXn class, first index = pT bin, second index = neutron bin (C)
+    Int_t nEv_XnXn_BinsPtN[5][5][5] = { 0 };// XnXn class, first index = pT bin, second index = neutron bin (A), third index = neutron bin (C)
+    // the total veto inefficiency
+    Double_t fVetoIneff_direct = 0.;
+    Double_t fVetoIneff_weight = 0.;
+    // veto inefficiencies per pT bins
+    Double_t fVetoIneff_BinsPt[5] = { 0 };
+    // the total veto efficiency
+    Double_t fVetoEff_direct_val = 0.;
+    Double_t fVetoEff_direct_err = 0.;
+    Double_t fVetoEff_weight_val = 0.;
+    Double_t fVetoEff_weight_err = 0.;
+    // veto efficiencies per pT bins
+    Double_t fVetoEff_BinsPt_val[5] = { 0 };
+    Double_t fVetoEff_BinsPt_err[5] = { 0 };
+
     if(nPtBins == 4)      fPtBins = &fPtBins_4[0];
-    //else if(nPtBins == 5) fPtBins = &fPtBins_5[0];
+    else if(nPtBins == 5) fPtBins = &fPtBins_5[0];
 
     TFile *f_in = new TFile("Trees/_VetoInefficiencies/tNeutrons.root","read");
     if(f_in) Printf("Input file %s loaded.", f_in->GetName());
@@ -259,7 +259,7 @@ void VetoIneff_Calculate(Int_t nPtBins)
     Printf("*** Results printed to Results/_VetoInefficiencies/%ibins/nEvents_binsPt.txt.***", nPtBins);
 
     // numbers of events per neutron class and neutron bin
-    outfile.open("Results/_VetoInefficiencies/nEvents_binsN.txt");
+    outfile.open(Form("Results/_VetoInefficiencies/%ibins/nEvents_binsN.txt", nPtBins));
     // 0n0n
     outfile << "0n0n:\n"
             << "total: " << nEv_ch_N[0] << "\n\n";
@@ -294,7 +294,7 @@ void VetoIneff_Calculate(Int_t nPtBins)
                                              << nEv_XnXn_BinsN[4][iBinN] << "\n";
     }        
     outfile.close();
-    Printf("*** Results printed to Results/_VetoInefficiencies/nEvents_binsN.txt.***"); 
+    Printf("*** Results printed to Results/_VetoInefficiencies/%ibins/nEvents_binsN.txt.***", nPtBins); 
 
     // numbers of events per neutron class, pT bin and neutron bin 
     outfile.open(Form("Results/_VetoInefficiencies/%ibins/nEvents_binsPtN.txt", nPtBins));
