@@ -1,9 +1,9 @@
 total value:
-directly calculated: (72.6 pm 1.4)%
-weighted avg over pT bins: (72.6 pm 1.5)%
+directly calculated: (55.0 pm 42.0)%
+weighted avg over pT bins: (55.0 pm 0.0)%
 in pT bins:
 pT_low	pT_upp	eff	err
-0.200	0.282	79.0	1.4
-0.282	0.381	78.8	1.4
-0.381	0.571	71.4	1.7
-0.571	1.000	64.0	1.5
+0.200	0.282	63.0	23.3
+0.282	0.381	64.7	19.3
+0.381	0.571	58.1	26.8
+0.571	1.000	43.5	123.3

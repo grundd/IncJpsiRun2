@@ -26,14 +26,21 @@ Double_t fPtBins_5[6] = {0.200, 0.265, 0.336, 0.453, 0.659, 1.000};
 
 Double_t fNumberOfN[6] = {0.0, 1.5, 5.5, 10.5, 20.5, 50.5};
 TString sNumberOfN[5] = {"0-1", "2-5", "6-10", "11-20", "21-50"};
-Double_t fVetoIneff_A_val[5] = {0.085, 0.157, 0.265, 0.413, 0.579};
-Double_t fVetoIneff_A_err[5] = {0.041, 0.043, 0.063, 0.073, 0.051};
-Double_t fVetoIneff_C_val[5] = {0.146, 0.333, 0.425, 0.542, 0.844};
-Double_t fVetoIneff_C_err[5] = {0.055, 0.057, 0.078, 0.072, 0.038};
-Double_t fVetoEff_A_val[5] = { 0 };
-Double_t fVetoEff_A_err[5] = { 0 };
-Double_t fVetoEff_C_val[5] = { 0 };
-Double_t fVetoEff_C_err[5] = { 0 };
+// veto inefficiencies (no. of lost events over no. of all events)
+Double_t fIneff_Xn0n_val[5] = {0.085, 0.157, 0.265, 0.413, 0.579};
+Double_t fIneff_Xn0n_err[5] = {0.041, 0.043, 0.063, 0.073, 0.051};
+Double_t fIneff_0nXn_val[5] = {0.146, 0.333, 0.425, 0.542, 0.844};
+Double_t fIneff_0nXn_err[5] = {0.055, 0.057, 0.078, 0.072, 0.038};
+// veto efficiencies (no. of surviving events over no. of all events)
+Double_t fEff_Xn0n_val[5] = { 0 };
+Double_t fEff_Xn0n_err[5] = { 0 };
+Double_t fEff_0nXn_val[5] = { 0 };
+Double_t fEff_0nXn_err[5] = { 0 };
+// inverse efficiencies (no. of all events over no. of surviving events)
+Double_t fEta_Xn0n_val[5] = { 0 };
+Double_t fEta_Xn0n_err[5] = { 0 };
+Double_t fEta_0nXn_val[5] = { 0 };
+Double_t fEta_0nXn_err[5] = { 0 };
 
 Bool_t fZNA_hit, fZNC_hit;
 Double_t fZNA_n, fZNC_n;
@@ -69,7 +76,7 @@ void _VetoInefficiencies()
 
         VetoIneff_Calculate(4);
 
-        VetoIneff_Calculate(5);
+        //VetoIneff_Calculate(5);
 
         //SameSignEv_PrepareTree();
 
@@ -108,19 +115,20 @@ void VetoIneff_Calculate(Int_t nPtBins)
     Int_t nEv_Xn0n_BinsPtN[5][5] = { 0 };   // Xn0n class, first index = pT bin, second index = neutron bin (A)
     Int_t nEv_0nXn_BinsPtN[5][5] = { 0 };   // 0nXn class, first index = pT bin, second index = neutron bin (C)
     Int_t nEv_XnXn_BinsPtN[5][5][5] = { 0 };// XnXn class, first index = pT bin, second index = neutron bin (A), third index = neutron bin (C)
-    // the total veto inefficiency
-    Double_t fVetoIneff_direct = 0.;
-    Double_t fVetoIneff_weight = 0.;
-    // veto inefficiencies per pT bins
-    Double_t fVetoIneff_BinsPt[5] = { 0 };
     // the total veto efficiency
-    Double_t fVetoEff_direct_val = 0.;
-    Double_t fVetoEff_direct_err = 0.;
-    Double_t fVetoEff_weight_val = 0.;
-    Double_t fVetoEff_weight_err = 0.;
+    Double_t fEff_direct_val = 0.;
+    Double_t fEff_direct_err = 0.;
+    Double_t fInvEff_direct_val = 0;
+    Double_t fInvEff_direct_err = 0;
+    Double_t fEff_weight_val = 0.;
+    Double_t fEff_weight_err = 0.;
+    Double_t fInvEff_weight_val = 0;
+    Double_t fInvEff_weight_err = 0;
     // veto efficiencies per pT bins
-    Double_t fVetoEff_BinsPt_val[5] = { 0 };
-    Double_t fVetoEff_BinsPt_err[5] = { 0 };
+    Double_t fEff_BinsPt_val[5] = { 0 };
+    Double_t fEff_BinsPt_err[5] = { 0 };
+    Double_t fInvEff_BinsPt_val[5] = { 0 };
+    Double_t fInvEff_BinsPt_err[5] = { 0 };
 
     if(nPtBins == 4)      fPtBins = &fPtBins_4[0];
     else if(nPtBins == 5) fPtBins = &fPtBins_5[0];
@@ -355,122 +363,121 @@ void VetoIneff_Calculate(Int_t nPtBins)
     Printf("*** Results printed to Results/_VetoInefficiencies/%ibins/nEvents_binsPtN.txt.***", nPtBins);  
 
     // ##########################################################################################################
-    // calculate veto inefficiencies from Guillermo's numbers
-    // in pT bins
-    // and the total number as a weighted average over pT bins
-    for(Int_t iBinPt = 0; iBinPt < nPtBins; iBinPt++)
+    // calculate partial veto efficiencies and inverse partial veto efficiencies from partial veto inefficiencies
+    for(Int_t i = 0; i < 5; i++)
     {
-        Double_t Ineff_Xn0n(0), Ineff_0nXn(0), Ineff_XnXn(0);
-        for(Int_t iBinN1 = 0; iBinN1 < 5; iBinN1++){
-            Ineff_Xn0n += fVetoIneff_A_val[iBinN1] * nEv_Xn0n_BinsPtN[iBinPt][iBinN1];
-            Ineff_0nXn += fVetoIneff_C_val[iBinN1] * nEv_0nXn_BinsPtN[iBinPt][iBinN1];
-            for(Int_t iBinN2 = 0; iBinN2 < 5; iBinN2++){
-                Ineff_XnXn += fVetoIneff_A_val[iBinN1] * fVetoIneff_C_val[iBinN2] * nEv_XnXn_BinsPtN[iBinPt][iBinN1][iBinN2];
-            }
-        }
-        fVetoIneff_BinsPt[iBinPt] = (Ineff_Xn0n + Ineff_0nXn + Ineff_XnXn) / nEv_BinsPt[iBinPt];
-        fVetoIneff_weight += fVetoIneff_BinsPt[iBinPt] * nEv_BinsPt[iBinPt];
+        fEff_Xn0n_val[i] = 1. - fIneff_Xn0n_val[i];
+        fEff_Xn0n_err[i] = fIneff_Xn0n_err[i];
+        fEff_0nXn_val[i] = 1. - fIneff_0nXn_val[i];
+        fEff_0nXn_err[i] = fIneff_0nXn_err[i];
+        fEta_Xn0n_val[i] = 1. / fEff_Xn0n_val[i];
+        fEta_Xn0n_err[i] = 1. / TMath::Power(fEff_Xn0n_val[i],2) * fEff_Xn0n_err[i];
+        fEta_0nXn_val[i] = 1. / fEff_0nXn_val[i];
+        fEta_0nXn_err[i] = 1. / TMath::Power(fEff_0nXn_val[i],2) * fEff_0nXn_err[i];
     }
-    fVetoIneff_weight = fVetoIneff_weight / (Double_t)nEv_tot;
-    // the total number: direct calculation
-    Double_t Ineff_Xn0n(0), Ineff_0nXn(0), Ineff_XnXn(0);
-    for(Int_t iBinN1 = 0; iBinN1 < 5; iBinN1++){
-        Ineff_Xn0n += fVetoIneff_A_val[iBinN1] * nEv_Xn0n_BinsN[iBinN1];
-        Ineff_0nXn += fVetoIneff_C_val[iBinN1] * nEv_0nXn_BinsN[iBinN1];
-        for(Int_t iBinN2 = 0; iBinN2 < 5; iBinN2++){
-            Ineff_XnXn += fVetoIneff_A_val[iBinN1] * fVetoIneff_C_val[iBinN2] * nEv_XnXn_BinsN[iBinN1][iBinN2];
-        }
-    }
-    fVetoIneff_direct = (Ineff_Xn0n + Ineff_0nXn + Ineff_XnXn) / nEv_tot;
     // ##########################################################################################################
     // print the results
-    outfile.open(Form("Results/_VetoInefficiencies/%ibins/VetoIneff.txt", nPtBins));
-    outfile << "total value:\n"
-            << Form("directly calculated: %.4f = %.2f%%\n", fVetoIneff_direct, fVetoIneff_direct*100)
-            << Form("weighted avg over pT bins: %.4f = %.2f%%\n", fVetoIneff_weight, fVetoIneff_weight*100)
-            << "in pT bins:\n"
-            << "pT_low\tpT_upp\tineff\n";
-    for(Int_t iBinPt = 0; iBinPt < nPtBins; iBinPt++)
-    {
-        outfile << std::fixed << std::setprecision(3)
-                << fPtBins[iBinPt] << "\t" 
-                << fPtBins[iBinPt+1] << "\t"
-                << fVetoIneff_BinsPt[iBinPt] << "\n";
-    }
+    outfile.open(Form("Results/_VetoInefficiencies/%ibins/PartialEff.txt", nPtBins));
+    outfile << std::fixed << std::setprecision(3);
+    outfile << "eff_A:\n";
+    for(Int_t i = 0; i < 5; i++) outfile << "(" << fEff_Xn0n_val[i] << " pm " << fEff_Xn0n_err[i] << ")\t";
+    outfile << "\neff_C:\n";
+    for(Int_t i = 0; i < 5; i++) outfile << "(" << fEff_0nXn_val[i] << " pm " << fEff_0nXn_err[i] << ")\t";
+    outfile << "\n1/eff_A:\n";
+    for(Int_t i = 0; i < 5; i++) outfile << "(" << fEta_Xn0n_val[i] << " pm " << fEta_Xn0n_err[i] << ")\t";
+    outfile << "\n1/eff_C:\n";
+    for(Int_t i = 0; i < 5; i++) outfile << "(" << fEta_0nXn_val[i] << " pm " << fEta_0nXn_err[i] << ")\t";
     outfile.close();
-    Printf("*** Results printed to Results/_VetoInefficiencies/%ibins/VetoIneff.txt.***", nPtBins); 
+    Printf("*** Results printed to Results/_VetoInefficiencies/%ibins/PartialEff.txt.***", nPtBins); 
     // ##########################################################################################################
     // calculate veto efficiencies from Guillermo's numbers
     // in pT bins
     // and the total number as a weighted average over pT bins
-    for(Int_t i = 0; i < 5; i++)
-    {
-        fVetoEff_A_val[i] = 1 - fVetoIneff_A_val[i];
-        fVetoEff_A_err[i] = fVetoIneff_A_err[i];
-        fVetoEff_C_val[i] = 1 - fVetoIneff_C_val[i];
-        fVetoEff_C_err[i] = fVetoIneff_C_err[i];
-    }
-
     for(Int_t iBinPt = 0; iBinPt < nPtBins; iBinPt++)
     {
-        Double_t Eff_0n0n(0), Eff_Xn0n(0), Eff_0nXn(0), Eff_XnXn(0);
-        Double_t PartialDiffEff_A_i[5] = { 0 };
-        Double_t PartialDiffEff_C_i[5] = { 0 };
-        for(Int_t iBinN1 = 0; iBinN1 < 5; iBinN1++){
-            Eff_Xn0n += fVetoEff_A_val[iBinN1] * nEv_Xn0n_BinsPtN[iBinPt][iBinN1];
-            Eff_0nXn += fVetoEff_C_val[iBinN1] * nEv_0nXn_BinsPtN[iBinPt][iBinN1];
-            PartialDiffEff_A_i[iBinN1] += nEv_Xn0n_BinsPtN[iBinPt][iBinN1];
-            PartialDiffEff_C_i[iBinN1] += nEv_0nXn_BinsPtN[iBinPt][iBinN1];
-            for(Int_t iBinN2 = 0; iBinN2 < 5; iBinN2++){
-                Eff_XnXn += fVetoEff_A_val[iBinN1] * fVetoEff_C_val[iBinN2] * nEv_XnXn_BinsPtN[iBinPt][iBinN1][iBinN2];
-                PartialDiffEff_A_i[iBinN1] += fVetoEff_C_val[iBinN2] * nEv_XnXn_BinsPtN[iBinPt][iBinN1][iBinN2];
-                PartialDiffEff_C_i[iBinN1] += fVetoEff_A_val[iBinN2] * nEv_XnXn_BinsPtN[iBinPt][iBinN2][iBinN1];
+        Double_t nEvCorr_0n0n(0), nEvCorr_Xn0n(0), nEvCorr_0nXn(0), nEvCorr_XnXn(0);
+        Double_t PartDerEta_Xn0n_i[5] = { 0 };
+        Double_t PartDerEta_0nXn_i[5] = { 0 };
+        //Double_t PartDerEff_Xn0n_i[5] = { 0 };
+        //Double_t PartDerEff_0nXn_i[5] = { 0 };
+        for(Int_t iBinN1 = 0; iBinN1 < 5; iBinN1++)
+        {
+            nEvCorr_Xn0n += nEv_Xn0n_BinsPtN[iBinPt][iBinN1] / fEff_Xn0n_val[iBinN1];
+            nEvCorr_0nXn += nEv_0nXn_BinsPtN[iBinPt][iBinN1] / fEff_0nXn_val[iBinN1];
+            PartDerEta_Xn0n_i[iBinN1] += nEv_Xn0n_BinsPtN[iBinPt][iBinN1];
+            PartDerEta_0nXn_i[iBinN1] += nEv_0nXn_BinsPtN[iBinPt][iBinN1];
+            //PartDerEff_Xn0n_i[iBinN1] += nEv_Xn0n_BinsPtN[iBinPt][iBinN1];
+            //PartDerEff_0nXn_i[iBinN1] += nEv_0nXn_BinsPtN[iBinPt][iBinN1];
+            for(Int_t iBinN2 = 0; iBinN2 < 5; iBinN2++)
+            {
+                nEvCorr_XnXn += nEv_XnXn_BinsPtN[iBinPt][iBinN1][iBinN2] / fEff_Xn0n_val[iBinN1] / fEff_0nXn_val[iBinN2];
+                PartDerEta_Xn0n_i[iBinN1] += fEta_0nXn_val[iBinN2] * nEv_XnXn_BinsPtN[iBinPt][iBinN1][iBinN2];
+                PartDerEta_0nXn_i[iBinN1] += fEta_Xn0n_val[iBinN2] * nEv_XnXn_BinsPtN[iBinPt][iBinN2][iBinN1];
+                //PartDerEff_Xn0n_i[iBinN1] += fEff_0nXn_val[iBinN2] * nEv_XnXn_BinsPtN[iBinPt][iBinN1][iBinN2];
+                //PartDerEff_0nXn_i[iBinN1] += fEff_Xn0n_val[iBinN2] * nEv_XnXn_BinsPtN[iBinPt][iBinN2][iBinN1];
             }
-            PartialDiffEff_A_i[iBinN1] = PartialDiffEff_A_i[iBinN1] / nEv_BinsPt[iBinPt];
-            PartialDiffEff_C_i[iBinN1] = PartialDiffEff_C_i[iBinN1] / nEv_BinsPt[iBinPt];
-
-            fVetoEff_BinsPt_err[iBinPt] += TMath::Power(PartialDiffEff_A_i[iBinN1],2) * TMath::Power(fVetoEff_A_err[iBinN1],2) + 
-                                           TMath::Power(PartialDiffEff_C_i[iBinN1],2) * TMath::Power(fVetoEff_C_err[iBinN1],2);
+            PartDerEta_Xn0n_i[iBinN1] = PartDerEta_Xn0n_i[iBinN1] / nEv_BinsPt[iBinPt];
+            PartDerEta_0nXn_i[iBinN1] = PartDerEta_0nXn_i[iBinN1] / nEv_BinsPt[iBinPt];
+            //PartDerEff_Xn0n_i[iBinN1] = PartDerEff_Xn0n_i[iBinN1] / nEv_BinsPt[iBinPt];
+            //PartDerEff_0nXn_i[iBinN1] = PartDerEff_0nXn_i[iBinN1] / nEv_BinsPt[iBinPt];
+            fInvEff_BinsPt_err[iBinPt] += TMath::Power(PartDerEta_Xn0n_i[iBinN1],2) * TMath::Power(fEta_Xn0n_err[iBinN1],2) + 
+                                          TMath::Power(PartDerEta_0nXn_i[iBinN1],2) * TMath::Power(fEta_0nXn_err[iBinN1],2);
+            //fEff_BinsPt_err[iBinPt] += TMath::Power(PartDerEff_Xn0n_i[iBinN1],2) * TMath::Power(fEff_Xn0n_err[iBinN1],2) + 
+            //                               TMath::Power(PartDerEff_0nXn_i[iBinN1],2) * TMath::Power(fEff_0nXn_err[iBinN1],2);
         }        
-        Eff_0n0n = 1.0 * nEv_0n0n_BinsPt[iBinPt];
-        fVetoEff_BinsPt_val[iBinPt] = (Eff_0n0n + Eff_Xn0n + Eff_0nXn + Eff_XnXn) / nEv_BinsPt[iBinPt];
-        fVetoEff_BinsPt_err[iBinPt] = TMath::Sqrt(fVetoEff_BinsPt_err[iBinPt]);
-        fVetoEff_weight_val += fVetoEff_BinsPt_val[iBinPt] * nEv_BinsPt[iBinPt];
-        fVetoEff_weight_err += fVetoEff_BinsPt_err[iBinPt] * nEv_BinsPt[iBinPt];
+        nEvCorr_0n0n = nEv_0n0n_BinsPt[iBinPt] / 1.0;
+        fEff_BinsPt_val[iBinPt] = (Double_t)nEv_BinsPt[iBinPt] / (nEvCorr_0n0n + nEvCorr_Xn0n + nEvCorr_0nXn + nEvCorr_XnXn);
+        fInvEff_BinsPt_val[iBinPt] = (nEvCorr_0n0n + nEvCorr_Xn0n + nEvCorr_0nXn + nEvCorr_XnXn) / (Double_t)nEv_BinsPt[iBinPt];
+        fInvEff_BinsPt_err[iBinPt] = TMath::Sqrt(fInvEff_BinsPt_err[iBinPt]);
+        fEff_BinsPt_err[iBinPt] = 1. / TMath::Power(fEff_BinsPt_val[iBinPt],2) * fInvEff_BinsPt_err[iBinPt];
+        fEff_weight_val += nEv_BinsPt[iBinPt] / fEff_BinsPt_val[iBinPt];
+        //fEff_weight_err += nEv_BinsPt[iBinPt] * fEff_BinsPt_err[iBinPt];
     }
-    fVetoEff_weight_val = fVetoEff_weight_val / (Double_t)nEv_tot;
-    fVetoEff_weight_err = fVetoEff_weight_err / (Double_t)nEv_tot;
+    fEff_weight_val = nEv_tot / fEff_weight_val;
+    //fEff_weight_err = nEv_tot / fEff_weight_err;
+
     // the total number: direct calculation
-    Double_t Eff_0n0n(0), Eff_Xn0n(0), Eff_0nXn(0), Eff_XnXn(0);
-    Double_t PartialDiffEff_A_i[5] = { 0 };
-    Double_t PartialDiffEff_C_i[5] = { 0 };
+    Double_t nEvCorr_0n0n(0), nEvCorr_Xn0n(0), nEvCorr_0nXn(0), nEvCorr_XnXn(0);
+    Double_t PartDerEta_Xn0n_i[5] = { 0 };
+    Double_t PartDerEta_0nXn_i[5] = { 0 };
+    //Double_t PartDerEff_Xn0n_i[5] = { 0 };
+    //Double_t PartDerEff_0nXn_i[5] = { 0 };
     for(Int_t iBinN1 = 0; iBinN1 < 5; iBinN1++)
     {
-        Eff_Xn0n += fVetoEff_A_val[iBinN1] * nEv_Xn0n_BinsN[iBinN1];
-        Eff_0nXn += fVetoEff_C_val[iBinN1] * nEv_0nXn_BinsN[iBinN1];
-        PartialDiffEff_A_i[iBinN1] += nEv_Xn0n_BinsN[iBinN1];
-        PartialDiffEff_C_i[iBinN1] += nEv_0nXn_BinsN[iBinN1];
+        nEvCorr_Xn0n += nEv_Xn0n_BinsN[iBinN1] / fEff_Xn0n_val[iBinN1];
+        nEvCorr_0nXn += nEv_0nXn_BinsN[iBinN1] / fEff_0nXn_val[iBinN1];
+        PartDerEta_Xn0n_i[iBinN1] += nEv_Xn0n_BinsN[iBinN1];
+        PartDerEta_0nXn_i[iBinN1] += nEv_0nXn_BinsN[iBinN1];
+        //PartDerEff_Xn0n_i[iBinN1] += nEv_Xn0n_BinsN[iBinN1];
+        //PartDerEff_0nXn_i[iBinN1] += nEv_0nXn_BinsN[iBinN1];
         for(Int_t iBinN2 = 0; iBinN2 < 5; iBinN2++)
         {
-            Eff_XnXn += fVetoEff_A_val[iBinN1] * fVetoEff_C_val[iBinN2] * nEv_XnXn_BinsN[iBinN1][iBinN2];
-            PartialDiffEff_A_i[iBinN1] += fVetoEff_C_val[iBinN2] * nEv_XnXn_BinsN[iBinN1][iBinN2];
-            PartialDiffEff_C_i[iBinN1] += fVetoEff_A_val[iBinN2] * nEv_XnXn_BinsN[iBinN2][iBinN1];
+            nEvCorr_XnXn += nEv_XnXn_BinsN[iBinN1][iBinN2] / fEff_Xn0n_val[iBinN1] / fEff_0nXn_val[iBinN2];
+            PartDerEta_Xn0n_i[iBinN1] += fEta_0nXn_val[iBinN2] * nEv_XnXn_BinsN[iBinN1][iBinN2];
+            PartDerEta_0nXn_i[iBinN1] += fEta_Xn0n_val[iBinN2] * nEv_XnXn_BinsN[iBinN2][iBinN1];
+            //PartDerEff_Xn0n_i[iBinN1] += fEff_0nXn_val[iBinN2] * nEv_XnXn_BinsN[iBinN1][iBinN2];
+            //PartDerEff_0nXn_i[iBinN1] += fEff_Xn0n_val[iBinN2] * nEv_XnXn_BinsN[iBinN2][iBinN1];
         }
-        PartialDiffEff_A_i[iBinN1] = PartialDiffEff_A_i[iBinN1] / nEv_tot;
-        PartialDiffEff_C_i[iBinN1] = PartialDiffEff_C_i[iBinN1] / nEv_tot;
-
-        fVetoEff_direct_err += TMath::Power(PartialDiffEff_A_i[iBinN1],2) * TMath::Power(fVetoEff_A_err[iBinN1],2) + 
-                               TMath::Power(PartialDiffEff_C_i[iBinN1],2) * TMath::Power(fVetoEff_C_err[iBinN1],2);
+        PartDerEta_Xn0n_i[iBinN1] = PartDerEta_Xn0n_i[iBinN1] / nEv_tot;
+        PartDerEta_0nXn_i[iBinN1] = PartDerEta_0nXn_i[iBinN1] / nEv_tot;
+        //PartDerEff_Xn0n_i[iBinN1] = PartDerEff_Xn0n_i[iBinN1] / nEv_tot;
+        //PartDerEff_0nXn_i[iBinN1] = PartDerEff_0nXn_i[iBinN1] / nEv_tot;
+        fInvEff_direct_err += TMath::Power(PartDerEta_Xn0n_i[iBinN1],2) * TMath::Power(fEta_Xn0n_err[iBinN1],2) + 
+                              TMath::Power(PartDerEta_0nXn_i[iBinN1],2) * TMath::Power(fEta_0nXn_err[iBinN1],2);
+        //fEff_direct_err += TMath::Power(PartDerEff_Xn0n_i[iBinN1],2) * TMath::Power(fEff_Xn0n_err[iBinN1],2) + 
+        //                       TMath::Power(PartDerEff_0nXn_i[iBinN1],2) * TMath::Power(fEff_0nXn_err[iBinN1],2);
     }
-    Eff_0n0n = 1.0 * nEv_0n0n;
-    fVetoEff_direct_val = (Eff_0n0n + Eff_Xn0n + Eff_0nXn + Eff_XnXn) / nEv_tot;
-    fVetoEff_direct_err = TMath::Sqrt(fVetoEff_direct_err);
+    nEvCorr_0n0n = nEv_0n0n / 1.0;
+    fEff_direct_val = (Double_t)nEv_tot / (nEvCorr_0n0n + nEvCorr_Xn0n + nEvCorr_0nXn + nEvCorr_XnXn);
+    fInvEff_direct_val = (nEvCorr_0n0n + nEvCorr_Xn0n + nEvCorr_0nXn + nEvCorr_XnXn) / (Double_t)nEv_tot;
+    fInvEff_direct_err = TMath::Sqrt(fInvEff_direct_err);
+    fEff_direct_err = 1. / TMath::Power(fEff_direct_val,2) * fInvEff_direct_err;
     // ##########################################################################################################
     // print the results
     outfile.open(Form("Results/_VetoInefficiencies/%ibins/VetoEff.txt", nPtBins));
     outfile << "total value:\n"
-            << Form("directly calculated: (%.1f pm %.1f)%%\n", fVetoEff_direct_val*100, fVetoEff_direct_err*100)
-            << Form("weighted avg over pT bins: (%.1f pm %.1f)%%\n", fVetoEff_weight_val*100, fVetoEff_weight_err*100)
+            << Form("directly calculated: (%.1f pm %.1f)%%\n", fEff_direct_val*100, fEff_direct_err*100)
+            << Form("weighted avg over pT bins: (%.1f pm %.1f)%%\n", fEff_weight_val*100, fEff_weight_err*100)
             << "in pT bins:\n"
             << "pT_low\tpT_upp\teff\terr\n";
     for(Int_t iBinPt = 0; iBinPt < nPtBins; iBinPt++)
@@ -479,8 +486,8 @@ void VetoIneff_Calculate(Int_t nPtBins)
                 << fPtBins[iBinPt] << "\t" 
                 << fPtBins[iBinPt+1] << "\t"
                 << std::fixed << std::setprecision(1)
-                << fVetoEff_BinsPt_val[iBinPt]*100 << "\t"
-                << fVetoEff_BinsPt_err[iBinPt]*100 << "\n";
+                << fEff_BinsPt_val[iBinPt]*100 << "\t"
+                << fEff_BinsPt_err[iBinPt]*100 << "\n";
     }
     outfile.close();
     Printf("*** Results printed to Results/_VetoInefficiencies/%ibins/VetoEff.txt.***", nPtBins); 
