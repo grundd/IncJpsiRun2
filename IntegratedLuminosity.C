@@ -35,6 +35,8 @@ Int_t nRunsInList = 0;
 vector<Int_t> RunList;
 vector<Int_t> CountsList;
 
+TString PeriodName[2] = {"18q", "18r"};
+
 void CalculateLumi(Int_t period);
 void SumLumi(Int_t period);
 void SetLumiHisto(TH1D* h, Int_t period, Color_t color);
@@ -74,8 +76,8 @@ void IntegratedLuminosity(Int_t iAnalysis)
     return;
 }
 
-void CalculateLumi(Int_t period){
-
+void CalculateLumi(Int_t period)
+{
     // Choose the period
     if(period == 0){ 
         // LHC18q
@@ -178,7 +180,8 @@ void CalculateLumi(Int_t period){
     SumLumi(period);
 }
 
-void SumLumi(Int_t period){
+void SumLumi(Int_t period)
+{
     // Here the total integrated luminosity is calculated
     // Open input file and read lumi per run
     TFile *fInputLumiHisto = TFile::Open("Results/" + str_subfolder + "Lumi/LumiHisto.root", "read");
@@ -190,6 +193,13 @@ void SumLumi(Int_t period){
         int_lumi_rec += hLumi->GetBinContent(i+1);
     }
 
+    // Print the values to a text file
+    TString str_outfile = "Results/" + str_subfolder + "Lumi/lumi_" + PeriodName[period] + ".txt";
+    ofstream outfile(str_outfile.Data());
+    outfile << int_lumi_ana << "\n" << int_lumi_rec;
+    outfile.close();
+    Printf("*** Results printed to %s.***", str_outfile.Data());
+
     // Also, we want to sum the luminosity corresponding to ClassName1 (CCUP31-B-NOPF-CENTNOTRD), i.e., 
     // to the situation without the past-future protection
     Double_t int_lumi_ana_NOPF(0.), int_lumi_rec_NOPF(0.);
@@ -199,16 +209,13 @@ void SumLumi(Int_t period){
             int_lumi_rec_NOPF += hLumi->GetBinContent(hLumi->GetXaxis()->FindBin(Form("%i",RunList[i])));
         }
     }
-    TString str_NOPF_file = "";
-    if(period == 0) str_NOPF_file = "Results/" + str_subfolder + "Lumi/lumi_NOPF_18q.txt";
-    if(period == 1) str_NOPF_file = "Results/" + str_subfolder + "Lumi/lumi_NOPF_18r.txt";
-    ofstream NOPF_file(str_NOPF_file.Data());
-    NOPF_file << "Integrated luminosity corresponding to CCUP31-B-NOPF-CENTNOTRD (run number < 295881):\n";
-    NOPF_file << Form("analyzed: %.3f (%.1f percent of the total lumi for this period) \n",int_lumi_ana_NOPF, int_lumi_ana_NOPF / int_lumi_ana * 100.);
-    NOPF_file << Form("recorded: %.3f (%.1f percent of the total lumi for this period) \n",int_lumi_rec_NOPF, int_lumi_rec_NOPF / int_lumi_rec * 100.);
-    NOPF_file.close();
-    Printf("*** Results printed to %s.***", str_NOPF_file.Data());
-
+    TString str_outfile_NOPF = "Results/" + str_subfolder + "Lumi/lumi_NOPF_" + PeriodName[period] + ".txt";
+    ofstream outfile_NOPF(str_outfile_NOPF.Data());
+    outfile_NOPF << "Integrated luminosity corresponding to CCUP31-B-NOPF-CENTNOTRD (run number < 295881):\n";
+    outfile_NOPF << Form("analyzed: %.3f (%.1f percent of the total lumi for this period) \n",int_lumi_ana_NOPF, int_lumi_ana_NOPF / int_lumi_ana * 100.);
+    outfile_NOPF << Form("recorded: %.3f (%.1f percent of the total lumi for this period) \n",int_lumi_rec_NOPF, int_lumi_rec_NOPF / int_lumi_rec * 100.);
+    outfile_NOPF.close();
+    Printf("*** Results printed to %s.***", str_outfile_NOPF.Data());
 
     SetLumiHisto(hLumi, period, kBlue); // recorded lumi
     SetLumiHisto(hLumiS, period, kRed); // seen lumi
@@ -241,18 +248,13 @@ void SumLumi(Int_t period){
     legLumi->SetBorderSize(0);
     legLumi->SetFillStyle(0);
     legLumi->Draw();
-    if(period == 0){ 
-        // LHC18q
-        cLumi->SaveAs("Results/" + str_subfolder + "Lumi/lumi_ccup31_18q.pdf");
-        cLumi->SaveAs("Results/" + str_subfolder + "Lumi/lumi_ccup31_18q.png");
-    } else if(period == 1){
-        // LHC18r
-        cLumi->SaveAs("Results/" + str_subfolder + "Lumi/lumi_ccup31_18r.pdf");
-        cLumi->SaveAs("Results/" + str_subfolder + "Lumi/lumi_ccup31_18r.png");   
-    }
+
+    cLumi->SaveAs("Results/" + str_subfolder + "Lumi/lumi_ccup31_" + PeriodName[period] + ".pdf");
+    cLumi->SaveAs("Results/" + str_subfolder + "Lumi/lumi_ccup31_" + PeriodName[period] + ".png");
 }
 
-void SetLumiHisto(TH1D* h, Int_t period, Color_t color){
+void SetLumiHisto(TH1D* h, Int_t period, Color_t color)
+{
     // A function to set the properties of the final histograms
     //gStyle->SetperiodStat(0);
     gStyle->SetOptTitle(0);
