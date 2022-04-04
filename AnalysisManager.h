@@ -284,11 +284,9 @@ Bool_t EventPassed(Int_t iMassCut, Int_t iPtCut){
         case 1: // m between 3.0 and 3.2 GeV/c^2
             if(fM > 3.0 && fM < 3.2) bMassCut = kTRUE;
             break;
-        /*
-        case 2:
+        case 2: // m between 1.5 and 7.0 GeV/c^2 (syst uncertainties in inv mass fit)
             if(fM > 1.5 && fM < 7.0) bMassCut = kTRUE;
             break;
-        */
     }
     if(!bMassCut) return kFALSE;
 
