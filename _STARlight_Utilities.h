@@ -15,12 +15,39 @@
 #include "TLorentzVector.h"
 #include "TClonesArray.h"
 
+Double_t fPtGm, fPtVM, fPtPm;
 TLorentzVector *parent;
 TClonesArray *daughters;
 
 //###############################################################################
+// To connect branch addresses of STARlight and GammaVMPom trees:
+
+void ConnectTreeVariables_tPtGammaVMPom(TTree *tPtGammaVMPom)
+{
+    tPtGammaVMPom->SetBranchAddress("fPtGm", &fPtGm);
+    tPtGammaVMPom->SetBranchAddress("fPtVM", &fPtVM);
+    tPtGammaVMPom->SetBranchAddress("fPtPm", &fPtPm);
+
+    Printf("Variables from %s connected.", tPtGammaVMPom->GetName());
+
+    return;
+}
+
+void ConnectTreeVariables_tSL(TTree *tSL)
+{
+    tSL->SetBranchAddress("parent", &parent);
+    tSL->SetBranchAddress("daughters", &daughters);
+
+    Printf("Variables from %s connected.", tSL->GetName());
+
+    return;
+}
+
+//###############################################################################
 // From STARlight:
-double IDtoMass(int particleCode){
+
+double IDtoMass(int particleCode)
+{
     double mass;
     if (particleCode == 2 || particleCode==3) {mass = 0.00051099907;} // electron
     else if (particleCode == 5 || particleCode==6) {mass = 0.105658389;} // muon

@@ -1,19 +1,19 @@
-// PhotoCrossSec_PlotWithRatios.c
-// David Grund, Dec 1, 2021
+// PhotoCrossSec_PlotWithRatios.C
+// David Grund, Apr 24, 2022
 
+// root headers
+#include "TSystem.h"
 // my headers
 #include "PhotoCrossSec_Utilities.h"
 
-Int_t lineWidth = 2;
-
 void PlotWithRatios();
 
-void PhotoCrossSec_PlotWithRatios()
+void PhotoCrossSec_PlotWithRatios(Int_t iAnalysis)
 {
-    iFeedDown = 0; 
-    PlotWithRatios();
+    InitAnalysis(iAnalysis);
 
-    iFeedDown = 1; 
+    gSystem->Exec("mkdir -p Results/" + str_subfolder + "PhotoCrossSec/PlotWithRatios/");
+
     PlotWithRatios();
 
     return;
@@ -21,15 +21,15 @@ void PhotoCrossSec_PlotWithRatios()
 
 void PlotWithRatios()
 {
-    ReadInputMeasurement();
+    ReadInput_Measurement();
 
-    ReadInputHSModel();
+    ReadInput_HSModel();
 
-    ReadInputGuzey();
+    ReadInput_Guzey();
 
-    ReadInputHeikki();
+    ReadInput_Heikki();
 
-    ReadInputSTARlight();
+    ReadInput_STARlight();
 
     // Fill the data graphs
     for(Int_t i = 0; i < nPtBins; i++){
@@ -210,8 +210,9 @@ void PlotWithRatios()
     cCSont->Modified();
     cCSont->Update();
 
-    cCSont->Print(Form("PhotoCrossSec/img_PlotWithRatios/Plot_FeedDown%i_%ibins.pdf", iFeedDown, nPtBins));
-    cCSont->Print(Form("PhotoCrossSec/img_PlotWithRatios/Plot_FeedDown%i_%ibins.png", iFeedDown, nPtBins));
+    TString path1 = "Results/" + str_subfolder + Form("PhotoCrossSec/PlotWithRatios/plot_%ibins", nPtBins);
+    cCSont->Print((path1 + ".pdf").Data());
+    cCSont->Print((path1 + ".png").Data());
 
     // *****************************************************************************
     // Calculate and plot ratios
@@ -321,8 +322,9 @@ void PlotWithRatios()
     line->SetLineStyle(2);
     line->Draw("SAME");
 
-    cDataModel->Print(Form("PhotoCrossSec/img_PlotWithRatios/Ratios_FeedDown%i_%ibins.pdf", iFeedDown, nPtBins));
-    cDataModel->Print(Form("PhotoCrossSec/img_PlotWithRatios/Ratios_FeedDown%i_%ibins.png", iFeedDown, nPtBins));
+    TString path2 = "Results/" + str_subfolder + Form("PhotoCrossSec/PlotWithRatios/ratios_%ibins", nPtBins);
+    cDataModel->Print((path2 + ".pdf").Data());
+    cDataModel->Print((path2 + ".png").Data());
 
     // *****************************************************************************
     // Draw both
@@ -398,8 +400,9 @@ void PlotWithRatios()
     leg4->SetTextSize(0.105);
     leg4->Draw();
 
-    cBoth->Print(Form("PhotoCrossSec/img_PlotWithRatios/RatiosPlot_FeedDown%i_%ibins.pdf", iFeedDown, nPtBins));
-    cBoth->Print(Form("PhotoCrossSec/img_PlotWithRatios/RatiosPlot_FeedDown%i_%ibins.png", iFeedDown, nPtBins));
+    TString path3 = "Results/" + str_subfolder + Form("PhotoCrossSec/PlotWithRatios/plot_with_ratios_%ibins", nPtBins);
+    cBoth->Print((path3 + ".pdf").Data());
+    cBoth->Print((path3 + ".png").Data());
 
     return;
 }

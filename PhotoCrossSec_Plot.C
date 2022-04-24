@@ -1,19 +1,19 @@
-// PhotoCrossSec_Plot.c
-// David Grund, Oct 30, 2021
+// PhotoCrossSec_Plot.C
+// David Grund, Apr 24, 2022
 
+// root headers
+#include "TSystem.h"
 // my headers
 #include "PhotoCrossSec_Utilities.h"
 
-Int_t lineWidth = 2;
-
 void Plot();
 
-void PhotoCrossSec_Plot()
+void PhotoCrossSec_Plot(Int_t iAnalysis)
 {
-    iFeedDown = 0; 
-    Plot();
+    InitAnalysis(iAnalysis);
 
-    iFeedDown = 1; 
+    gSystem->Exec("mkdir -p Results/" + str_subfolder + "PhotoCrossSec/Plot/");
+
     Plot();
 
     return;
@@ -21,15 +21,15 @@ void PhotoCrossSec_Plot()
 
 void Plot()
 {
-    ReadInputMeasurement();
+    ReadInput_Measurement();
 
-    ReadInputHSModel();
+    ReadInput_HSModel();
 
-    ReadInputGuzey();
+    ReadInput_Guzey();
 
-    ReadInputHeikki();
+    ReadInput_Heikki();
 
-    ReadInputSTARlight();
+    ReadInput_STARlight();
 
     // Fill the histogram
     for(Int_t i = 0; i < nPtBins; i++){
@@ -180,8 +180,9 @@ void Plot()
     l->SetFillStyle(0);  // legend is transparent
     l->Draw();
 
-    c->Print(Form("PhotoCrossSec/img_Plot/Plot_FeedDown%i_%ibins.pdf", iFeedDown, nPtBins));
-    c->Print(Form("PhotoCrossSec/img_Plot/Plot_FeedDown%i_%ibins.png", iFeedDown, nPtBins));
+    TString path = "Results/" + str_subfolder + Form("PhotoCrossSec/Plot/plot_%ibins", nPtBins);
+    c->Print((path + ".pdf").Data());
+    c->Print((path + ".png").Data());
 
     return;
 }

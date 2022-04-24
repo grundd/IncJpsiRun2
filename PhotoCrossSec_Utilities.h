@@ -1,5 +1,5 @@
 // PhotoCrossSec_Utilities.h
-// David Grund, Apr 05, 2022
+// David Grund, Apr 24, 2022
 
 // c++ headers
 #include <iostream>
@@ -22,6 +22,7 @@
 
 // my headers
 #include "AnalysisManager.h"
+#include "AnalysisConfig.h"
 
 // To read the values from the files:
 Double_t sig_val[5] = { 0 };
@@ -71,6 +72,8 @@ Double_t sig_HM_noflu[nData_HM];
 const Int_t nData_SL = 125;
 Double_t abs_t_SL[nData_SL];
 Double_t sig_SL[nData_SL];
+
+Int_t lineWidth = 2;
 
 //#####################################################################################################
 // Functions to read the input
@@ -191,11 +194,11 @@ void ReadInput_Heikki()
     return;
 }
 
-void ReadInputSTARlight()
+void ReadInput_STARlight()
 {
     // read the input file for Guzey's model predictions
     ifstream ifs;
-    ifs.open("PhotoCrossSec/STARlight/inc_tDep_0.00-2.50.txt");
+    ifs.open("Trees/PhotoCrossSec/STARlight/IncJ_tDep_0.00-2.50.txt");
     for(Int_t i = 0; i < nData_SL; i++){
         ifs >> abs_t_SL[i];
         ifs >> sig_SL[i];
