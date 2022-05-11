@@ -1,9 +1,10 @@
 // PhotoCrossSec_Total.C
-// David Grund, Apr 05, 2022
+// David Grund, May 11, 2022
 
 // cpp headers
 #include <vector>
 // root headers
+#include "TSystem.h"
 #include "TAxis.h"
 // my headers
 #include "PhotoCrossSec_Utilities.h"
@@ -17,27 +18,59 @@ Double_t err_stat_low(0), err_syst_low(0),
     err_stat_upp(0), err_syst_upp(0),
     err_tot(0);
 
+Double_t GraphIntegral(TString str_name, Int_t n_data, Double_t *abs_t_val, Double_t *sig_val, Double_t t_min, Double_t t_max);
+void GraphIntegralAll(Double_t t_min, Double_t t_max);
+void PlotTotal();
+void ModelsRatios(Double_t t_low_1, Double_t t_upp_1, Double_t t_low_2, Double_t t_upp_2);
+
+void PhotoCrossSec_Total(Int_t iAnalysis)
+{
+    InitAnalysis(iAnalysis);
+
+    gSystem->Exec("mkdir -p Results/" + str_subfolder + "PhotoCrossSec/Total/");
+
+    PlotTotal();
+
+    ModelsRatios(0.04,1.00,0.00,2.00);
+
+    return;
+}    
+
 Double_t GraphIntegral(TString str_name, Int_t n_data, Double_t *abs_t_val, Double_t *sig_val, Double_t t_min = 0.04, Double_t t_max = 1.00)
 {
     vector<Double_t> t_edges; 
     vector<Double_t> sigmas;
     t_edges.push_back(t_min);
     Int_t iPoint = 0;
+    Double_t new_t_edge = 0;
+    // while below desired range of |t|
     while(abs_t_val[iPoint] <= t_min) iPoint++;
-    while(abs_t_val[iPoint] < t_max){
-        if(iPoint == n_data-1){
-            t_edges.push_back(abs_t_val[iPoint] + (abs_t_val[iPoint] - t_edges.back()));
-            sigmas.push_back(sig_val[iPoint]);
+    // while within desired range of |t|
+    while(abs_t_val[iPoint] <= t_max)
+    {
+        // save the value of the cross section at this point
+        sigmas.push_back(sig_val[iPoint]);
+        // if last point from the dataset
+        if(iPoint == n_data-1)
+        {
+            new_t_edge = abs_t_val[iPoint] + (abs_t_val[iPoint] - t_edges.back());
+            t_edges.push_back(new_t_edge);
+            //Printf("%i \t%.4f \t%.5f", iPoint, new_t_edge, sig_val[iPoint]);
             break;
         } 
-        if((abs_t_val[iPoint] + abs_t_val[iPoint+1]) / 2. < t_max){
-            t_edges.push_back((abs_t_val[iPoint] + abs_t_val[iPoint+1]) / 2.);
-            sigmas.push_back(sig_val[iPoint]);
-            //Printf("%.4f \t%.5f", (abs_t_val[iPoint] + abs_t_val[iPoint+1]) / 2., sig_val[iPoint]);
+        if((abs_t_val[iPoint] + abs_t_val[iPoint+1]) / 2. < t_max)
+        {
+            new_t_edge = (abs_t_val[iPoint] + abs_t_val[iPoint+1]) / 2.;
+            t_edges.push_back(new_t_edge);
+            //Printf("%i \t%.4f \t%.5f", iPoint, new_t_edge, sig_val[iPoint]);
             iPoint++;
-        } else {
-            t_edges.push_back(t_max);
-            sigmas.push_back(sig_val[iPoint]);
+        } 
+        // if |t| extends beyond t_max before the dataset ends
+        else 
+        {
+            new_t_edge = t_max;
+            t_edges.push_back(new_t_edge);
+            //Printf("%i \t%.4f \t%.5f", iPoint, new_t_edge, sig_val[iPoint]);
             break;
         }
     }
@@ -74,7 +107,7 @@ Double_t GraphIntegral(TString str_name, Int_t n_data, Double_t *abs_t_val, Doub
     hist->GetXaxis()->SetTitleSize(0.05);
     hist->GetXaxis()->SetTitleOffset(1.2);
     hist->GetXaxis()->SetLabelSize(0.05);
-    hist->GetXaxis()->SetRangeUser(t_min,t_max);
+    //hist->GetXaxis()->SetRangeUser(t_min,t_max);
     // Draw histogram
     hist->Draw("");
     // Draw graph
@@ -106,8 +139,10 @@ Double_t GraphIntegral(TString str_name, Int_t n_data, Double_t *abs_t_val, Doub
 
     Int_t oldLevel = gErrorIgnoreLevel; 
     gErrorIgnoreLevel = kWarning; 
-    c->Print(Form("PhotoCrossSec/img_Total/%.2f-%.2f/%s.pdf", t_min, t_max, str_name.Data()));
-    c->Print(Form("PhotoCrossSec/img_Total/%.2f-%.2f/%s.png", t_min, t_max, str_name.Data()));
+    gSystem->Exec("mkdir -p Results/" + str_subfolder + Form("PhotoCrossSec/Total/%.2f-%.2f/", t_min, t_max));
+    TString path = "Results/" + str_subfolder + Form("PhotoCrossSec/Total/%.2f-%.2f/%s", t_min, t_max, str_name.Data());
+    c->Print((path + ".pdf").Data());
+    c->Print((path + ".png").Data());
     gErrorIgnoreLevel = oldLevel; 
 
     Printf("%s: %.3f micro barns.", str_name.Data(), integral_graph * 1e3);
@@ -121,12 +156,12 @@ Double_t GraphIntegral(TString str_name, Int_t n_data, Double_t *abs_t_val, Doub
 void GraphIntegralAll(Double_t t_min, Double_t t_max)
 {
     // STARlight
-    ReadInputSTARlight();
+    ReadInput_STARlight();
     TString str_SL = "STARlight";
     integral_SL = GraphIntegral(str_SL,nData_SL,abs_t_SL,sig_SL, t_min, t_max);    
 
     // HS model
-    ReadInputHSModel();
+    ReadInput_HSModel();
     // GG-hs
     TString str_HS_hs = "CCK GG-hs";
     integral_HS_hs = GraphIntegral(str_HS_hs,nData_HS,abs_t_HS,sig_HS_inc_hs, t_min, t_max);
@@ -135,7 +170,7 @@ void GraphIntegralAll(Double_t t_min, Double_t t_max)
     integral_HS_n = GraphIntegral(str_HS_n,nData_HS,abs_t_HS,sig_HS_inc_n, t_min, t_max);
 
     // Heikki's model
-    ReadInputHeikki();
+    ReadInput_Heikki();
     // IPsat fluctuations
     TString str_MS_fl = "MS IPsat flu";
     integral_MS_fl = GraphIntegral(str_MS_fl,nData_HM,abs_t_HM,sig_HM_fluct, t_min, t_max);
@@ -144,7 +179,7 @@ void GraphIntegralAll(Double_t t_min, Double_t t_max)
     integral_MS_nf = GraphIntegral(str_MS_nf,nData_HM,abs_t_HM,sig_HM_noflu, t_min, t_max);
 
     // Guzey's model
-    ReadInputGuzey();
+    ReadInput_Guzey();
     for (Int_t i = 0; i < nData_GZ; i++){
         sig_GZ_tot_min[i] = sig_GZ_tot_min[i] / 1e6;
         sig_GZ_tot_max[i] = sig_GZ_tot_max[i] / 1e6;
@@ -163,7 +198,7 @@ void PlotTotal()
 {
     Double_t MarkerSize = 2.;
     // Integrate data in 0.04 < |t| < 1.0 GeV^2
-    ReadInputMeasurement();
+    ReadInput_Measurement();
     Double_t integral_stat_low(0), integral_stat_upp(0);
     Double_t integral_syst_low(0), integral_syst_upp(0);
     for(Int_t i = 0; i < nPtBins; i++){
@@ -289,8 +324,9 @@ void PlotTotal()
         else latex[i]->DrawLatex(14.5,8.0-i,Form("#bf{%s}", names[i].Data()));
     }    
 
-    c->Print("PhotoCrossSec/img_Total/TotalCrossSection.pdf");
-    c->Print("PhotoCrossSec/img_Total/TotalCrossSection.png");
+    TString path = "Results/" + str_subfolder + "PhotoCrossSec/Total/TotalCrossSection";
+    c->Print((path + ".pdf").Data());
+    c->Print((path + ".png").Data());
 
     return;
 }
@@ -322,25 +358,17 @@ void ModelsRatios(Double_t t_low_1, Double_t t_upp_1, Double_t t_low_2, Double_t
     Printf("Ratio GZ up: %.3f", int_GZ_up_1/int_GZ_up_2);
     Printf("Ratio GZ lo: %.3f", int_GZ_lo_1/int_GZ_lo_2);
 
-    ofstream fout_ratios("PhotoCrossSec/img_Total/ratios.txt");
+    TString path = "Results/" + str_subfolder + "PhotoCrossSec/Total/ratios.txt";
+    ofstream fout_ratios(path.Data());
     fout_ratios << std::fixed << std::setprecision(3);
     fout_ratios << Form("Ratio STARlight: %.3f\n", int_SL_1/int_SL_2);
-    fout_ratios << Form("Ratio HS GG-hs:\t %.3f\n", int_HS_hs_1/int_HS_hs_2);
-    fout_ratios << Form("Ratio HS GG-n:\t %.3f\n", int_HS_n_1/int_HS_n_2);
-    fout_ratios << Form("Ratio MS fluct:\t %.3f\n", int_MS_fl_1/int_MS_fl_2);
-    fout_ratios << Form("Ratio MS noflu:\t %.3f\n", int_MS_nf_1/int_MS_nf_2);
-    fout_ratios << Form("Ratio GZ upp: \t %.3f\n", int_GZ_up_1/int_GZ_up_2);
-    fout_ratios << Form("Ratio GZ low: \t %.3f\n", int_GZ_lo_1/int_GZ_lo_2);
+    fout_ratios << Form("Ratio HS GG-hs:  %.3f\n", int_HS_hs_1/int_HS_hs_2);
+    fout_ratios << Form("Ratio HS GG-n:   %.3f\n", int_HS_n_1/int_HS_n_2);
+    fout_ratios << Form("Ratio MS fluct:  %.3f\n", int_MS_fl_1/int_MS_fl_2);
+    fout_ratios << Form("Ratio MS noflu:  %.3f\n", int_MS_nf_1/int_MS_nf_2);
+    fout_ratios << Form("Ratio GZ upp:    %.3f\n", int_GZ_up_1/int_GZ_up_2);
+    fout_ratios << Form("Ratio GZ low:    %.3f\n", int_GZ_lo_1/int_GZ_lo_2);
     fout_ratios.close();
-
-    return;
-}
-
-void PhotoCrossSec_Total()
-{
-    PlotTotal();
-
-    //ModelsRatios(0.04,1.00,0.00,2.00);
 
     return;
 }
