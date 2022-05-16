@@ -31,7 +31,7 @@ void PhotoCrossSec_Total(Int_t iAnalysis)
 
     PlotTotal();
 
-    ModelsRatios(0.04,1.00,0.00,2.00);
+    //ModelsRatios(0.04,1.00,0.00,2.00);
 
     return;
 }    
@@ -87,13 +87,13 @@ Double_t GraphIntegral(TString str_name, Int_t n_data, Double_t *abs_t_val, Doub
     gStyle->SetOptStat(0);
     gStyle->SetOptTitle(0);
     // Plots
-    TCanvas *c = new TCanvas("c","c",900,600);
-    c->SetLogy(); 
+    TCanvas *c1 = new TCanvas("c1","c1",900,600);
+    c1->SetLogy(); 
     // Margins
-    c->SetTopMargin(0.03);
-    c->SetBottomMargin(0.14);
-    c->SetRightMargin(0.03);
-    c->SetLeftMargin(0.12);
+    c1->SetTopMargin(0.03);
+    c1->SetBottomMargin(0.14);
+    c1->SetRightMargin(0.03);
+    c1->SetLeftMargin(0.12);
     // Histogram settings
     hist->SetTitle(";|#it{t}| (GeV^{2}); d#sigma_{#gammaPb}/d|#it{t}| (mb/GeV^{2})");    
     hist->SetLineColor(kBlue);
@@ -141,13 +141,13 @@ Double_t GraphIntegral(TString str_name, Int_t n_data, Double_t *abs_t_val, Doub
     gErrorIgnoreLevel = kWarning; 
     gSystem->Exec("mkdir -p Results/" + str_subfolder + Form("PhotoCrossSec/Total/%.2f-%.2f/", t_min, t_max));
     TString path = "Results/" + str_subfolder + Form("PhotoCrossSec/Total/%.2f-%.2f/%s", t_min, t_max, str_name.Data());
-    c->Print((path + ".pdf").Data());
-    c->Print((path + ".png").Data());
+    c1->Print((path + ".pdf").Data());
+    c1->Print((path + ".png").Data());
     gErrorIgnoreLevel = oldLevel; 
 
     Printf("%s: %.3f micro barns.", str_name.Data(), integral_graph * 1e3);
 
-    delete c;
+    delete c1;
     delete hist;
 
     return integral_graph;
@@ -282,7 +282,7 @@ void PlotTotal()
     Double_t x_max = 20.;
     axis->SetLimits(x_min,x_max);
     // Make the plot 
-    TCanvas *c = new TCanvas("c","c",900,600);
+    TCanvas *c2 = new TCanvas("c2","c2",900,600);
     TPad *pL = new TPad("pL","pL",0.0,0.0,0.03,1.0);
     pL->Draw();
     TPad *pR = new TPad("pR","pR",0.03,0.0,1.0,1.0);
@@ -325,8 +325,8 @@ void PlotTotal()
     }    
 
     TString path = "Results/" + str_subfolder + "PhotoCrossSec/Total/TotalCrossSection";
-    c->Print((path + ".pdf").Data());
-    c->Print((path + ".png").Data());
+    c2->Print((path + ".pdf").Data());
+    c2->Print((path + ".png").Data());
 
     return;
 }

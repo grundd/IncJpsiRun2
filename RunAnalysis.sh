@@ -8,8 +8,8 @@ declare -i iAnalysis=13
 # define if compile each macro
 declare -i compile=0
 # define which macros to run
-#declare -a arr=("0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12" "13" "14" "15" "16" "17" "18" "19" "20")
-declare -a arr=("0y" "1y" "2y" "3y" "4y" "5y" "6y" "7y" "8y" "9y" "10y" "11y" "12y" "13y" "14y" "15y" "16y" "17y" "18y" "19y" "20y")
+#declare -a arr=("0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12" "13" "14" "15" "16" "17" "18" "19" "20" "21")
+declare -a arr=("0y" "1y" "2y" "3y" "4y" "5y" "6y" "7y" "8y" "9y" "10y" "11y" "12y" "13y" "14y" "15y" "16y" "17y" "18y" "19y" "20y" "21y")
 
 # 0) Count events (data)
 if [ "${arr[0]}" = "0y" ] 
@@ -200,3 +200,11 @@ then
     fi
 fi
 
+# 22) Answer to comments from Raphaelle
+if [ "${arr[21]}" = "21y" ] 
+then
+    if [[ "$compile" -eq 0 ]]
+    then root -q RaphaelleComments.C\($iAnalysis\)
+    else root -q RaphaelleComments.C+\($iAnalysis\)
+    fi
+fi
