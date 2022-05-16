@@ -122,8 +122,12 @@ void R02_AcceptanceDimuons()
 
 void R02_FillHistogram(TTree *t, TH1 *h, Bool_t MC, Bool_t etaCut)
 {
-    for(Int_t iEntry = 0; iEntry < t->GetEntries(); iEntry++){
+    for(Int_t iEntry = 0; iEntry < t->GetEntries(); iEntry++)
+    {
         t->GetEntry(iEntry);
+
+        // Run number in the GoodHadronPID lists published by DPG
+        if(!RunNumberInListOfGoodRuns()) continue;
 
         // if not MC:
         if(!MC){
@@ -253,6 +257,9 @@ void R15_DeltaPhiVsPt()
     for(Int_t iEntry = 0; iEntry < t->GetEntries(); iEntry++)
     {
         t->GetEntry(iEntry);
+
+        // Run number in the GoodHadronPID lists published by DPG
+        if(!RunNumberInListOfGoodRuns()) continue;
 
         // pass1:
         // All selections applied on the GRID:
