@@ -16,15 +16,7 @@
 #include "AnalysisConfig.h"
 #include "SetPtBinning.h"
 
-Int_t nBins = 100;
-Double_t sigma_low = 0.0;
-Double_t sigma_upp = 20.;
-TH2D *hSigmasTPC = new TH2D("hSigmasTPC","hSigmasTPC",nBins,sigma_low,sigma_upp,nBins,sigma_low,sigma_upp);
-// horizontal axis = sigma if electron
-// vertical axis = sigma if muon
-
-void Plot2DHist_SigmasTPC(Bool_t isMC);
-void Plot2DHist_dEdxPosNeg();
+void Make2dHistograms(Bool_t isMC);
 Bool_t EventPassedLocal(Bool_t isMC);
 
 void ElectronsMuonsPID(Int_t iAnalysis)
@@ -34,15 +26,27 @@ void ElectronsMuonsPID(Int_t iAnalysis)
     gSystem->Exec("mkdir -p Results/" + str_subfolder + "ElectronsMuonsPID/");
 
     // data
-    Plot2DHist_SigmasTPC(kFALSE);
+    Make2dHistograms(kFALSE);
     // MC, kIncohJpsiToMu
-    Plot2DHist_SigmasTPC(kTRUE);
+    Make2dHistograms(kTRUE);
 
     return;
 }
 
-void Plot2DHist_SigmasTPC(Bool_t isMC)
+void Make2dHistograms(Bool_t isMC)
 {
+    Int_t nBins1 = 100;
+    Double_t sigma_low = 0.0;
+    Double_t sigma_upp = 20.0;
+    Int_t nBins2 = 200;
+    Double_t dEdx_low = 0.0;
+    Double_t dEdx_upp = 150.0;
+    // horizontal axis = sigma if electron, vertical axis = sigma if muon
+    TH2D *hSigmasTPC = new TH2D("hSigmasTPC","hSigmasTPC",nBins1,sigma_low,sigma_upp,nBins1,sigma_low,sigma_upp);
+    // horizontal axis = dEdx for negative lepton, vertical axis = dEdx for positive lepton
+    TH2D *hdEdxElec = new TH2D("hdEdxElec","hdEdxElec",nBins2,dEdx_low,dEdx_upp,nBins2,dEdx_low,dEdx_upp);
+    TH2D *hdEdxMuon = new TH2D("hdEdxMuon","hdEdxMuon",nBins2,dEdx_low,dEdx_upp,nBins2,dEdx_low,dEdx_upp);
+
     // Load data
     TString str_f_in, str_t_in;
     if(isMC){
@@ -70,7 +74,22 @@ void Plot2DHist_SigmasTPC(Bool_t isMC)
         t->GetEntry(iEntry);
         Double_t SigmaIfEls = TMath::Sqrt(fTrk1SigIfEl*fTrk1SigIfEl + fTrk2SigIfEl*fTrk2SigIfEl);
         Double_t SigmaIfMus = TMath::Sqrt(fTrk1SigIfMu*fTrk1SigIfMu + fTrk2SigIfMu*fTrk2SigIfMu);
-        if(EventPassedLocal(isMC)) hSigmasTPC->Fill(SigmaIfEls,SigmaIfMus);
+        if(EventPassedLocal(isMC))
+        {
+            // plot with sigmas from TPC:
+            hSigmasTPC->Fill(SigmaIfEls,SigmaIfMus);
+
+            // plot with dEdx for the negative and positive lepton:
+            // if considered muons
+            //if(SigmaIfMus < SigmaIfEls){ 
+                if(fQ1 < 0) hdEdxMuon->Fill(fTrk1dEdx, fTrk2dEdx);
+                else        hdEdxMuon->Fill(fTrk2dEdx, fTrk1dEdx);
+            // if considered electrons
+            //} else {
+            //    if(fQ1 < 0) hdEdxElec->Fill(fTrk1dEdx, fTrk2dEdx);
+            //    else        hdEdxElec->Fill(fTrk2dEdx, fTrk1dEdx);
+            //}    
+        }
 
         if((iEntry+1) % 100000 == 0){
             nEntriesAnalysed += 100000;
@@ -83,12 +102,15 @@ void Plot2DHist_SigmasTPC(Bool_t isMC)
     gStyle->SetOptStat(0);
     //gStyle->SetPalette(1);
 
-    TCanvas *c = new TCanvas("c","c",900,800);
-    c->SetGrid();
-    c->SetTopMargin(0.03);
-    c->SetBottomMargin(0.145);
-    c->SetRightMargin(0.11);
-    c->SetLeftMargin(0.13);
+    // ******************************************************************************************
+    // plot with sigmas from TPC:
+    TCanvas *c1 = new TCanvas("c1","c1",900,800);
+    c1->SetGrid();
+    c1->SetTopMargin(0.03);
+    c1->SetBottomMargin(0.145);
+    c1->SetRightMargin(0.11);
+    c1->SetLeftMargin(0.13);
+    if(isMC) c1->SetLogz();
 
     // horizontal axis
     hSigmasTPC->GetXaxis()->SetTitle("#sqrt{#it{N}#sigma_{e}^{2}(+) + #it{N}#sigma_{e}^{2}(-)}");
@@ -136,12 +158,57 @@ void Plot2DHist_SigmasTPC(Bool_t isMC)
     //leg_mu->SetFillColor(kBlue);
     leg_mu->Draw();
 
-    TString str_out;
-    if(isMC) str_out = "Results/" + str_subfolder + "ElectronsMuonsPID/data_h2D_SigmasTPC";
-    else     str_out = "Results/" + str_subfolder + "ElectronsMuonsPID/MC_h2D_SigmasTPC";
+    TString str_out1;
+    if(isMC) str_out1 = "Results/" + str_subfolder + "ElectronsMuonsPID/h2D_SigmasTPC_MC";
+    else     str_out1 = "Results/" + str_subfolder + "ElectronsMuonsPID/h2D_SigmasTPC_data";
 
-    c->Print((str_out + ".pdf").Data());
-    c->Print((str_out + ".png").Data());
+    c1->Print((str_out1 + ".pdf").Data());
+    c1->Print((str_out1 + ".png").Data());
+
+    // ******************************************************************************************
+    // plot with dEdx
+    TCanvas *c2 = new TCanvas("c2","c2",900,800);
+    c2->SetGrid();
+    c2->SetTopMargin(0.03);
+    c2->SetBottomMargin(0.145);
+    c2->SetRightMargin(0.11);
+    c2->SetLeftMargin(0.13);
+    if(isMC) c2->SetLogz();
+
+    // horizontal axis
+    hdEdxMuon->GetXaxis()->SetTitle("dE/dx^{TPC}(l^{-}) (a.u.)");
+    hdEdxMuon->GetXaxis()->SetTitleSize(0.05);
+    hdEdxMuon->GetXaxis()->SetTitleOffset(1.15);
+    hdEdxMuon->GetXaxis()->SetLabelSize(0.05);
+    hdEdxMuon->GetXaxis()->SetDecimals(0);
+    // vertical axis
+    hdEdxMuon->GetYaxis()->SetTitle("dE/dx^{TPC}(l^{+}) (a.u.)");
+    hdEdxMuon->GetYaxis()->SetTitleSize(0.05);
+    hdEdxMuon->GetYaxis()->SetTitleOffset(1.15);
+    hdEdxMuon->GetYaxis()->SetLabelSize(0.05);
+    hdEdxMuon->GetYaxis()->SetDecimals(0);
+    // Z-axis
+    //hSigmasTPC->GetZaxis()->SetLabelSize(0.05);
+    // Set ranges, colors and draw
+    hdEdxMuon->GetYaxis()->SetRangeUser(30.,120.0);
+    hdEdxMuon->GetXaxis()->SetRangeUser(30.,120.0);
+    //hdEdxElec->SetMarkerStyle(20); 
+    //hdEdxMuon->SetMarkerStyle(20);
+    //hdEdxElec->SetMarkerColor(kBlue);  
+    //hdEdxMuon->SetMarkerColor(kRed);
+    //hdEdxElec->Draw("COLZ");
+    hdEdxMuon->Draw("COLZ");
+
+    TString str_out2;
+    if(isMC) str_out2 = "Results/" + str_subfolder + "ElectronsMuonsPID/h2D_dEdx_MC";
+    else     str_out2 = "Results/" + str_subfolder + "ElectronsMuonsPID/h2D_dEdx_data";
+
+    c2->Print((str_out2 + ".pdf").Data());
+    c2->Print((str_out2 + ".png").Data());
+
+    delete hSigmasTPC;
+    delete hdEdxElec;
+    delete hdEdxMuon;
 
     return;
 }
