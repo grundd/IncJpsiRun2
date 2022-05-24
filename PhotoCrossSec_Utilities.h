@@ -83,7 +83,7 @@ void ReadInput_Measurement()
     // read the input file for measured cross section
     ifstream ifs;
     t_boundaries[0] = 0.04;
-    TString str = "Results" + str_subfolder + "PhotoCrossSec/CrossSec_photo.txt";
+    TString str = "Results/" + str_subfolder + "PhotoCrossSec/CrossSec_photo.txt";
     ifs.open(str.Data());
     if(!ifs.fail()){
         Int_t i = 0;
@@ -101,8 +101,7 @@ void ReadInput_Measurement()
     }
     Printf("Values of the photonuclear cross section loaded.");
 
-    /*
-    str = Form("DependenceOnT/output_%ibins.txt", nPtBins);
+    str = "Results/" + str_subfolder + "STARlight_tVsPt/AvgTPerBin.txt";
     ifs.open(str.Data()); 
     if(!ifs.fail()){
         Int_t i = 0;
@@ -117,7 +116,6 @@ void ReadInput_Measurement()
         ifs.close();
     }  
     Printf("Values of an avg |t| value per bin loaded.");
-    */
 
     return;
 }

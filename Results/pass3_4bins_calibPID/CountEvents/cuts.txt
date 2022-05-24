@@ -10,7 +10,7 @@
 7b) V0C offline veto:	1424147
 8) SPD match FOhits: 	615894
 9) muon pairs only:  	540240
-10) dilept |y| < 0.8: 	529748
+10) dilept |y| < 0.8:	529748
 11) trks |eta| < 0.8:	437569
 12) opposite charges:	356366
 13) mass 2.2 to 4.5: 	16744

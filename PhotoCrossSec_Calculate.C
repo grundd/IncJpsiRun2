@@ -293,26 +293,22 @@ void CalculateCrossSec_PtBins()
 
     //#####################################################################################################
     // Load avg values of |t| per bin
-    // ... (to do) ...
-    /*
-    TString str_avgT = Form("DependenceOnT/output_%ibins.txt", nPtBins);
-    ifs.open(str_avgT.Data()); 
+    TString str_t_avg = "Results/" + str_subfolder + "STARlight_tVsPt/AvgTPerBin.txt";
+    ifs.open(str_t_avg.Data()); 
+    // Read data from the file
     if(!ifs.fail()){
-        Int_t i = 0;
-        std::string str;
-        while(std::getline(ifs,str)){
-            Printf("Reading line %i: %s", i, str.data());
-            istringstream istr(str);
-            istr >> i_bin >> t_avg_val[i];
-            i++;   
+        for(Int_t iBin = 0; iBin < nPtBins; iBin++)
+        {
+            Int_t bin;
+            ifs >> bin >> t_avg_val[iBin];
+            if(kFALSE) Printf("Reading: bin %i, |t| = %.4f", bin, t_avg_val[iBin]);
         }
-        ifs.close();
     } else {
-        PrintErr(str_avgT);
-        return;         
+        PrintErr(str_t_avg);
+        return;
     }
-    Printf("6) Values of avg |t| values per bin loaded.");
-    */
+    ifs.close();
+    Printf("Values of an avg |t| value per bin loaded.");
 
     //#####################################################################################################
     // Print the results to text files

@@ -4,12 +4,12 @@
 # ./RunAnalysis.sh
 
 # define the type of the analysis (see AnalysisConfig.h)
-declare -i iAnalysis=13
+declare -i iAnalysis=12
 # define if compile each macro
 declare -i compile=0
 # define which macros to run
-#declare -a arr=("0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12" "13" "14" "15" "16" "17" "18" "19" "20" "21" "22")
-declare -a arr=("0y" "1y" "2y" "3y" "4y" "5y" "6y" "7y" "8y" "9y" "10y" "11y" "12y" "13y" "14y" "15y" "16y" "17y" "18y" "19y" "20y" "21y" "22y")
+#declare -a arr=("0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12" "13" "14" "15" "16" "17" "18" "19" "20" "21" "22" "23" "24" "25")
+declare -a arr=("0y" "1y" "2y" "3y" "4y" "5y" "6y" "7y" "8y" "9y" "10y" "11y" "12y" "13y" "14y" "15y" "16y" "17y" "18y" "19y" "20y" "21y" "22y" "23y" "24y" "25y")
 
 # 0) Count events (data)
 if [ "${arr[0]}" = "0y" ] 
@@ -164,8 +164,17 @@ then
     fi
 fi
 
-# 17) Calculate the photonuclear cross section
+# 17) Calculate the average |t| per bin based on STARlight predictions
 if [ "${arr[17]}" = "17y" ] 
+then
+    if [[ "$compile" -eq 0 ]]
+    then root -q STARlight_tVsPt.C\($iAnalysis\)
+    else root -q STARlight_tVsPt.C+\($iAnalysis\)
+    fi
+fi
+
+# 18) Calculate the photonuclear cross section
+if [ "${arr[18]}" = "18y" ] 
 then
     if [[ "$compile" -eq 0 ]]
     then root -q PhotoCrossSec_Calculate.C\($iAnalysis\)
@@ -173,8 +182,8 @@ then
     fi
 fi
 
-# 18) Plot the photonuclear cross section
-if [ "${arr[18]}" = "18y" ] 
+# 19) Plot the photonuclear cross section
+if [ "${arr[19]}" = "19y" ] 
 then
     if [[ "$compile" -eq 0 ]]
     then root -q PhotoCrossSec_Plot.C\($iAnalysis\)
@@ -182,8 +191,8 @@ then
     fi
 fi
 
-# 19) Plot the photonuclear cross section with ratios
-if [ "${arr[19]}" = "19y" ] 
+# 20) Plot the photonuclear cross section with ratios
+if [ "${arr[20]}" = "20y" ] 
 then
     if [[ "$compile" -eq 0 ]]
     then root -q PhotoCrossSec_PlotWithRatios.C\($iAnalysis\)
@@ -191,8 +200,8 @@ then
     fi
 fi
 
-# 20) Plot the total cross section (integrated over |t|)
-if [ "${arr[20]}" = "20y" ] 
+# 21) Plot the total cross section (integrated over |t|)
+if [ "${arr[21]}" = "21y" ] 
 then
     if [[ "$compile" -eq 0 ]]
     then root -q PhotoCrossSec_Total.C\($iAnalysis\)
@@ -200,20 +209,38 @@ then
     fi
 fi
 
-# 21) Answer to comments from Raphaelle
-if [ "${arr[21]}" = "21y" ] 
+# 22) Migration of events between pT bins
+if [ "${arr[22]}" = "22y" ] 
 then
     if [[ "$compile" -eq 0 ]]
-    then root -q RaphaelleComments.C\($iAnalysis\)
-    else root -q RaphaelleComments.C+\($iAnalysis\)
+    then root -q MigrationPtReecGen.C\($iAnalysis\)
+    else root -q MigrationPtReecGen.C+\($iAnalysis\)
     fi
 fi
 
-# 22) Make PID plots (muon-electron separation)
-if [ "${arr[22]}" = "22y" ] 
+# 23) Calculate pT resolution as a FWHM value
+if [ "${arr[23]}" = "23y" ] 
+then
+    if [[ "$compile" -eq 0 ]]
+    then root -q ResolutionPt.C\($iAnalysis\)
+    else root -q ResolutionPt.C+\($iAnalysis\)
+    fi
+fi
+
+# 24) Make PID plots (muon-electron separation)
+if [ "${arr[24]}" = "24y" ] 
 then
     if [[ "$compile" -eq 0 ]]
     then root -q ElectronsMuonsPID.C\($iAnalysis\)
     else root -q ElectronsMuonsPID.C+\($iAnalysis\)
+    fi
+fi
+
+# 25) Answers to comments from Raphaelle
+if [ "${arr[25]}" = "25y" ] 
+then
+    if [[ "$compile" -eq 0 ]]
+    then root -q RaphaelleComments.C\($iAnalysis\)
+    else root -q RaphaelleComments.C+\($iAnalysis\)
     fi
 fi

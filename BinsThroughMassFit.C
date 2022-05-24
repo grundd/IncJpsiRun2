@@ -339,6 +339,8 @@ void BinsThroughMassFit_DoFit(Double_t fPtCutLow, Double_t fPtCutUpp, Bool_t sav
         cHist->Print((str + ".png").Data()); 
     }
 
+    f_in->Close();
+
     return;
 }
 

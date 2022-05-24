@@ -24,6 +24,8 @@ void _STARlight_PrepareSTARlightTree()
     PrepareTrees_ChooseDataset(40);
     PrepareTrees_ChooseDataset(41);
 
+    // IncJ: |t| vs. pT of the J_psi
+    PrepareTrees_ChooseDataset(68);
 
     return;
 }
@@ -83,6 +85,13 @@ void PrepareTrees_ChooseDataset(Int_t iDS){
         nGenEv = 6000000;
         folder_in = "STARlight_src/installation/IncP_7.350/";
         folder_out = "Trees/STARlight/IncP_7.350/";
+    } else if(iDS == 68){
+        // May 24, 2022
+        // IncJ, R_A = 6.624 fm, PtGammaVMPom.txt produced
+        nGenEv = 6000000;
+        folder_in = "STARlight_src/installation/IncJ_tVsPt/";
+        folder_out = "Trees/STARlight/IncJ_tVsPt/";
+        PrepareTreesPtGammaVMPom(nGenEv, folder_in, folder_out);
     } 
 
     gSystem->Exec("mkdir -p " + folder_out);

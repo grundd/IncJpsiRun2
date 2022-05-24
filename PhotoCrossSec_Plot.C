@@ -59,6 +59,7 @@ void Plot()
     grData_syst->SetMarkerSize(0);
     grData_syst->SetMarkerStyle(1);
     grData_syst->SetMarkerColor(kBlack);
+    grData_syst->SetLineWidth(0); // to have no line around the box
 
     // STARlight
     TGraph *gr_SL = new TGraph(nData_SL, abs_t_SL, sig_SL);

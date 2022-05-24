@@ -1,5 +1,5 @@
 // _STARlight_Utilities.h
-// David Grund, Mar 07, 2022
+// David Grund, May 24, 2022
 
 // cpp headers
 #include <iostream>
@@ -41,6 +41,71 @@ void ConnectTreeVariables_tSL(TTree *tSL)
     Printf("Variables from %s connected.", tSL->GetName());
 
     return;
+}
+
+//###############################################################################
+// To create tree from the file PtGammaVMPom.txt
+
+void PrepareTreesPtGammaVMPom(Int_t nGenEv, TString folder_in, TString folder_out)
+{
+	TString name_out = folder_out + "tree_tPtGammaVMPom.root";
+    TFile *f_out = TFile::Open(name_out.Data(),"read");
+    if(f_out){
+        Printf("Tree %s already created.", name_out.Data());
+        return;
+
+    } else {  
+
+		Printf("Tree %s will be created.", name_out.Data());
+
+		// create the output file and tree
+		f_out = new TFile(name_out.Data(), "RECREATE");
+		if(!f_out){
+			Printf("Could not create output file %s. Terminating...", name_out.Data());
+			return;
+		}
+
+		TTree *tPtGammaVMPom = new TTree("tPtGammaVMPom", "tPtGammaVMPom");
+		tPtGammaVMPom->Branch("fPtGm", &fPtGm, "fPtGm/D");
+		tPtGammaVMPom->Branch("fPtVM", &fPtVM, "fPtVM/D");
+		tPtGammaVMPom->Branch("fPtPm", &fPtPm, "fPtPm/D");
+
+		Int_t nEntriesAnalysed = 0;
+		Int_t nEntriesProgress = (Double_t)nGenEv / 20.;
+		Int_t nPercent = 0;
+
+		ifstream ifs;
+		ifs.open((folder_in + "PtGammaVMPom.txt").Data());
+		if(!ifs.fail()){
+			for(Int_t i = 0; i < nGenEv; i++){
+				ifs >> fPtGm >> fPtVM >> fPtPm;
+				tPtGammaVMPom->Fill();
+
+				if((i+1) % nEntriesProgress == 0){
+				nPercent += 5;
+				nEntriesAnalysed += nEntriesProgress;
+				Printf("[%i%%] %i entries analysed.", nPercent, nEntriesAnalysed);
+				}
+			}
+			ifs.close();
+		} else {
+			Printf("File %s missing. Terminating.", (folder_in + "PtGammaVMPom.txt").Data());
+			return;
+		}
+
+		tPtGammaVMPom->Write("",TObject::kWriteDelete);
+		if(f_out){
+			f_out->Close();
+			delete f_out;
+		}
+
+		Printf("*****");
+		Printf("Done.");
+		Printf("*****");
+		Printf("\n\n");
+
+		return;
+	}
 }
 
 //###############################################################################
