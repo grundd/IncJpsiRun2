@@ -4,7 +4,7 @@
 # ./RunAnalysis.sh
 
 # define the type of the analysis (see AnalysisConfig.h)
-declare -i iAnalysis=12
+declare -i iAnalysis=100
 # define if compile each macro
 declare -i compile=0
 # define which macros to run

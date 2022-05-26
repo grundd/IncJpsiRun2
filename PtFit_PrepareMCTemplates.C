@@ -387,7 +387,7 @@ void PtFit_PreparePDFs_modRA_all(Bool_t bStopWeigh)
                     Printf("This option is not supported. Skipping..."); 
                     continue;
                 }
-                // detine the output histogram with rec. events
+                // define the output histogram with rec. events
                 h_modRA[iMC] = new TH1D(str_modRA[iMC].Data(),str_modRA[iMC].Data(),nPtBins_PtFit,ptBoundaries_PtFit);
                 // define the paths to the file and tRec
                 TString str_f_in = "Trees/AnalysisDataMC_pass3/AnalysisResults_MC_";

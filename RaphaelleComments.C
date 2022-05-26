@@ -275,7 +275,7 @@ void R15_DeltaPhiVsPt()
             // 2) At least two tracks associated with the vertex
             if(fVertexContrib < 2) continue;
             // 3) Distance from the IP lower than 15 cm
-            if(fVertexZ > 15) continue;
+            if(fVertexZ > cut_fVertexZ) continue;
         }
 
         // 4) Central UPC trigger CCUP31: V0 and AD vetoes

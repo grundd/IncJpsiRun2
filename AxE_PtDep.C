@@ -129,12 +129,12 @@ void AxE_PtDep(Int_t iAnalysis)
     gSystem->Exec("mkdir -p Results/" + str_subfolder + "AxE_PtDep/ratios/");
 
     // ratios vs pt rec
-    cuts[0] = 0;
-    CalculateRatiosOfNRec();
+    //cuts[0] = 0;
+    //CalculateRatiosOfNRec();
 
     // ratios vs pt gen
-    cuts[0] = 1;
-    CalculateRatiosOfNRec();
+    //cuts[0] = 1;
+    //CalculateRatiosOfNRec();
     //#########################################################################
 
     return;

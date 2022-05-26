@@ -38,10 +38,12 @@ void PlotAndFitHistograms(Int_t iDataset, Bool_t calibrated = kFALSE);
 //          = 8 => kTwoGammaToElMedium
 void CalculateAverageShift(Bool_t calibrated);
 void ShiftPIDSignal(Int_t iDataset, Bool_t pass3);
+void PlotHistogramsSigmas(TString name, TCanvas *c, TH1D *h_ifmu, TH1D *h_ifel, TF1 *f_ifmu = NULL, TF1 *f_ifel = NULL);
 
 void _CheckPIDdEdx()
 {
     if(kTRUE){
+
         gSystem->Exec("mkdir -p Results/_CheckPIDdEdx/");
 
         // data
@@ -57,13 +59,13 @@ void _CheckPIDdEdx()
         // repair NSigmas and kinematics in: kCohJpsiToMu, kCohPsi2sToMuPi, 
         // kIncohJpsiToMu, kIncohPsi2sToMuPi and kTwoGammaToMuMedium
         gSystem->Exec("mkdir -p Trees/AnalysisDataMC_pass3/PIDCalibrated/");
-        for(Int_t i = 1; i <= 8; i++) ShiftPIDSignal(i, kTRUE);
+        //for(Int_t i = 1; i <= 8; i++) ShiftPIDSignal(i, kTRUE);
     
         // MC datasets after NSigmas are calibrated
         for(Int_t i = 1; i <= 8; i++) PlotAndFitHistograms(i, kTRUE); 
 
         // calculate average shifts after NSigmas are calibrated
-        CalculateAverageShift(kTRUE);          
+        CalculateAverageShift(kTRUE);       
     } 
 
     return;
@@ -124,7 +126,7 @@ void PlotAndFitHistograms(Int_t iDataset, Bool_t calibrated)
 
     // histograms
     Int_t nBins = 100;
-    Double_t range(15.);
+    Double_t range(10.);
     TH1D *hSigmaTPC[4] = { NULL };
     hSigmaTPC[0] = new TH1D("pass1_SigIfMu", "pass1_SigIfMu", nBins, -range, range);
     hSigmaTPC[1] = new TH1D("pass1_SigIfEl", "pass1_SigIfEl", nBins, -range, range);
@@ -233,48 +235,136 @@ void PlotAndFitHistograms(Int_t iDataset, Bool_t calibrated)
         hSigmaTPC[3]->Fill(fTrk2SigIfEl);  
     }
 
-    // plot histograms
-    TCanvas *c = new TCanvas("c","c",900,700);
-    c->Divide(2,2,0,0);
-    for(Int_t i = 0; i < 4; i++){
-        c->cd(i+1);
-        hSigmaTPC[i]->Draw();
-    }
-
     // fit histograms
-    TF1 *fGauss[4] = { 0 };
-    if(iDataset != 0){
+    TF1 *fGauss[4] = { NULL };
+    if(iDataset != 0)
+    {
         for(Int_t i = 0; i < 4; i++){
             fGauss[i] = new TF1(Form("fGauss%i", i+1), "gaus", -range, range);
             hSigmaTPC[i]->Fit(fGauss[i]);
         }
     }
 
+    TString name = "0";
+    if(iDataset == 0) name = "LHC18qr";
+    else              name = DatasetsMCNames[iDataset-1];
+
+    // plot histograms for both passes separately
+    TCanvas *c_p1 = new TCanvas("c_p1","c_p1",900,600);
+    // draw everything
+    PlotHistogramsSigmas(name,c_p1,hSigmaTPC[0],hSigmaTPC[1],fGauss[0],fGauss[1]);
+
+    TCanvas *c_p3 = new TCanvas("c_p3","c_p3",900,600);
+    // draw everything
+    PlotHistogramsSigmas(name,c_p3,hSigmaTPC[2],hSigmaTPC[3],fGauss[2],fGauss[3]);
+
     // print the plots and (if MC) print the values of the fitted means
-    TString str_f_out = "";
-    if(iDataset == 0) str_f_out = "Results/_CheckPIDdEdx/data_LHC18qr";
-    else {
-        if(!calibrated) str_f_out = "Results/_CheckPIDdEdx/no_calibration/";
-        else            str_f_out = "Results/_CheckPIDdEdx/calibrated/";
-        gSystem->Exec("mkdir -p " + str_f_out);
+    TString str_out = "";
+    if(iDataset == 0)
+    {
+        str_out = "Results/_CheckPIDdEdx/data_LHC18qr";
+    } 
+    else 
+    {
+        if(!calibrated) str_out = "Results/_CheckPIDdEdx/no_calibration/";
+        else            str_out = "Results/_CheckPIDdEdx/calibrated/";
+        gSystem->Exec("mkdir -p " + str_out);
 
         TString str_dataset = Form("MC_%s", DatasetsMCNames[iDataset-1].Data());
 
-        ofstream f_out((str_f_out + "means_" + str_dataset + ".txt").Data());
+        ofstream f_out((str_out + "means_" + str_dataset + ".txt").Data());
         f_out << std::fixed << std::setprecision(3);
         for(Int_t i = 0; i < 4; i++){
             f_out << fGauss[i]->GetParameter(1) << endl;
         }
         f_out.close();
-        Printf("*** Results printed to %s.***", (str_f_out + "means_" + str_dataset + ".txt").Data());
+        Printf("*** Results printed to %s.***", (str_out + "means_" + str_dataset + ".txt").Data());
 
-        str_f_out += str_dataset;
+        str_out += str_dataset;
     }
 
-    c->Print((str_f_out + ".png").Data());
-    c->Print((str_f_out + ".pdf").Data());
+    c_p1->Print((str_out + "_p1.pdf").Data());
+    c_p3->Print((str_out + "_p3.pdf").Data());
 
-    delete c;
+    return;
+}
+
+void PlotHistogramsSigmas(TString name, TCanvas *c, TH1D *h_ifmu, TH1D *h_ifel, TF1 *f_ifmu, TF1 *f_ifel)
+{
+    gStyle->SetOptTitle(0);
+    gStyle->SetOptStat(0);
+
+    c->SetTopMargin(0.06);
+    c->SetBottomMargin(0.12);
+    c->SetRightMargin(0.03);
+    c->SetLeftMargin(0.08);
+
+    TH1D *h_max = NULL; // histogram with the maximum entry
+    TH1D *h_other = NULL;
+    Double_t max_ifmu = h_ifmu->GetBinContent(h_ifmu->GetMaximumBin());
+    Double_t max_ifel = h_ifel->GetBinContent(h_ifel->GetMaximumBin());
+    if(max_ifmu > max_ifel){
+        h_max = h_ifmu;
+        h_other = h_ifel;
+    } else {
+        h_max = h_ifel;
+        h_other = h_ifmu;
+    }
+    // horizontal axis
+    h_max->GetXaxis()->SetTitle("#sigma_{l,#it{i}} [-]");
+    h_max->GetXaxis()->SetTitleSize(0.05);
+    h_max->GetXaxis()->SetTitleOffset(1.15);
+    h_max->GetXaxis()->SetLabelSize(0.05);
+    h_max->GetXaxis()->SetDecimals(1);
+    // vertical axis
+    h_max->GetYaxis()->SetTitle("Counts");
+    h_max->GetYaxis()->SetTitleSize(0.05);
+    h_max->GetYaxis()->SetTitleOffset(0.75);
+    h_max->GetYaxis()->SetLabelSize(0.05);
+    h_max->GetYaxis()->SetMaxDigits(3);
+    // set style of the histograms and fits
+    h_max->SetLineWidth(1);
+    if(f_ifmu != NULL){
+        f_ifmu->SetLineStyle(2);
+        f_ifmu->SetLineWidth(2);
+        f_ifel->SetLineStyle(2);
+        f_ifel->SetLineWidth(2);
+        f_ifmu->SetLineColor(kBlue+1);
+        f_ifel->SetLineColor(kRed+1);
+    } 
+    h_ifmu->SetLineColor(kBlue);
+    h_ifel->SetLineColor(kRed);
+    // draw everything
+    c->cd();
+    h_max->Draw("HIST");
+    h_other->Draw("HIST SAME");
+    if(f_ifmu != NULL){
+        f_ifmu->Draw("SAME");
+        f_ifel->Draw("SAME");
+    } 
+
+    TLegend *l = NULL;
+    if(f_ifmu != NULL) l = new TLegend(0.73,0.70,0.95,0.93);
+    else               l = new TLegend(0.85,0.80,0.95,0.93);
+    l->AddEntry(h_ifmu,"#sigma_{#mu,i}","L"); 
+    if(f_ifmu != NULL) l->AddEntry(f_ifmu,Form("mean = %.2f", f_ifmu->GetParameter(1)),"L"); 
+    l->AddEntry(h_ifel,"#sigma_{e,i}","L"); 
+    if(f_ifmu != NULL) l->AddEntry(f_ifel,Form("mean = %.2f", f_ifel->GetParameter(1)),"L"); 
+    l->SetTextSize(0.05);
+    l->SetBorderSize(0);
+    l->SetFillColor(0);
+    if(f_ifmu != NULL) l->SetMargin(0.2);
+    else               l->SetMargin(0.4);
+    l->Draw();
+
+    TLegend *l_name = new TLegend(0.12,0.86,0.38,0.93);
+    l_name->AddEntry((TObject*)0,name.Data(),"");
+    l_name->SetTextSize(0.05);
+    l_name->SetBorderSize(0);
+    l_name->SetBorderSize(0);
+    l_name->SetFillStyle(0);
+    l_name->SetMargin(0.);
+    l_name->Draw();
 
     return;
 }
@@ -513,7 +603,6 @@ void ShiftPIDSignal(Int_t iDataset, Bool_t pass3)
             nEntriesAnalysed += 100000;
             Printf("%i entries analysed.", nEntriesAnalysed);
         }
-
     }
 
     // create new file
