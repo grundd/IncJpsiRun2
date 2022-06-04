@@ -381,13 +381,17 @@ void InvMassFit_DoFit(Int_t opt, Double_t fMCutLow, Double_t fMCutUpp, Double_t 
     l2->SetFillStyle(0);
     l2->Draw();
 
-    TLegend *l3 = new TLegend(0.74,0.48,0.85,0.58);
-    l3->AddEntry((TObject*)0,Form("#it{n}_{L} = %.2f", n_L.getVal()),"");
-    l3->AddEntry((TObject*)0,Form("#it{n}_{R} = %.2f", n_R.getVal()),"");
-    l3->SetTextSize(0.040); // was 0.042
-    l3->SetBorderSize(0);
-    l3->SetFillStyle(0);
-    l3->Draw();
+    TLegend *l3 = NULL;
+    if(!isNParInDSCBFixed)
+    {
+        l3 = new TLegend(0.74,0.48,0.85,0.58);
+        l3->AddEntry((TObject*)0,Form("#it{n}_{L} = %.2f", n_L.getVal()),"");
+        l3->AddEntry((TObject*)0,Form("#it{n}_{R} = %.2f", n_R.getVal()),"");
+        l3->SetTextSize(0.040); // was 0.042
+        l3->SetBorderSize(0);
+        l3->SetFillStyle(0);
+        l3->Draw();
+    }
 
     // Print the numbers of events to text file
     ofstream outfile((str_out + ".txt").Data());

@@ -212,7 +212,8 @@ void CalculateCrossSec_PtBins()
             (Lumi_val * 1000) *
             BR_val * 
             RapWidth * Pt2Widths[iBin] );
-        Sigma_UPC_err_stat[iBin] = Sigma_UPC_val[iBin] * N_yield_err[iBin] / N_yield_val[iBin];
+        Sigma_UPC_err_stat[iBin] = Sigma_UPC_val[iBin] * TMath::Sqrt(TMath::Power(N_yield_err[iBin] / N_yield_val[iBin], 2)
+            + TMath::Power(AxE_err[iBin] / AxE_val[iBin], 2));
     }
 
     //#####################################################################################################
@@ -229,12 +230,6 @@ void CalculateCrossSec_PtBins()
         return;        
     }
     ifs.close();
-
-    //#####################################################################################################
-    // Systematic uncertainties: MC AxE => should these be considered?
-    for(Int_t iBin = 0; iBin < nPtBins; iBin++){
-        ErrSyst_AxE[iBin] = AxE_err[iBin] / AxE_val[iBin] * 100.;
-    }
 
     //#####################################################################################################
     // Systematic uncertainties: FC AND FD
@@ -267,7 +262,6 @@ void CalculateCrossSec_PtBins()
         // Total systematic uncertainty of sigma UPC
         Sigma_UPC_err_syst[iBin] = Sigma_UPC_val[iBin] * TMath::Sqrt(
             TMath::Power(ErrSyst_SigExtr[iBin] / 100., 2) +
-            TMath::Power(ErrSyst_AxE[iBin] / 100., 2) +
             TMath::Power(ErrSyst_fD[iBin] / 100., 2) +
             TMath::Power(ErrSyst_fC[iBin] / 100., 2) +
             TMath::Power(ErrSyst_lumi / 100., 2) + 
@@ -370,11 +364,10 @@ void CalculateCrossSec_PtBins()
             << Form("%.1f \t%.1f \t%.1f \t%.1f \t%.1f \t%.1f \n\n",
                 ErrSyst_lumi, ErrSyst_veto, ErrSyst_EMD, ErrSyst_tracks, ErrSyst_CCUP31, ErrSyst_BR);
     outfile << "UNCORRELATED:\n"
-            << "Bin\tSigExt\tAxE MC\tfD\tfC\n";
+            << "Bin\tSigExt\tfD\tfC\n";
     for(Int_t i = 0; i < nPtBins; i++){
         outfile << i+1 << std::fixed << std::setprecision(1) << "\t"
                 << ErrSyst_SigExtr[i] << "\t"
-                << ErrSyst_AxE[i] << "\t"
                 << ErrSyst_fD[i] << "\t"
                 << ErrSyst_fC[i] << "\n";
     }    
@@ -389,7 +382,6 @@ void CalculateCrossSec_PtBins()
                 << "$(" << ptBoundaries[i] << "," << ptBoundaries[i+1] << ")$ & "
                 << std::fixed << std::setprecision(1)
                 << ErrSyst_SigExtr[i] << " & "
-                << ErrSyst_AxE[i] << " & "
                 << ErrSyst_fD[i] << " & "
                 << ErrSyst_fC[i] << R"( \\)" << "\n";
                             

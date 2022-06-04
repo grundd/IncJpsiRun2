@@ -369,7 +369,8 @@ void CalcAndPlotRatios(const char* subfolder_out, Double_t R_A)
     hRatios->GetYaxis()->SetDecimals(1);
     hRatios->GetYaxis()->SetRangeUser(0.0,5.0);
     // Horizontal axis
-    hRatios->GetXaxis()->SetTitle("#it{p}_{T}^{gen} (GeV/#it{c})");
+    if (strncmp(strMC.Data(),"CohP",4) == 0 || strncmp(strMC.Data(),"IncP",4) == 0) hRatios->GetXaxis()->SetTitle("#it{p}_{T,#psi(2S)}^{gen} (GeV/#it{c})");
+    else                                                                            hRatios->GetXaxis()->SetTitle("#it{p}_{T,J/#psi}^{gen} (GeV/#it{c})");
     hRatios->GetXaxis()->SetTitleSize(0.05);
     hRatios->GetXaxis()->SetTitleOffset(1.2);
     hRatios->GetXaxis()->SetLabelSize(0.05);
@@ -390,7 +391,7 @@ void CalcAndPlotRatios(const char* subfolder_out, Double_t R_A)
     hRecOld->GetYaxis()->SetLabelSize(0.05);
     hRecOld->GetYaxis()->SetRangeUser(0.1,1e5);
     // Horizontal axis
-    hRecOld->GetXaxis()->SetTitle("#it{p}_{T}^{gen} (GeV/#it{c})");
+    hRecOld->GetXaxis()->SetTitle("#it{p}_{T,J/#psi}^{gen} (GeV/#it{c})");   
     hRecOld->GetXaxis()->SetTitleSize(0.05);
     hRecOld->GetXaxis()->SetTitleOffset(1.2);
     hRecOld->GetXaxis()->SetLabelSize(0.05);

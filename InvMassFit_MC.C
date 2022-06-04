@@ -180,6 +180,14 @@ void InvMassFit_MC_DoFit(Int_t opt){
     RooRealVar alpha_R("#alpha_{R}","alpha_{R}",-1.,-20.0,0.0); 
     RooRealVar n_R("n_{R}","n_{R}",8.,0,30);
 
+    if(isNParInDSCBFixed)
+    {
+        n_L.setVal(10.);
+        n_R.setVal(10.);
+        n_L.setConstant(kTRUE);
+        n_R.setConstant(kTRUE);
+    }
+
     RooCBShape CB_left("CB_left","CB_left",fM,mean_L,sigma_L,alpha_L,n_L);
     RooCBShape CB_right("CB_right","CB_right",fM,mean_R,sigma_R,alpha_R,n_R);
     RooRealVar frac("frac","fraction of CBs",0.5);
@@ -233,8 +241,17 @@ void InvMassFit_MC_DoFit(Int_t opt){
     leg->AddEntry((TObject*)0,Form("#sigma = %.4f GeV/#it{c}^{2}", sigma_L.getVal()),""); // sigma_L.getError()
     leg->AddEntry((TObject*)0,Form("#alpha_{L} = %.3f #pm %.3f", alpha_L.getVal(), alpha_L.getError()),"");
     leg->AddEntry((TObject*)0,Form("#alpha_{R} = %.3f #pm %.3f", (-1)*(alpha_R.getVal()), alpha_R.getError()),"");
-    leg->AddEntry((TObject*)0,Form("#it{n}_{L} = %.2f #pm %.2f", n_L.getVal(), n_L.getError()),"");
-    leg->AddEntry((TObject*)0,Form("#it{n}_{R} = %.2f #pm %.2f", n_R.getVal(), n_R.getError()),"");
+    if(!isNParInDSCBFixed)
+    {
+        leg->AddEntry((TObject*)0,Form("#it{n}_{L} = %.2f #pm %.2f", n_L.getVal(), n_L.getError()),"");
+        leg->AddEntry((TObject*)0,Form("#it{n}_{R} = %.2f #pm %.2f", n_R.getVal(), n_R.getError()),"");
+    }
+    else
+    {
+        leg->AddEntry((TObject*)0,Form("#it{n}_{L} = %.1f", n_L.getVal()),"");
+        leg->AddEntry((TObject*)0,Form("#it{n}_{R} = %.1f", n_R.getVal()),"");
+    }
+
     leg->SetTextSize(0.042);
     leg->SetBorderSize(0);
     leg->SetFillStyle(0);
@@ -340,8 +357,9 @@ void InvMassFit_MC_DrawCorrMatrix(TCanvas *cCorrMat, RooFitResult* fResFit){
 
     TH2* hCorr = fResFit->correlationHist();
 
-    hCorr->GetXaxis()->SetBinLabel(7,"#sigma");
-    hCorr->GetYaxis()->SetBinLabel(7,"#sigma");
+    if(!isNParInDSCBFixed) hCorr->GetXaxis()->SetBinLabel(7,"#sigma");
+    else                   hCorr->GetXaxis()->SetBinLabel(5,"#sigma");
+    hCorr->GetYaxis()->SetBinLabel(1,"#sigma");
 
     hCorr->SetMarkerSize(2.0);
     hCorr->GetXaxis()->SetLabelSize(0.08); // 0.049

@@ -73,7 +73,7 @@ void STARlight_OptimalRA_FindMinimum(Bool_t bStopWeigh)
     Printf("Minimum in R_A = (%.3f pm %.3f) fm", RA_min_val, RA_min_err);
 
     // Prepare dashed line at y = 1
-    TLine *line_min = new TLine(RA_min_val,0.6,RA_min_val,1.15);
+    TLine *line_min = new TLine(RA_min_val,0.6,RA_min_val,1.45);
     line_min->SetLineColor(kRed+1);
     line_min->SetLineWidth(2);
     line_min->SetLineStyle(2);
@@ -109,7 +109,8 @@ void STARlight_OptimalRA_FindMinimum(Bool_t bStopWeigh)
 
     TLegend *l2 = new TLegend(0.2,0.75,0.8,0.9);
     l2->AddEntry((TObject*)0,"STARlight value: #it{R}_{A} = 6.624 fm","");
-    l2->AddEntry((TObject*)0,Form("Minimum at #it{R}_{A} = (%.3f #pm %.3f) fm", RA_min_val, RA_min_err),"");
+    l2->AddEntry((TObject*)0,Form("Minimum at #it{R}_{A} = %.3f fm", RA_min_val),"");
+    //l2->AddEntry((TObject*)0,Form("Minimum at #it{R}_{A} = (%.3f #pm %.3f) fm", RA_min_val, RA_min_err),"");
     l2->SetTextSize(0.05);
     l2->SetBorderSize(0);
     l2->SetFillStyle(0);

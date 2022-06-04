@@ -52,6 +52,12 @@ void InvMassFit_SystUncertainties(Int_t iAnalysis)
 {
     InitAnalysis(iAnalysis);
 
+    if(isNParInDSCBFixed)
+    {
+        do_n_L = kFALSE;
+        do_n_R = kFALSE;
+    }
+
     gSystem->Exec("mkdir -p Results/" + str_subfolder + "InvMassFit_SystUncertainties/");
 
     InvMassFit_PrepareData(2);

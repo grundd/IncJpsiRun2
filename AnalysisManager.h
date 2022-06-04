@@ -14,6 +14,7 @@ Int_t cut_fVertexContrib = 2;
 Double_t cut_fVertexZ = 15.;
 Double_t cut_fY = 0.8;
 Double_t cut_fEta = 0.8;
+Double_t fN_DSCB = 10.;
 // Options that will be set by the choice of iAnalysis in InitAnalysis:
 vector<Int_t> runList_18q;
 vector<Int_t> runList_18r;
@@ -21,6 +22,7 @@ Int_t nRuns_18q;
 Int_t nRuns_18r; 
 Bool_t isPass3;
 Bool_t isPIDCalibrated; // if NSigmas in MC data were shifted to zeros
+Bool_t isNParInDSCBFixed; // if the values of the tail parameters "N" in DSCB are fixed to N_DSCB
 // Array containing pT bin boundaries (will be created in SetPtBinning.h):
 Double_t *ptBoundaries = NULL;
 Int_t nPtBins;

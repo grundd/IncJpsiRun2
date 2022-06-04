@@ -105,6 +105,7 @@ void PlotResults(Double_t pT2_min, Double_t pT2_max)
 }
 
 void CalculateAvgTPerBin()
+// calculate the average value of |t| (p_T,pom^2) and the average value of p_T,J/psi^2 in each bin as predicted by STARlight
 {
     TFile *f = TFile::Open("Trees/STARlight/IncJ_tVsPt/tree_tPtGammaVMPom.root", "read");
     if(f) Printf("File %s loaded.", f->GetName());
@@ -115,8 +116,12 @@ void CalculateAvgTPerBin()
     ConnectTreeVariables_tPtGammaVMPom(tPtGammaVMPom);
 
     Double_t nPt2VMPerBin[5] = { 0 };
+    // to calculate average |t|:
     Double_t SumOfTPerBin[5] = { 0 };
     Double_t AvgOfTPerBin[5] = { 0 };
+    // to calculate average p_T,J/psi^2
+    Double_t SumOfPt2VMPerBin[5] = { 0 };
+    Double_t AvgOfPt2VMPerBin[5] = { 0 };
 
     for(Int_t iEntry = 0; iEntry < nGenEv; iEntry++)
     {
@@ -127,24 +132,35 @@ void CalculateAvgTPerBin()
             {
                 nPt2VMPerBin[iBin]++;
                 SumOfTPerBin[iBin] += fPtPm * fPtPm;
+                SumOfPt2VMPerBin[iBin] += fPtVM * fPtVM;
             }
         }
     }
 
-    TString str = Form("Results/%sSTARlight_tVsPt/AvgTPerBin.txt", str_subfolder.Data());
-    ofstream outfile(str.Data());
-    outfile << std::fixed << std::setprecision(6);
+    TString str_1 = Form("Results/%sSTARlight_tVsPt/AvgTPerBin.txt", str_subfolder.Data());
+    ofstream outfile_1(str_1.Data());
+    outfile_1 << std::fixed << std::setprecision(6);
+    TString str_2 = Form("Results/%sSTARlight_tVsPt/AvgPt2VMPerBin.txt", str_subfolder.Data());
+    ofstream outfile_2(str_2.Data());
+    outfile_2 << std::fixed << std::setprecision(6);
 
     // Calculate the average values
     for(Int_t iBin = 0; iBin < nPtBins; iBin++)
     {
+        // to calculate average |t|:
         AvgOfTPerBin[iBin] = SumOfTPerBin[iBin] / nPt2VMPerBin[iBin];
-        Printf("Bin %i: avg |t| value = %.6f", iBin+1, AvgOfTPerBin[iBin]);
-        outfile << iBin+1 << "\t" << AvgOfTPerBin[iBin] << "\n";
+        // to calculate average p_T,J/psi^2
+        AvgOfPt2VMPerBin[iBin] = SumOfPt2VMPerBin[iBin] / nPt2VMPerBin[iBin];
+        // print the results
+        Printf("Bin %i: avg |t| value = %.6f, avg p_T,Jpsi^2 value = %.6f", iBin+1, AvgOfTPerBin[iBin], AvgOfPt2VMPerBin[iBin]);
+        outfile_1 << iBin+1 << "\t" << AvgOfTPerBin[iBin] << "\n";
+        outfile_2 << iBin+1 << "\t" << AvgOfPt2VMPerBin[iBin] << "\n";
     }
 
-    outfile.close();
-    Printf("*** Results printed to %s. ***", str.Data());
+    outfile_1.close();
+    outfile_2.close();
+    Printf("*** Results printed to %s. ***", str_1.Data());
+    Printf("*** Results printed to %s. ***", str_2.Data());
 
     return;
 }
