@@ -654,9 +654,11 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iNormFD, Bool_t bStopWeigh)
     outfile << "$(0.200,1.000)$\t& $"
             << N_CohJ_to1_val << R"( \pm )" << N_CohJ_to1_err << "$\t& $"
             << N_IncJ_to1_val << R"( \pm )" << N_IncJ_to1_err << "$\t& $"
-            << N_Diss_to1_val << R"( \pm )" << N_Diss_to1_err << "$\t& -" << R"( \\)" 
+            << N_Diss_to1_val << R"( \pm )" << N_Diss_to1_err << "$\t& $"  
             //<< N_CohP_to1_val << R"( \pm )" << N_CohP_to1_err << "$ \t& $"
             //<< N_IncP_to1_val << R"( \pm )" << N_IncP_to1_err << "$ \t& $"
+            << std::fixed << std::setprecision(2)
+            << fC_to1_val << R"( \pm )" << fC_to1_err << R"($ \\)"
             << "\n";
     for(Int_t i = 0; i < nPtBins; i++){
         outfile << std::fixed << std::setprecision(3)
@@ -682,7 +684,10 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iNormFD, Bool_t bStopWeigh)
             << N_IncJ_to1_val << R"( \pm )" << N_IncJ_to1_err << "$\t& $"
             << N_Diss_to1_val << R"( \pm )" << N_Diss_to1_err << "$\t& $"
             << N_CohP_to1_val << R"( \pm )" << N_CohP_to1_err << "$\t& $" 
-            << N_IncP_to1_val << R"( \pm )" << N_IncP_to1_err << "$\t& - & - & - " << R"( \\)" 
+            << N_IncP_to1_val << R"( \pm )" << N_IncP_to1_err << "$\t& $"
+            << fDCoh_to1_val  << R"( \pm )" << fDCoh_to1_err  << "$\t& $" 
+            << fDInc_to1_val  << R"( \pm )" << fDInc_to1_err  << "$\t& $" 
+            << fD_to1_val     << R"( \pm )" << fD_to1_err     << R"($ \\)"
             << "\n";
     for(Int_t i = 0; i < nPtBins; i++){
         outfile << std::fixed << std::setprecision(3)

@@ -343,14 +343,15 @@ void CalculateCrossSec_PtBins()
             << Form("$%.1f", Eff_EMD_val) << R"( \pm )" << Form("%.1f$", Eff_EMD_err) << " &\n"
             << Form("$%.1f", PhotonFlux_val) << R"( \pm )" << Form("%.1f$", PhotonFlux_err) << R"( \\)" << "\n\n";
     for(Int_t i = 0; i < nPtBins; i++){
-        outfile << std::fixed << std::setprecision(3)
-                << "$(" << ptBoundaries[i] << "," << ptBoundaries[i+1] << ")$ & "
+        outfile << std::fixed << std::setprecision(3) << "$(" 
+                << ptBoundaries[i] * ptBoundaries[i] << "," 
+                << ptBoundaries[i+1] * ptBoundaries[i+1] << ")$ & "
                 << std::fixed << std::setprecision(4) << Pt2Widths[i] << " &\t$"
                 << std::fixed << std::setprecision(0) << N_yield_val[i] << R"( \pm )" << N_yield_err[i] << "$ &\t$"
                 << std::fixed << std::setprecision(2) << AxE_val[i] << R"( \pm )" << AxE_err[i] << "$ &\t$"
                 << std::fixed << std::setprecision(1) << CorrFD_val[i] << R"( \pm )" << CorrFD_err[i] << "$ &\t$"
                 << std::fixed << std::setprecision(3) << CorrFC_val[i] << R"( \pm )" << CorrFC_err[i] << "$ &\t$"
-                << std::fixed << std::setprecision(2) << Sigma_UPC_val[i] << R"( \pm )" << Sigma_UPC_err_stat[i] << R"((stat.) \pm )" << Sigma_UPC_err_syst[i] << R"((syst.)$ \\)" << "\n";
+                << std::fixed << std::setprecision(2) << Sigma_UPC_val[i] << R"( \pm )" << Sigma_UPC_err_stat[i] << R"((\text{stat.}) \pm )" << Sigma_UPC_err_syst[i] << R"((\text{syst.})$ \\)" << "\n";
     }                  
     outfile.close();
     Printf("Results printed to %s.", str_out_1b.Data());
@@ -415,7 +416,7 @@ void CalculateCrossSec_PtBins()
                 << ptBoundaries[i+1] * ptBoundaries[i+1] << ")$ & "
                 << t_avg_val[i] << " &\t$"
                 << std::fixed << std::setprecision(1)
-                << Sigma_photo_val[i] << R"( \pm )" << Sigma_photo_err_stat[i] << R"((stat.) \pm )" << Sigma_photo_err_syst[i] << R"((syst.)$ \\)" << "\n";
+                << Sigma_photo_val[i] << R"( \pm )" << Sigma_photo_err_stat[i] << R"((\text{stat.}) \pm )" << Sigma_photo_err_syst[i] << R"((\text{syst.})$ \\)" << "\n";
     }
     outfile.close();
     Printf("Results printed to %s.", str_out_3b.Data()); 

@@ -28,8 +28,8 @@ Double_t N_Jpsi_all[2]; // number of J/psi events with arbitrary mass
 Double_t N_bkgr_peak[2];// number of J/psi events with mass from 3.0 to 3.2 GeV (around the J/psi peak)
 Double_t N_Jpsi_peak[2];// number of bckgr events with mass from 3.0 to 3.2 GeV (around the J/psi peak)
 
-void InvMassFit_DrawCorrMatrix(TCanvas *cCorrMat, RooFitResult* fResFit){
-
+void InvMassFit_DrawCorrMatrix(TCanvas *cCorrMat, RooFitResult* fResFit)
+{
     gStyle->SetOptTitle(0);
     gStyle->SetOptStat(0);
     gStyle->SetPalette(1);
@@ -64,8 +64,8 @@ void InvMassFit_DrawCorrMatrix(TCanvas *cCorrMat, RooFitResult* fResFit){
     return;
 }
 
-void InvMassFit_SetCanvas(TCanvas *c, Bool_t bLogScale){
-
+void InvMassFit_SetCanvas(TCanvas *c, Bool_t bLogScale)
+{
     if(bLogScale == kTRUE) c->SetLogy();
     c->SetTopMargin(0.055);
     c->SetBottomMargin(0.12);
@@ -75,8 +75,8 @@ void InvMassFit_SetCanvas(TCanvas *c, Bool_t bLogScale){
     return;
 }
 
-void InvMassFit_PrepareData(Int_t iMassCut){
-
+void InvMassFit_PrepareData(Int_t iMassCut)
+{
     TString name;
     if(iMassCut == 0) name = "Trees/" + str_subfolder + "InvMassFit/InvMassFit.root";
     if(iMassCut == 2) name = "Trees/" + str_subfolder + "InvMassFit/InvMassFit_SystUncertainties.root";
@@ -137,7 +137,7 @@ void InvMassFit_PrepareData(Int_t iMassCut){
     }
 }
 
-void InvMassFit_DoFit(Int_t opt, Double_t fMCutLow, Double_t fMCutUpp, Double_t fAlpha_L, Double_t fAlpha_R, Double_t fN_L, Double_t fN_R, TString str_out, Bool_t isSystUncr = kFALSE)
+void InvMassFit_DoFit(Int_t opt, Double_t fMCutLow, Double_t fMCutUpp, Double_t fAlpha_L, Double_t fAlpha_R, Double_t fN_L, Double_t fN_R, TString str_out, Bool_t isSystUncr = kFALSE, Double_t fCutZ = -1)
 {
     // Fit the invariant mass distribution using Double-sided CB function
     // Fix the values of the tail parameters to MC values
@@ -216,8 +216,17 @@ void InvMassFit_DoFit(Int_t opt, Double_t fMCutLow, Double_t fMCutUpp, Double_t 
 
     // Get the data trees
     TFile *f_in = NULL;
-    if(!isSystUncr) f_in = new TFile("Trees/" + str_subfolder + "InvMassFit/InvMassFit.root"); 
-    else            f_in = new TFile("Trees/" + str_subfolder + "InvMassFit/InvMassFit_SystUncertainties.root"); 
+    // ordinary fits:
+    if(isSystUncr == kFALSE) f_in = new TFile("Trees/" + str_subfolder + "InvMassFit/InvMassFit.root"); 
+    // systematic uncertainties 
+    else 
+    {
+        // related to signal extraction
+        if(fCutZ == cut_fVertexZ) f_in = new TFile("Trees/" + str_subfolder + "InvMassFit/InvMassFit_SystUncertainties.root"); 
+        // related to modifications of Z vertex cut 
+        else f_in = new TFile("Trees/" + str_subfolder + Form("VertexZ_SystUncertainty/Zcut%.1f_InvMassFit.root", fCutZ)); 
+    }
+
     TTree *t_in = NULL;
     if(opt == 0 || opt == 3 || opt == 4 || opt == 5 || opt == 6 || opt == 7 || opt == 8){
         f_in->GetObject("tIncEnrSample",t_in);
@@ -382,8 +391,8 @@ void InvMassFit_DoFit(Int_t opt, Double_t fMCutLow, Double_t fMCutUpp, Double_t 
     l2->Draw();
 
     TLegend *l3 = NULL;
-    if(!isNParInDSCBFixed)
-    {
+    //if(!isNParInDSCBFixed)
+    //{
         l3 = new TLegend(0.74,0.48,0.85,0.58);
         l3->AddEntry((TObject*)0,Form("#it{n}_{L} = %.2f", n_L.getVal()),"");
         l3->AddEntry((TObject*)0,Form("#it{n}_{R} = %.2f", n_R.getVal()),"");
@@ -391,7 +400,7 @@ void InvMassFit_DoFit(Int_t opt, Double_t fMCutLow, Double_t fMCutUpp, Double_t 
         l3->SetBorderSize(0);
         l3->SetFillStyle(0);
         l3->Draw();
-    }
+    //}
 
     // Print the numbers of events to text file
     ofstream outfile((str_out + ".txt").Data());

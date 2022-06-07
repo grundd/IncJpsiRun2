@@ -88,12 +88,21 @@ void InitAnalysis(Int_t iAnalysis){
     // pass3, 5bins, calibrated MC PID, cut_fVertexZ set to 10 cm
     if(iAnalysis == 100)
     {
-        str_subfolder = "pass3_5bins_calibPID_Zcut10/";
+        str_subfolder = "pass3_5bins_calibPID_Nfix_Zcut10.0/";
         nPtBins = 5;
         isPass3 = kTRUE;
         isPIDCalibrated = kTRUE;
-        isNParInDSCBFixed = kFALSE;
-        cut_fVertexZ = 10;
+        isNParInDSCBFixed = kTRUE;
+        cut_fVertexZ = 10.0;
+    }
+    if(iAnalysis == 101)
+    {
+        str_subfolder = "pass3_5bins_calibPID_Nfix_Zcut12.5/";
+        nPtBins = 5;
+        isPass3 = kTRUE;
+        isPIDCalibrated = kTRUE;
+        isNParInDSCBFixed = kTRUE;
+        cut_fVertexZ = 12.5;
     }
     // set reduced run lists for the given pass
     SetReducedRunList(isPass3);

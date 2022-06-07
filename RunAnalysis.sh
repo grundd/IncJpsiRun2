@@ -4,7 +4,7 @@
 # ./RunAnalysis.sh
 
 # define the type of the analysis (see AnalysisConfig.h)
-declare -i iAnalysis=14
+declare -i iAnalysis=100
 # define if compile each macro
 declare -i compile=0
 # define which macros to run
@@ -105,8 +105,8 @@ fi
 if [ "${arr[10]}" = "10y" ] 
 then
     if [[ "$compile" -eq 0 ]]
-    then root -q AxE_PtBins.C\($iAnalysis\)
-    else root -q AxE_PtBins.C+\($iAnalysis\)
+    then root -q AxE_PtBins.C\($iAnalysis,0\)
+    else root -q AxE_PtBins.C+\($iAnalysis,0\)
     fi
 fi
 

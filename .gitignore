@@ -17,3 +17,6 @@ STARlight_src/
 # Ignore the Documents folder
 Documents/
 
+# Ignore the Results folder
+Results/
+
