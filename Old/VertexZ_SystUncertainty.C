@@ -19,7 +19,6 @@ void NewCutZ_InvMassFits(Double_t fCutZ);
 void NewCutZ_AxE_PtBins(Double_t fCutZ);
 void NewCutZ_PrepareTree_InvMassFit_MC(Double_t fCutZ);
 void NewCutZ_PrepareTree_InvMassFit(Double_t fCutZ);
-void NewCutZ_PrepareTree_AxE(Double_t fCutZ);
 
 void VertexZ_SystUncertainty(Int_t iAnalysis)
 {

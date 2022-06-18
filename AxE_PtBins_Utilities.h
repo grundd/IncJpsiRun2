@@ -40,7 +40,7 @@ void AxE_PtBins_FillHistNRec(Double_t fCutZ)
     // Check if the corresponding text file already exists
     TString file;
     if(fCutZ == cut_fVertexZ) file = "Results/" + str_subfolder + "AxE_PtBins/";
-    else                      file = "Results/" + str_subfolder + Form("VertexZ_SystUncertainty/Zcut%.1f_AxE_PtBins/", fCutZ);
+    else                      file = "Results/" + str_subfolder + Form("VertexZ_SystUncertainties/Zcut%.1f_AxE_PtBins/", fCutZ);
     file.Append(Form("NRec_%ibins.txt", nPtBins));
 
     ifstream inFile;
@@ -70,7 +70,7 @@ void AxE_PtBins_FillHistNRec(Double_t fCutZ)
         
         ConnectTreeVariablesMCRec(tRec);
 
-        // |> *********** for VertexZ_SystUncertainty.C ***********
+        // |> *********** for VertexZ_SystUncertainties.C ***********
         // save the original value of cut_fVertexZ
         Printf("Original cut on vertex Z: %.1f", cut_fVertexZ);
         Double_t fCutZ_orig = cut_fVertexZ;
@@ -95,7 +95,7 @@ void AxE_PtBins_FillHistNRec(Double_t fCutZ)
         }
         Printf("*** Finished! ***");
 
-        // |> *********** for VertexZ_SystUncertainty.C ***********
+        // |> *********** for VertexZ_SystUncertainties.C ***********
         if(cut_fVertexZ != fCutZ_orig)
         {
             // set back the original value of cut_fVertexZ
@@ -230,7 +230,7 @@ void AxE_PtBins_Calculate(Double_t fCutZ)
     // Save the figures and print the results to txt file
     TString str;
     if(fCutZ == cut_fVertexZ) str = "Results/" + str_subfolder + Form("AxE_PtBins/AxE_%ibins", nPtBins);
-    else                      str = "Results/" + str_subfolder + Form("VertexZ_SystUncertainty/Zcut%.1f_AxE_PtBins/AxE_%ibins", fCutZ, nPtBins);
+    else                      str = "Results/" + str_subfolder + Form("VertexZ_SystUncertainties/Zcut%.1f_AxE_PtBins/AxE_%ibins", fCutZ, nPtBins);
     c->Print((str + ".pdf").Data());
     c->Print((str + ".png").Data());
     ofstream outfile((str + ".txt").Data());
