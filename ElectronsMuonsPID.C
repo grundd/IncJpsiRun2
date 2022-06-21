@@ -233,7 +233,7 @@ Bool_t EventPassedLocal(Bool_t isMC)
             if(isPass3){
                 // 3) At least two tracks associated with the vertex
                 if(fVertexContrib < cut_fVertexContrib) return kFALSE;
-                // 4) Distance from the IP lower than 15 cm
+                // 4) Distance from the IP lower than cut_fVertexZ
                 if(fVertexZ > cut_fVertexZ) return kFALSE;
             }
         // if MC:
@@ -250,7 +250,7 @@ Bool_t EventPassedLocal(Bool_t isMC)
             if(isPass3){
                 // 3) At least two tracks associated with the vertex
                 if(fVertexContrib < cut_fVertexContrib) return kFALSE;
-                // 4) Distance from the IP lower than 15 cm
+                // 4) Distance from the IP lower than cut_fVertexZ
                 if(fVertexZ > cut_fVertexZ) return kFALSE;
             }
             // 4) Central UPC trigger CCUP31:
@@ -286,11 +286,11 @@ Bool_t EventPassedLocal(Bool_t isMC)
     // 8) Muon pairs only
     // (no cut)
 
-    // 9) Dilepton rapidity |y| < 0.8
-    if(!(abs(fY) < 0.8)) return kFALSE;
+    // 9) Dilepton rapidity |y| < cut_fY
+    if(!(abs(fY) < cut_fY)) return kFALSE;
 
-    // 10) Pseudorapidity of both tracks |eta| < 0.8
-    if(!(abs(fEta1) < 0.8 && abs(fEta2) < 0.8)) return kFALSE;
+    // 10) Pseudorapidity of both tracks |eta| < cut_fEta
+    if(!(abs(fEta1) < cut_fEta && abs(fEta2) < cut_fEta)) return kFALSE;
 
     // 11) Tracks have opposite charges
     if(!(fQ1 * fQ2 < 0)) return kFALSE;

@@ -8,74 +8,56 @@ declare -i iAnalysis=0
 # define if compile each macro
 declare -i compile=0
 # define which macros to run
-#declare -a arr=("0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12" "13" "14" "15" "16" "17" "18" "19" "20" "21" "22" "23" "24" "25")
-declare -a arr=("0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12" "13y" "14y" "15y" "16y" "17y" "18y" "19y" "20y" "21y" "22y" "23y" "24y" "25y" "26y")
+#declare -a arr=("0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "10")
+declare -a arr=("0" "1y" "2y" "3y" "4y" "5y" "6y" "7y" "8y" "9y" "10y")
 
-# 0) Count events (data)
-if [ "${arr[0]}" = "0y" ] 
-then
-    if [[ "$compile" -eq 0 ]]
-    then root -q CountEvents.C\($iAnalysis\)
-    else root -q CountEvents.C+\($iAnalysis\)
-    fi
-fi
-
-# 1) Count events (MC)
+# 1) count events (data & MC) and do run list check
 if [ "${arr[1]}" = "1y" ] 
 then
     if [[ "$compile" -eq 0 ]]
-    then root -q CountEvents_MC.C\($iAnalysis\)
-    else root -q CountEvents_MC.C+\($iAnalysis\)
+    then 
+        root -q CountEvents.C\($iAnalysis\)
+        root -q CountEvents_MC.C\($iAnalysis\)
+        root -q RunListCheck.C\($iAnalysis\)
+    else 
+        root -q CountEvents.C+\($iAnalysis\)
+        root -q CountEvents_MC.C+\($iAnalysis\)
+        root -q RunListCheck.C+\($iAnalysis\)
     fi
 fi
 
-# 2) Run list check
+# 2) Integrated luminosity:
+#    - get trigger counters for both periods
+#    - calculate the lumi
 if [ "${arr[2]}" = "2y" ] 
 then
     if [[ "$compile" -eq 0 ]]
-    then root -q RunListCheck.C\($iAnalysis\)
-    else root -q RunListCheck.C+\($iAnalysis\)
+    then 
+        root -q GetTriggerCounters.C\($iAnalysis\)
+        root -q IntegratedLuminosity.C\($iAnalysis\)
+    else 
+        root -q GetTriggerCounters.C+\($iAnalysis\)
+        root -q IntegratedLuminosity.C+\($iAnalysis\)
     fi
 fi
 
-# 3) Get trigger counters for both periods
+# 3) Invariant mass fits of coh, inc, all and allbins
+#    - MC
+#    - data
 if [ "${arr[3]}" = "3y" ] 
 then
     if [[ "$compile" -eq 0 ]]
-    then root -q GetTriggerCounters.C\($iAnalysis\)
-    else root -q GetTriggerCounters.C+\($iAnalysis\)
+    then 
+        root -q InvMassFit_MC.C\($iAnalysis,0\)
+        root -q InvMassFit.C\($iAnalysis,0\)
+    else 
+        root -q InvMassFit_MC.C+\($iAnalysis,0\)
+        root -q InvMassFit.C+\($iAnalysis,0\)
     fi
 fi
 
-# 4) Calculate the integrated luminosity
+# 4) Set pT binning via the invariant mass fitting
 if [ "${arr[4]}" = "4y" ] 
-then
-    if [[ "$compile" -eq 0 ]]
-    then root -q IntegratedLuminosity.C\($iAnalysis\)
-    else root -q IntegratedLuminosity.C+\($iAnalysis\)
-    fi
-fi
-
-# 5) MC invariant mass fits of coh, inc, all and allbins
-if [ "${arr[5]}" = "5y" ] 
-then
-    if [[ "$compile" -eq 0 ]]
-    then root -q InvMassFit_MC.C\($iAnalysis,0\)
-    else root -q InvMassFit_MC.C+\($iAnalysis,0\)
-    fi
-fi
-
-# 6) Invariant mass fits of coh, inc, all and allbins
-if [ "${arr[6]}" = "6y" ] 
-then
-    if [[ "$compile" -eq 0 ]]
-    then root -q InvMassFit.C\($iAnalysis,0\)
-    else root -q InvMassFit.C+\($iAnalysis,0\)
-    fi
-fi
-
-# 7) Set pT binning via the invariant mass fitting
-if [ "${arr[7]}" = "7y" ] 
 then
     if [[ "$compile" -eq 0 ]]
     then root -q BinsThroughMassFit.C\($iAnalysis\)
@@ -83,26 +65,23 @@ then
     fi
 fi
 
-# 8) MC invariant mass fits in pT bins
-if [ "${arr[8]}" = "8y" ] 
+# 5) Invariant mass fits in pT bins:
+#    - MC 
+#    - data
+if [ "${arr[5]}" = "5y" ] 
 then
     if [[ "$compile" -eq 0 ]]
-    then root -q InvMassFit_MC.C\($iAnalysis,1\)
-    else root -q InvMassFit_MC.C+\($iAnalysis,1\)
+    then 
+        root -q InvMassFit_MC.C\($iAnalysis,1\)
+        root -q InvMassFit.C\($iAnalysis,1\)
+    else 
+        root -q InvMassFit_MC.C+\($iAnalysis,1\)
+        root -q InvMassFit.C+\($iAnalysis,1\)
     fi
 fi
 
-# 9) Invariant mass fits in pT bins
-if [ "${arr[9]}" = "9y" ] 
-then
-    if [[ "$compile" -eq 0 ]]
-    then root -q InvMassFit.C\($iAnalysis,1\)
-    else root -q InvMassFit.C+\($iAnalysis,1\)
-    fi
-fi
-
-# 10) AxE in pT bins
-if [ "${arr[10]}" = "10y" ] 
+# 6) AxE in pT bins:
+if [ "${arr[6]}" = "6y" ] 
 then
     if [[ "$compile" -eq 0 ]]
     then root -q AxE_PtBins.C\($iAnalysis\)
@@ -110,150 +89,92 @@ then
     fi
 fi
 
-# 11) AxE: dependence on pT
-if [ "${arr[11]}" = "11y" ] 
+# 7) Fits of the transverse momentum distribution:
+#    - create pT bins for the fit of the pT distribution and subtract background in these bins
+#    - prepare MC templates (PDFs) to be used in pT fits
+#    - calculate normalizations of feed-down curves in pT fits
+#    - run all pT fits
+#    - find the optimal RA (for which there is a minimum in chi2 of the pT fit)
+if [ "${arr[7]}" = "7y" ] 
 then
     if [[ "$compile" -eq 0 ]]
-    then root -q AxE_PtDep.C\($iAnalysis\)
-    else root -q AxE_PtDep.C+\($iAnalysis\)
+    then 
+        root -q PtFit_SubtractBkg.C\($iAnalysis\)
+        root -q PtFit_PrepareMCTemplates.C\($iAnalysis\)
+        root -q PtFit_FeedDownNormalization.C\($iAnalysis\)
+        root -q PtFit_NoBkg.C\($iAnalysis\)
+        root -q STARlight_OptimalRA.C\($iAnalysis\)
+    else 
+        root -q PtFit_SubtractBkg.C+\($iAnalysis\)
+        root -q PtFit_PrepareMCTemplates.C+\($iAnalysis\)
+        root -q PtFit_FeedDownNormalization.C+\($iAnalysis\)
+        root -q PtFit_NoBkg.C+\($iAnalysis\)
+        root -q STARlight_OptimalRA.C+\($iAnalysis\)
     fi
 fi
 
-# 12) Create pT bins for the fit of the pT distribution and subtract background in these bins
-if [ "${arr[12]}" = "12y" ] 
+# 8) Systematic uncertainties:
+#    - signal extraction
+#    - fD and fC (via changes in R)
+#    - Z_vertex selection
+if [ "${arr[8]}" = "8y" ] 
 then
     if [[ "$compile" -eq 0 ]]
-    then root -q PtFit_SubtractBkg.C\($iAnalysis\)
-    else root -q PtFit_SubtractBkg.C+\($iAnalysis\)
+    then 
+        root -q InvMassFit_SystUncertainties.C\($iAnalysis\)
+        root -q VertexZ_SystUncertainties.C\($iAnalysis\)
+        root -q PtFit_SystUncertainties.C\($iAnalysis\)
+    else 
+        root -q InvMassFit_SystUncertainties.C+\($iAnalysis\)
+        root -q VertexZ_SystUncertainties.C+\($iAnalysis\)
+        root -q PtFit_SystUncertainties.C+\($iAnalysis\)
     fi
 fi
 
-# 13) Prepare MC templates (PDFs) to be used in pT fits
-if [ "${arr[13]}" = "13y" ] 
+# 9) Photonuclear cross section:
+#    - calculate the average |t| per bin based on STARlight predictions
+#    - calculate the photonuclear cross section
+#    - plot the photonuclear cross section
+#    - plot the photonuclear cross section with ratios
+#    - plot the total cross section (integrated over |t|)
+if [ "${arr[9]}" = "9y" ] 
 then
     if [[ "$compile" -eq 0 ]]
-    then root -q PtFit_PrepareMCTemplates.C\($iAnalysis\)
-    else root -q PtFit_PrepareMCTemplates.C+\($iAnalysis\)
+    then 
+        root -q STARlight_tVsPt.C\($iAnalysis\)
+        root -q PhotoCrossSec_Calculate.C\($iAnalysis\)
+        root -q PhotoCrossSec_Plot.C\($iAnalysis\)
+        root -q PhotoCrossSec_PlotWithRatios.C\($iAnalysis\)
+        root -q PhotoCrossSec_Total.C\($iAnalysis\)
+    else 
+        root -q STARlight_tVsPt.C+\($iAnalysis\)
+        root -q PhotoCrossSec_Calculate.C+\($iAnalysis\)
+        root -q PhotoCrossSec_Plot.C+\($iAnalysis\)
+        root -q PhotoCrossSec_PlotWithRatios.C+\($iAnalysis\)
+        root -q PhotoCrossSec_Total.C+\($iAnalysis\)
     fi
 fi
 
-# 14) Various pT fits with background subtracted
-if [ "${arr[14]}" = "14y" ] 
+# 10) Extra macros:
+#     - calculate pT resolution in bins as FWHM values
+#     - migration of events between pT bins
+#     - make PID plots (electron-muon separation)
+#     - make plots to answers comments from Raphaelle
+#     - detailed pT dependence of AxE
+if [ "${arr[10]}" = "10y" ] 
 then
     if [[ "$compile" -eq 0 ]]
-    then root -q PtFit_FeedDownNormalization.C\($iAnalysis\)
-    else root -q PtFit_FeedDownNormalization.C+\($iAnalysis\)
-    fi
-    if [[ "$compile" -eq 0 ]]
-    then root -q PtFit_NoBkg.C\($iAnalysis\)
-    else root -q PtFit_NoBkg.C+\($iAnalysis\)
-    fi
-fi
-
-# 15) Find the optimal RA (for which there is a minimum in chi2 of the pT fit)
-if [ "${arr[15]}" = "15y" ] 
-then
-    if [[ "$compile" -eq 0 ]]
-    then root -q STARlight_OptimalRA.C\($iAnalysis\)
-    else root -q STARlight_OptimalRA.C+\($iAnalysis\)
-    fi
-fi
-
-# 16) Systematic uncertainties corresponding to signal extraction (invariant mass fitting)
-if [ "${arr[16]}" = "16y" ] 
-then
-    if [[ "$compile" -eq 0 ]]
-    then root -q InvMassFit_SystUncertainties.C\($iAnalysis\)
-    else root -q InvMassFit_SystUncertainties.C+\($iAnalysis\)
-    fi
-fi
-
-# 17) Systematic uncertainties corresponding to Z_vertex selection
-if [ "${arr[17]}" = "17y" ] 
-then
-    if [[ "$compile" -eq 0 ]]
-    then root -q VertexZ_SystUncertainties.C\($iAnalysis\)
-    else root -q VertexZ_SystUncertainties.C+\($iAnalysis\)
-    fi
-fi
-
-# 18) Calculate the average |t| per bin based on STARlight predictions
-if [ "${arr[18]}" = "18y" ] 
-then
-    if [[ "$compile" -eq 0 ]]
-    then root -q STARlight_tVsPt.C\($iAnalysis\)
-    else root -q STARlight_tVsPt.C+\($iAnalysis\)
-    fi
-fi
-
-# 19) Calculate the photonuclear cross section
-if [ "${arr[19]}" = "19y" ] 
-then
-    if [[ "$compile" -eq 0 ]]
-    then root -q PhotoCrossSec_Calculate.C\($iAnalysis\)
-    else root -q PhotoCrossSec_Calculate.C+\($iAnalysis\)
-    fi
-fi
-
-# 20) Plot the photonuclear cross section
-if [ "${arr[20]}" = "20y" ] 
-then
-    if [[ "$compile" -eq 0 ]]
-    then root -q PhotoCrossSec_Plot.C\($iAnalysis\)
-    else root -q PhotoCrossSec_Plot.C+\($iAnalysis\)
-    fi
-fi
-
-# 21) Plot the photonuclear cross section with ratios
-if [ "${arr[21]}" = "21y" ] 
-then
-    if [[ "$compile" -eq 0 ]]
-    then root -q PhotoCrossSec_PlotWithRatios.C\($iAnalysis\)
-    else root -q PhotoCrossSec_PlotWithRatios.C+\($iAnalysis\)
-    fi
-fi
-
-# 22) Plot the total cross section (integrated over |t|)
-if [ "${arr[22]}" = "22y" ] 
-then
-    if [[ "$compile" -eq 0 ]]
-    then root -q PhotoCrossSec_Total.C\($iAnalysis\)
-    else root -q PhotoCrossSec_Total.C+\($iAnalysis\)
-    fi
-fi
-
-# 23) Migration of events between pT bins
-if [ "${arr[23]}" = "23y" ] 
-then
-    if [[ "$compile" -eq 0 ]]
-    then root -q MigrationPtReecGen.C\($iAnalysis\)
-    else root -q MigrationPtReecGen.C+\($iAnalysis\)
-    fi
-fi
-
-# 24) Calculate pT resolution as a FWHM value
-if [ "${arr[24]}" = "24y" ] 
-then
-    if [[ "$compile" -eq 0 ]]
-    then root -q ResolutionPt.C\($iAnalysis\)
-    else root -q ResolutionPt.C+\($iAnalysis\)
-    fi
-fi
-
-# 25) Make PID plots (muon-electron separation)
-if [ "${arr[24]}" = "25y" ] 
-then
-    if [[ "$compile" -eq 0 ]]
-    then root -q ElectronsMuonsPID.C\($iAnalysis\)
-    else root -q ElectronsMuonsPID.C+\($iAnalysis\)
-    fi
-fi
-
-# 26) Answers to comments from Raphaelle
-if [ "${arr[26]}" = "26y" ] 
-then
-    if [[ "$compile" -eq 0 ]]
-    then root -q RaphaelleComments.C\($iAnalysis\)
-    else root -q RaphaelleComments.C+\($iAnalysis\)
+    then 
+        root -q ResolutionPt.C\($iAnalysis\)
+        root -q MigrationPtReecGen.C\($iAnalysis\)
+        root -q ElectronsMuonsPID.C\($iAnalysis\)
+        root -q RaphaelleComments.C\($iAnalysis\)
+        #root -q AxE_PtDep.C\($iAnalysis\)
+    else 
+        root -q ResolutionPt.C+\($iAnalysis\)
+        root -q MigrationPtReecGen.C+\($iAnalysis\)
+        root -q ElectronsMuonsPID.C+\($iAnalysis\)
+        root -q RaphaelleComments.C+\($iAnalysis\)
+        #root -q AxE_PtDep.C+\($iAnalysis\)
     fi
 fi

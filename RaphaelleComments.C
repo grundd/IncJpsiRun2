@@ -144,7 +144,7 @@ void R02_FillHistogram(TTree *t, TH1 *h, Bool_t MC, Bool_t etaCut)
             if(isPass3){
                 // 3) At least two tracks associated with the vertex
                 if(fVertexContrib < cut_fVertexContrib) continue;
-                // 4) Distance from the IP lower than 15 cm
+                // 4) Distance from the IP lower than cut_fVertexZ
                 if(fVertexZ > cut_fVertexZ) continue;
             }
         // if MC:
@@ -161,7 +161,7 @@ void R02_FillHistogram(TTree *t, TH1 *h, Bool_t MC, Bool_t etaCut)
             if(isPass3){
                 // 3) At least two tracks associated with the vertex
                 if(fVertexContrib < cut_fVertexContrib) continue;
-                // 4) Distance from the IP lower than 15 cm
+                // 4) Distance from the IP lower than cut_fVertexZ
                 if(fVertexZ > cut_fVertexZ) continue;
             }
             // 4) Central UPC trigger CCUP31:
@@ -190,10 +190,10 @@ void R02_FillHistogram(TTree *t, TH1 *h, Bool_t MC, Bool_t etaCut)
         if(!(fMatchingSPD == kTRUE)) continue;
         // 8) Muon pairs only
         if(!(TMath::Power(fTrk1SigIfMu,2) + TMath::Power(fTrk2SigIfMu,2) < TMath::Power(fTrk1SigIfEl,2) + TMath::Power(fTrk2SigIfEl,2))) continue;
-        // 9) Dilepton rapidity |y| < 0.8
+        // 9) Dilepton rapidity |y| < cut_fY
         // (skipped)
-        // 10) Pseudorapidity of both tracks |eta| < 0.8
-        if(etaCut && !(abs(fEta1) < 0.8 && abs(fEta2) < 0.8)) continue;
+        // 10) Pseudorapidity of both tracks |eta| < cut_fEta
+        if(etaCut && !(abs(fEta1) < cut_fEta && abs(fEta2) < cut_fEta)) continue;
         // 11) Tracks have opposite charges
         if(!(fQ1 * fQ2 < 0)) continue;            
         // 12) invariant mass between 2.2 and 4.5 GeV/c^2
@@ -274,7 +274,7 @@ void R15_DeltaPhiVsPt()
         if(isPass3){
             // 2) At least two tracks associated with the vertex
             if(fVertexContrib < 2) continue;
-            // 3) Distance from the IP lower than 15 cm
+            // 3) Distance from the IP lower than cut_fVertexZ
             if(fVertexZ > cut_fVertexZ) continue;
         }
 

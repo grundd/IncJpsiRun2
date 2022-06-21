@@ -14,95 +14,23 @@ TString str_in_MC_fldr_gen = "";
 TString str_in_MC_tree_gen = "";
 
 void InitAnalysis(Int_t iAnalysis){
-    // MAIN
+    // pass3, 4bins, calibrated MC PID, N params in DSCB fixed to 10.
     if(iAnalysis == 0)
     {
-        str_subfolder = "MAIN_RESULTS/";
-        nPtBins = 5;
-        isPass3 = kTRUE;
-        isPIDCalibrated = kTRUE;
-        isNParInDSCBFixed = kTRUE;
-    }
-    // pass1, 5bins, original MC PID
-    if(iAnalysis == 1)
-    {
-        str_subfolder = "pass1_5bins/";
-        nPtBins = 5;
-        isPass3 = kFALSE;
-        isPIDCalibrated = kFALSE;
-        isNParInDSCBFixed = kFALSE;
-    }
-    // pass3, 4bins, original MC PID
-    if(iAnalysis == 10){
-        str_subfolder = "pass3_4bins/";
-        nPtBins = 4;
-        isPass3 = kTRUE;
-        isPIDCalibrated = kFALSE;
-        isNParInDSCBFixed = kFALSE;
-    }
-    // pass3, 5bins, original MC PID
-    if(iAnalysis == 11)
-    {
-        str_subfolder = "pass3_5bins/";
-        nPtBins = 5;
-        isPass3 = kTRUE;
-        isPIDCalibrated = kFALSE;
-        isNParInDSCBFixed = kFALSE;
-    }
-    // pass3, 4bins, calibrated MC PID
-    if(iAnalysis == 12)
-    {
-        str_subfolder = "pass3_4bins_calibPID/";
-        nPtBins = 4;
-        isPass3 = kTRUE;
-        isPIDCalibrated = kTRUE;
-        isNParInDSCBFixed = kFALSE;
-    }
-    // pass3, 5bins, calibrated MC PID
-    if(iAnalysis == 13)
-    {
-        str_subfolder = "pass3_5bins_calibPID/";
-        nPtBins = 5;
-        isPass3 = kTRUE;
-        isPIDCalibrated = kTRUE;
-        isNParInDSCBFixed = kFALSE;
-    }
-    // pass3, 4bins, calibrated MC PID, N params in DSCB fixed to 10.
-    if(iAnalysis == 14)
-    {
-        str_subfolder = "pass3_4bins_calibPID_Nfix/";
+        str_subfolder = "4bins_pass3/";
         nPtBins = 4;
         isPass3 = kTRUE;
         isPIDCalibrated = kTRUE;
         isNParInDSCBFixed = kTRUE;
     }
     // pass3, 5bins, calibrated MC PID, N params in DSCB fixed to 10.
-    if(iAnalysis == 15)
+    if(iAnalysis == 1)
     {
-        str_subfolder = "pass3_5bins_calibPID_Nfix/";
+        str_subfolder = "5bins_pass3/";
         nPtBins = 5;
         isPass3 = kTRUE;
         isPIDCalibrated = kTRUE;
         isNParInDSCBFixed = kTRUE;
-    }
-    // pass3, 5bins, calibrated MC PID, cut_fVertexZ set to 10 cm
-    if(iAnalysis == 100)
-    {
-        str_subfolder = "pass3_5bins_calibPID_Nfix_Zcut10.0/";
-        nPtBins = 5;
-        isPass3 = kTRUE;
-        isPIDCalibrated = kTRUE;
-        isNParInDSCBFixed = kTRUE;
-        cut_fVertexZ = 10.0;
-    }
-    if(iAnalysis == 101)
-    {
-        str_subfolder = "pass3_5bins_calibPID_Nfix_Zcut12.5/";
-        nPtBins = 5;
-        isPass3 = kTRUE;
-        isPIDCalibrated = kTRUE;
-        isNParInDSCBFixed = kTRUE;
-        cut_fVertexZ = 12.5;
     }
     // set reduced run lists for the given pass
     SetReducedRunList(isPass3);

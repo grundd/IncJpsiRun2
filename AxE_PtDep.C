@@ -481,7 +481,7 @@ Bool_t EventPassedMCRec_AxEPtDep(Int_t iMassCut = 0, Int_t iPtBin = 0)
         // 2) At least two tracks associated with the vertex
         if(fVertexContrib < cut_fVertexContrib) return kFALSE;
 
-        // 3) Distance from the IP lower than 15 cm
+        // 3) Distance from the IP lower than cut_fVertexZ
         if(fVertexZ > cut_fVertexZ) return kFALSE;
     }
 
@@ -529,14 +529,14 @@ Bool_t EventPassedMCRec_AxEPtDep(Int_t iMassCut = 0, Int_t iPtBin = 0)
         if(!(fTrk1SigIfMu*fTrk1SigIfMu + fTrk2SigIfMu*fTrk2SigIfMu < fTrk1SigIfEl*fTrk1SigIfEl + fTrk2SigIfEl*fTrk2SigIfEl)) return kFALSE;
     }
 
-    // 9) Dilepton rapidity |y| < 0.8
+    // 9) Dilepton rapidity |y| < cut_fY
     if(cuts[9]){
-        if(!(abs(fY) < 0.8)) return kFALSE;
+        if(!(abs(fY) < cut_fY)) return kFALSE;
     }
 
-    // 10) Pseudorapidity of both tracks |eta| < 0.8
+    // 10) Pseudorapidity of both tracks |eta| < cut_fEta
     if(cuts[10]){
-        if(!(abs(fEta1) < 0.8 && abs(fEta2) < 0.8)) return kFALSE;
+        if(!(abs(fEta1) < cut_fEta && abs(fEta2) < cut_fEta)) return kFALSE;
     }
 
     // 11) Tracks have opposite charges
@@ -574,8 +574,8 @@ Bool_t EventPassedMCRec_AxEPtDep(Int_t iMassCut = 0, Int_t iPtBin = 0)
 
 Bool_t EventPassedMCGen_AxEPtDep(Int_t iPtBin = 0)
 {
-    // 1) Dilepton rapidity |y| < 0.8
-    if(!(abs(fYGen) < 0.8)) return kFALSE;
+    // 1) Dilepton rapidity |y| < cut_fY
+    if(!(abs(fYGen) < cut_fY)) return kFALSE;
 
     // 2) Transverse momentum cut
     if(!(fPtGen > edges[iPtBin-1] && fPtGen < edges[iPtBin])) return kFALSE;

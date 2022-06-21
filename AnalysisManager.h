@@ -50,8 +50,8 @@ Int_t fVertexContrib;
 // only for pass3 & psi(2s) datasets:
 Double_t fPtGen_Psi2s;
 
-void SetReducedRunList(Bool_t pass3){
-
+void SetReducedRunList(Bool_t pass3)
+{
     if(!pass3){
         nRuns_18q = sizeof(DPG_LHC18q_pass1_reduced) / sizeof(DPG_LHC18q_pass1_reduced[0]); // 123 runs
         for(Int_t i = 0; i < nRuns_18q; i++) runList_18q.push_back(DPG_LHC18q_pass1_reduced[i]);
@@ -69,7 +69,8 @@ void SetReducedRunList(Bool_t pass3){
     return;
 }
 
-void ConnectTreeVariables(TTree *t){
+void ConnectTreeVariables(TTree *t)
+{
     // Set branch addresses
     // Basic things:
     t->SetBranchAddress("fRunNumber", &fRunNumber);
@@ -124,7 +125,8 @@ void ConnectTreeVariables(TTree *t){
     return;
 }
 
-void ConnectTreeVariablesMCRec(TTree *t, Bool_t isPsi2sDataset = kFALSE){
+void ConnectTreeVariablesMCRec(TTree *t, Bool_t isPsi2sDataset = kFALSE)
+{
     // Set branch addresses
     // Basic things:
     t->SetBranchAddress("fRunNumber", &fRunNumber);
@@ -187,7 +189,8 @@ void ConnectTreeVariablesMCRec(TTree *t, Bool_t isPsi2sDataset = kFALSE){
     return;
 }
 
-void ConnectTreeVariablesMCGen(TTree *t){
+void ConnectTreeVariablesMCGen(TTree *t)
+{
     // Set branch addresses
     // Basic things:
     t->SetBranchAddress("fRunNumber", &fRunNumber);
@@ -201,8 +204,8 @@ void ConnectTreeVariablesMCGen(TTree *t){
     return;
 }
 
-Bool_t RunNumberInListOfGoodRuns(){
-
+Bool_t RunNumberInListOfGoodRuns()
+{
     // Run number in the GoodHadronPID lists published by DPG
     Bool_t GoodRunNumber = kFALSE;
     if(std::count(runList_18q.begin(), runList_18q.end(), fRunNumber) > 0) GoodRunNumber = kTRUE;
@@ -215,8 +218,8 @@ Bool_t RunNumberInListOfGoodRuns(){
     }
 }
 
-Bool_t EventPassed(Int_t iMassCut, Int_t iPtCut){
-
+Bool_t EventPassed(Int_t iMassCut, Int_t iPtCut)
+{
     // Run number in the GoodHadronPID lists published by DPG
     if(!RunNumberInListOfGoodRuns()) return kFALSE;
 
@@ -243,7 +246,7 @@ Bool_t EventPassed(Int_t iMassCut, Int_t iPtCut){
         // 3) At least two tracks associated with the vertex
         if(fVertexContrib < cut_fVertexContrib) return kFALSE;
 
-        // 4) Distance from the IP lower than 15 cm
+        // 4) Distance from the IP lower than cut_fVertexZ
         if(fVertexZ > cut_fVertexZ) return kFALSE;
     }
     
@@ -265,11 +268,11 @@ Bool_t EventPassed(Int_t iMassCut, Int_t iPtCut){
     // 8) Muon pairs only
     if(!(fTrk1SigIfMu*fTrk1SigIfMu + fTrk2SigIfMu*fTrk2SigIfMu < fTrk1SigIfEl*fTrk1SigIfEl + fTrk2SigIfEl*fTrk2SigIfEl)) return kFALSE;
 
-    // 9) Dilepton rapidity |y| < 0.8
-    if(!(abs(fY) < 0.8)) return kFALSE;
+    // 9) Dilepton rapidity |y| < cut_fY
+    if(!(abs(fY) < cut_fY)) return kFALSE;
 
-    // 10) Pseudorapidity of both tracks |eta| < 0.8
-    if(!(abs(fEta1) < 0.8 && abs(fEta2) < 0.8)) return kFALSE;
+    // 10) Pseudorapidity of both tracks |eta| < cut_fEta
+    if(!(abs(fEta1) < cut_fEta && abs(fEta2) < cut_fEta)) return kFALSE;
 
     // 11) Tracks have opposite charges
     if(!(fQ1 * fQ2 < 0)) return kFALSE;
@@ -317,8 +320,8 @@ Bool_t EventPassed(Int_t iMassCut, Int_t iPtCut){
     return kTRUE;
 }
 
-Bool_t EventPassedMCRec(Int_t iMassCut, Int_t iPtCut, Int_t iPtBin = -1){
-
+Bool_t EventPassedMCRec(Int_t iMassCut, Int_t iPtCut, Int_t iPtBin = -1)
+{
     // Run number in the GoodHadronPID lists published by DPG
     if(!RunNumberInListOfGoodRuns()) return kFALSE;
 
@@ -339,7 +342,7 @@ Bool_t EventPassedMCRec(Int_t iMassCut, Int_t iPtCut, Int_t iPtBin = -1){
         // 2) At least two tracks associated with the vertex
         if(fVertexContrib < cut_fVertexContrib) return kFALSE;
 
-        // 3) Distance from the IP lower than 15 cm
+        // 3) Distance from the IP lower than cut_fVertexZ
         if(fVertexZ > cut_fVertexZ) return kFALSE;
     }
 
@@ -373,10 +376,10 @@ Bool_t EventPassedMCRec(Int_t iMassCut, Int_t iPtCut, Int_t iPtBin = -1){
     // 8) Muon pairs only
     if(!(fTrk1SigIfMu*fTrk1SigIfMu + fTrk2SigIfMu*fTrk2SigIfMu < fTrk1SigIfEl*fTrk1SigIfEl + fTrk2SigIfEl*fTrk2SigIfEl)) return kFALSE;
 
-    // 9) Dilepton rapidity |y| < 0.8
+    // 9) Dilepton rapidity |y| < cut_fY
     if(!(abs(fY) < cut_fY)) return kFALSE;
 
-    // 10) Pseudorapidity of both tracks |eta| < 0.8
+    // 10) Pseudorapidity of both tracks |eta| < cut_fEta
     if(!(abs(fEta1) < cut_fEta && abs(fEta2) < cut_fEta)) return kFALSE;
 
     // 11) Tracks have opposite charges
@@ -425,9 +428,9 @@ Bool_t EventPassedMCRec(Int_t iMassCut, Int_t iPtCut, Int_t iPtBin = -1){
     return kTRUE;
 }
 
-Bool_t EventPassedMCGen(Int_t iPtCut = -1, Int_t iPtBin = -1){
-
-    // 1) Dilepton rapidity |y| < 0.8
+Bool_t EventPassedMCGen(Int_t iPtCut = -1, Int_t iPtBin = -1)
+{
+    // 1) Dilepton rapidity |y| < cut_fY
     if(!(abs(fYGen) < cut_fY)) return kFALSE;
 
     // 2) Transverse momentum cut (default: none)

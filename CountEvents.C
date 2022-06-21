@@ -124,7 +124,7 @@ Bool_t CountEvents_EventPassed(){
         if(fVertexContrib < cut_fVertexContrib) return kFALSE;
         counterData[1]++;
 
-        // 4) Distance from the IP lower than 15 cm
+        // 4) Distance from the IP lower than cut_fVertexZ
         if(fVertexZ > cut_fVertexZ) return kFALSE;
         counterData[2]++;
     }
@@ -157,11 +157,11 @@ Bool_t CountEvents_EventPassed(){
     if(!(fTrk1SigIfMu*fTrk1SigIfMu + fTrk2SigIfMu*fTrk2SigIfMu < fTrk1SigIfEl*fTrk1SigIfEl + fTrk2SigIfEl*fTrk2SigIfEl)) return kFALSE;
     counterData[9]++;
 
-    // 10) Dilepton rapidity |y| < 0.8
+    // 10) Dilepton rapidity |y| < cut_fY
     if(!(abs(fY) < cut_fY)) return kFALSE;
     counterData[10]++;
 
-    // 11) Pseudorapidity of both tracks |eta| < 0.8
+    // 11) Pseudorapidity of both tracks |eta| < cut_fEta
     if(!(abs(fEta1) < cut_fEta && abs(fEta2) < cut_fEta)) return kFALSE;
     counterData[11]++;
 
