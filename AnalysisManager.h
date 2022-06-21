@@ -11,7 +11,7 @@
 
 // Selections to set:
 Int_t cut_fVertexContrib = 2;
-Double_t cut_fVertexZ = 15.;
+Double_t cut_fVertexZ = 10.;
 Double_t cut_fY = 0.8;
 Double_t cut_fEta = 0.8;
 Double_t fN_DSCB = 10.;

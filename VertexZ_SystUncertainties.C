@@ -205,7 +205,7 @@ void NewCutZ_CompareCounts()
     }
     TString str_out = "Results/" + str_subfolder + Form("VertexZ_SystUncertainties/syst_uncertainties_%ibins.txt", nPtBins);
     ofstream outfile(str_out.Data());
-    outfile << "bin\tsyst\n";
+    //outfile << "bin\tsyst\n";
     outfile << std::fixed << std::setprecision(1);
     for(Int_t i = 0; i < nPtBins; i++)
     {

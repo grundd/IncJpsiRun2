@@ -33,11 +33,11 @@ Double_t t_avg_val[5] = { 0 };
 //*************************************************
 // Systematic uncertainties (in percent)
 Double_t ErrSyst_SigExtr[5] = { 0 };
-Double_t ErrSyst_AxE[5] = { 0 };
+Double_t ErrSyst_ZVertex[5] = { 0 };
 Double_t ErrSyst_fD[5] = { 0 };
 Double_t ErrSyst_fC[5] = { 0 };
 Double_t ErrSyst_lumi = 2.7;
-Double_t ErrSyst_veto = 3.0;
+Double_t ErrSyst_veto = 3.0; // (!)
 Double_t ErrSyst_EMD = 2.0;
 Double_t ErrSyst_tracks = 2.8;
 Double_t ErrSyst_CCUP31 = 1.3;
@@ -49,8 +49,8 @@ Double_t BR_val = 0.05961;
 Double_t BR_err = 0.00033;
 Double_t ErrSyst_BR = BR_err / BR_val * 100.;
 Double_t RapWidth = 1.6;
-Double_t Eff_veto_val = 94.0;
-Double_t Eff_veto_err = Eff_veto_val * ErrSyst_veto / 100.;
+Double_t Eff_veto_val = 94.0; // (!)
+Double_t Eff_veto_err = Eff_veto_val * ErrSyst_veto / 100.; // (!)
 Double_t Eff_EMD_val = 92.0;
 Double_t Eff_EMD_err = Eff_EMD_val * ErrSyst_EMD / 100.;
 Double_t PhotonFlux_val = 84.9;
@@ -232,6 +232,21 @@ void CalculateCrossSec_PtBins()
     ifs.close();
 
     //#####################################################################################################
+    // Systematic uncertainties: Z_VERTEX SELECTION
+    TString str_SystZVtx = "Results/" + str_subfolder + Form("VertexZ_SystUncertainties/syst_uncertainties_%ibins.txt", nPtBins);
+    ifs.open(str_SystZVtx.Data());
+    // Read data from the file
+    if(!ifs.fail()){
+        for(Int_t iBin = 0; iBin < nPtBins; iBin++){
+            ifs >> i_bin >> ErrSyst_ZVertex[iBin];
+        }
+    } else {
+        PrintErr(str_SystZVtx);
+        return;        
+    }
+    ifs.close();
+
+    //#####################################################################################################
     // Systematic uncertainties: FC AND FD
     Double_t CorrFD_upp[5] = { 0 };
     Double_t CorrFD_low[5] = { 0 };
@@ -262,6 +277,7 @@ void CalculateCrossSec_PtBins()
         // Total systematic uncertainty of sigma UPC
         Sigma_UPC_err_syst[iBin] = Sigma_UPC_val[iBin] * TMath::Sqrt(
             TMath::Power(ErrSyst_SigExtr[iBin] / 100., 2) +
+            TMath::Power(ErrSyst_ZVertex[iBin] / 100., 2) +
             TMath::Power(ErrSyst_fD[iBin] / 100., 2) +
             TMath::Power(ErrSyst_fC[iBin] / 100., 2) +
             TMath::Power(ErrSyst_lumi / 100., 2) + 
@@ -365,10 +381,11 @@ void CalculateCrossSec_PtBins()
             << Form("%.1f \t%.1f \t%.1f \t%.1f \t%.1f \t%.1f \n\n",
                 ErrSyst_lumi, ErrSyst_veto, ErrSyst_EMD, ErrSyst_tracks, ErrSyst_CCUP31, ErrSyst_BR);
     outfile << "UNCORRELATED:\n"
-            << "Bin\tSigExt\tfD\tfC\n";
+            << "Bin\tSigExt\tZVtx\tfD\tfC\n";
     for(Int_t i = 0; i < nPtBins; i++){
         outfile << i+1 << std::fixed << std::setprecision(1) << "\t"
                 << ErrSyst_SigExtr[i] << "\t"
+                << ErrSyst_ZVertex[i] << "\t"
                 << ErrSyst_fD[i] << "\t"
                 << ErrSyst_fC[i] << "\n";
     }    
@@ -383,6 +400,7 @@ void CalculateCrossSec_PtBins()
                 << "$(" << ptBoundaries[i] << "," << ptBoundaries[i+1] << ")$ & "
                 << std::fixed << std::setprecision(1)
                 << ErrSyst_SigExtr[i] << " & "
+                << ErrSyst_ZVertex[i] << " & "
                 << ErrSyst_fD[i] << " & "
                 << ErrSyst_fC[i] << R"( \\)" << "\n";
                             

@@ -14,14 +14,14 @@ TString str_in_MC_fldr_gen = "";
 TString str_in_MC_tree_gen = "";
 
 void InitAnalysis(Int_t iAnalysis){
-    // pass1, 4bins, original MC PID
+    // MAIN
     if(iAnalysis == 0)
     {
-        str_subfolder = "pass1_4bins/";
-        nPtBins = 4;
-        isPass3 = kFALSE;
-        isPIDCalibrated = kFALSE;
-        isNParInDSCBFixed = kFALSE;
+        str_subfolder = "MAIN_RESULTS/";
+        nPtBins = 5;
+        isPass3 = kTRUE;
+        isPIDCalibrated = kTRUE;
+        isNParInDSCBFixed = kTRUE;
     }
     // pass1, 5bins, original MC PID
     if(iAnalysis == 1)

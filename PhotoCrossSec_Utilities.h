@@ -73,7 +73,7 @@ const Int_t nData_SL = 125;
 Double_t abs_t_SL[nData_SL];
 Double_t sig_SL[nData_SL];
 
-Int_t lineWidth = 2;
+Int_t lineWidth = 3;
 
 //#####################################################################################################
 // Functions to read the input

@@ -124,7 +124,7 @@ void PlotWithRatios()
     gr_GZ_max->SetLineColor(kGreen);
     gr_GZ_max->SetLineWidth(lineWidth);
     SetupSysErrorBox(gr_GZ_area,kGreen);
-    gr_GZ_area->SetFillStyle(3013);
+    //gr_GZ_area->SetFillStyle(3003);
 
     // Hot-spot model
     // With subnucleonic degrees of freedom (hot spots):
@@ -332,7 +332,7 @@ void PlotWithRatios()
 
     // Draw legend with models
     TLegend *leg1mod = SetLegend(0.17,0.04,0.42,0.30);
-    leg1mod->SetTextSize(0.035);
+    leg1mod->SetTextSize(0.044);
     leg1mod->SetMargin(0.30);
     leg1mod->AddEntry(gr_SL,"STARlight", "L");
     leg1mod->AddEntry(gr_HM_fluct,"MS: IPsat flu.", "L");
@@ -347,6 +347,11 @@ void PlotWithRatios()
     pMain->Draw();
     pMain->cd();
     // Draw everything needed
+    fCSont->GetYaxis()->SetTitleOffset(1.02);
+    fCSont->GetXaxis()->SetTitleSize(0.06);
+    fCSont->GetYaxis()->SetTitleSize(0.06);
+    fCSont->GetXaxis()->SetLabelSize(0.06);
+    fCSont->GetYaxis()->SetLabelSize(0.06);
     fCSont->GetXaxis()->SetLabelSize(0);
     fCSont->GetXaxis()->SetTitle("");
     fCSont->Draw("AXIS");
@@ -361,8 +366,10 @@ void PlotWithRatios()
     gr_HM_noflu->Draw("CX SAME");    
     grData_stat->Draw("P SAME");
     //leg0->Draw();
+    latex->SetTextSize(0.044);
     latex->DrawLatex(0.55,0.93,"ALICE Pb+Pb #rightarrow Pb+Pb+J/#psi   #sqrt{#it{s}_{NN}} = 5.02 TeV");
     leg1mod->Draw();
+    leg2->SetTextSize(0.044);
     leg2->Draw();
 
     cBoth->cd();

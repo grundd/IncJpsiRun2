@@ -4,12 +4,12 @@
 # ./RunAnalysis.sh
 
 # define the type of the analysis (see AnalysisConfig.h)
-declare -i iAnalysis=100
+declare -i iAnalysis=0
 # define if compile each macro
 declare -i compile=0
 # define which macros to run
 #declare -a arr=("0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12" "13" "14" "15" "16" "17" "18" "19" "20" "21" "22" "23" "24" "25")
-declare -a arr=("0y" "1y" "2y" "3y" "4y" "5y" "6y" "7y" "8y" "9y" "10y" "11" "12y" "13y" "14y" "15y" "16y" "17y" "18y" "19y" "20y" "21y" "22y" "23y" "24y" "25y")
+declare -a arr=("0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12" "13y" "14y" "15y" "16y" "17y" "18y" "19y" "20y" "21y" "22y" "23y" "24y" "25y" "26y")
 
 # 0) Count events (data)
 if [ "${arr[0]}" = "0y" ] 
@@ -105,8 +105,8 @@ fi
 if [ "${arr[10]}" = "10y" ] 
 then
     if [[ "$compile" -eq 0 ]]
-    then root -q AxE_PtBins.C\($iAnalysis,0\)
-    else root -q AxE_PtBins.C+\($iAnalysis,0\)
+    then root -q AxE_PtBins.C\($iAnalysis\)
+    else root -q AxE_PtBins.C+\($iAnalysis\)
     fi
 fi
 
@@ -141,6 +141,10 @@ fi
 if [ "${arr[14]}" = "14y" ] 
 then
     if [[ "$compile" -eq 0 ]]
+    then root -q PtFit_FeedDownNormalization.C\($iAnalysis\)
+    else root -q PtFit_FeedDownNormalization.C+\($iAnalysis\)
+    fi
+    if [[ "$compile" -eq 0 ]]
     then root -q PtFit_NoBkg.C\($iAnalysis\)
     else root -q PtFit_NoBkg.C+\($iAnalysis\)
     fi
@@ -164,8 +168,17 @@ then
     fi
 fi
 
-# 17) Calculate the average |t| per bin based on STARlight predictions
+# 17) Systematic uncertainties corresponding to Z_vertex selection
 if [ "${arr[17]}" = "17y" ] 
+then
+    if [[ "$compile" -eq 0 ]]
+    then root -q VertexZ_SystUncertainties.C\($iAnalysis\)
+    else root -q VertexZ_SystUncertainties.C+\($iAnalysis\)
+    fi
+fi
+
+# 18) Calculate the average |t| per bin based on STARlight predictions
+if [ "${arr[18]}" = "18y" ] 
 then
     if [[ "$compile" -eq 0 ]]
     then root -q STARlight_tVsPt.C\($iAnalysis\)
@@ -173,8 +186,8 @@ then
     fi
 fi
 
-# 18) Calculate the photonuclear cross section
-if [ "${arr[18]}" = "18y" ] 
+# 19) Calculate the photonuclear cross section
+if [ "${arr[19]}" = "19y" ] 
 then
     if [[ "$compile" -eq 0 ]]
     then root -q PhotoCrossSec_Calculate.C\($iAnalysis\)
@@ -182,8 +195,8 @@ then
     fi
 fi
 
-# 19) Plot the photonuclear cross section
-if [ "${arr[19]}" = "19y" ] 
+# 20) Plot the photonuclear cross section
+if [ "${arr[20]}" = "20y" ] 
 then
     if [[ "$compile" -eq 0 ]]
     then root -q PhotoCrossSec_Plot.C\($iAnalysis\)
@@ -191,8 +204,8 @@ then
     fi
 fi
 
-# 20) Plot the photonuclear cross section with ratios
-if [ "${arr[20]}" = "20y" ] 
+# 21) Plot the photonuclear cross section with ratios
+if [ "${arr[21]}" = "21y" ] 
 then
     if [[ "$compile" -eq 0 ]]
     then root -q PhotoCrossSec_PlotWithRatios.C\($iAnalysis\)
@@ -200,8 +213,8 @@ then
     fi
 fi
 
-# 21) Plot the total cross section (integrated over |t|)
-if [ "${arr[21]}" = "21y" ] 
+# 22) Plot the total cross section (integrated over |t|)
+if [ "${arr[22]}" = "22y" ] 
 then
     if [[ "$compile" -eq 0 ]]
     then root -q PhotoCrossSec_Total.C\($iAnalysis\)
@@ -209,8 +222,8 @@ then
     fi
 fi
 
-# 22) Migration of events between pT bins
-if [ "${arr[22]}" = "22y" ] 
+# 23) Migration of events between pT bins
+if [ "${arr[23]}" = "23y" ] 
 then
     if [[ "$compile" -eq 0 ]]
     then root -q MigrationPtReecGen.C\($iAnalysis\)
@@ -218,8 +231,8 @@ then
     fi
 fi
 
-# 23) Calculate pT resolution as a FWHM value
-if [ "${arr[23]}" = "23y" ] 
+# 24) Calculate pT resolution as a FWHM value
+if [ "${arr[24]}" = "24y" ] 
 then
     if [[ "$compile" -eq 0 ]]
     then root -q ResolutionPt.C\($iAnalysis\)
@@ -227,8 +240,8 @@ then
     fi
 fi
 
-# 24) Make PID plots (muon-electron separation)
-if [ "${arr[24]}" = "24y" ] 
+# 25) Make PID plots (muon-electron separation)
+if [ "${arr[24]}" = "25y" ] 
 then
     if [[ "$compile" -eq 0 ]]
     then root -q ElectronsMuonsPID.C\($iAnalysis\)
@@ -236,8 +249,8 @@ then
     fi
 fi
 
-# 25) Answers to comments from Raphaelle
-if [ "${arr[25]}" = "25y" ] 
+# 26) Answers to comments from Raphaelle
+if [ "${arr[26]}" = "26y" ] 
 then
     if [[ "$compile" -eq 0 ]]
     then root -q RaphaelleComments.C\($iAnalysis\)

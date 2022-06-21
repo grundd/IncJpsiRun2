@@ -222,7 +222,7 @@ void InvMassFit_DoFit(Int_t opt, Double_t fMCutLow, Double_t fMCutUpp, Double_t 
     else 
     {
         // related to signal extraction
-        if(fCutZ == cut_fVertexZ) f_in = new TFile("Trees/" + str_subfolder + "InvMassFit/InvMassFit_SystUncertainties.root"); 
+        if(fCutZ == -1) f_in = new TFile("Trees/" + str_subfolder + "InvMassFit/InvMassFit_SystUncertainties.root"); 
         // related to modifications of Z vertex cut 
         else f_in = new TFile("Trees/" + str_subfolder + Form("VertexZ_SystUncertainty/Zcut%.1f_InvMassFit.root", fCutZ)); 
     }
