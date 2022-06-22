@@ -53,7 +53,7 @@ void PtFit_FeedDownNormalization(Int_t iAnalysis)
     // using the ratio measured by Michal for both values
     // R = 0.1800 pm 0.0185 (stat.) pm 0.0280 (syst.) pm 0.0050 (BR)
     // error when all contributions combined in quadrature: R = 0.18 pm 0.03
-    for(Double_t R = 0.15; R < 0.22; R+=0.01) Calc_fD(R,R);
+    for(Double_t R = 0.16; R < 0.21; R+=0.01) Calc_fD(R,R);
 
     return;
 }

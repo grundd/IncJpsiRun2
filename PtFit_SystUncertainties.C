@@ -14,7 +14,7 @@ void PtFit_SystUncertainties(Int_t iAnalysis)
     gSystem->Exec("mkdir -p Results/" + str_subfolder + "PtFit_SystUncertainties/");
 
     // Try various values of R
-    for(Int_t ifD = -3; ifD <= 3; ifD++) PtFit_NoBkg_DoFit(4,ifD);
+    for(Int_t ifD = -2; ifD <= 2; ifD++) PtFit_NoBkg_DoFit(4,ifD);
     
     return;
 }

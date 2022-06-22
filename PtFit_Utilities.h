@@ -162,12 +162,10 @@ void PtFit_SetCanvas(TCanvas *c, Bool_t isLogScale)
 void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t ifD = 0)
 // ifD = 0 => R_coh = R_inc = R = 0.18 (Michal's measured value)
 // systematic uncertainties:
+//     = -2 => R = 0.16
+//     = -1 => R = 0.17
 //     = 1 => R = 0.19
 //     = 2 => R = 0.20
-//     = 3 => R = 0.21
-//     = -1 => R = 0.17
-//     = -2 => R = 0.16
-//     = -3 => R = 0.15
 {
     Printf("###########################################");
     // ratio of the coherent psi(2S) and J/psi cross sections

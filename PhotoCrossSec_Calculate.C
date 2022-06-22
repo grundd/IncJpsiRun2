@@ -141,7 +141,7 @@ void CalculateCrossSec_PtBins()
 
     //#####################################################################################################
     // 4) Load FD corrections per pT bin
-    TString str_FD = "Results/" + str_subfolder + "PtFit_NoBkg/RecSh4_fD.txt";
+    TString str_FD = "Results/" + str_subfolder + "PtFit_NoBkg/RecSh4_fD0_fD.txt";
     ifs.open(str_FD.Data());
     // Read data from the file
     if(!ifs.fail()){
@@ -162,7 +162,7 @@ void CalculateCrossSec_PtBins()
 
     //#####################################################################################################
     // 5) Load FC corrections per pT bin
-    TString str_FC = "Results/" + str_subfolder + "PtFit_NoBkg/RecSh4_fC.txt";
+    TString str_FC = "Results/" + str_subfolder + "PtFit_NoBkg/RecSh4_fD0_fC.txt";
     ifs.open(str_FC.Data());
     // Read data from the file
     if(!ifs.fail()){

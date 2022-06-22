@@ -4,11 +4,11 @@
 # ./RunAnalysis.sh
 
 # define the type of the analysis (see AnalysisConfig.h)
-declare -i iAnalysis=0
+declare -i iAnalysis=1
 # define if compile each macro
 declare -i compile=0
 # define which macros to run
-#declare -a arr=("0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "10")
+#declare -a arr=("0" "1" "2" "3" "4" "5" "6" "7" "8" "9y" "10y")
 declare -a arr=("0" "1y" "2y" "3y" "4y" "5y" "6y" "7y" "8y" "9y" "10y")
 
 # 1) count events (data & MC) and do run list check

@@ -1,7 +1,0 @@
-Ratio STARlight: 0.834
-Ratio HS GG-hs:  0.838
-Ratio HS GG-n:   0.709
-Ratio MS fluct:  0.789
-Ratio MS noflu:  0.845
-Ratio GZ upp:    0.771
-Ratio GZ low:    0.771
