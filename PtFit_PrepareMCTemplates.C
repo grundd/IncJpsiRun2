@@ -44,7 +44,7 @@ void PtFit_PrepareMCTemplates(Int_t iAnalysis)
     PtFit_PreparePDFs_modRA_CohJ(kTRUE);
 
     gSystem->Exec("mkdir -p Results/" + str_subfolder + "PtFit_NoBkg/modRA_all_ratios/");
-    // prepare PDFs for CohJ, IncJ, CohP and IncP from STARlight data generated with R_A = 7.350 fm (optimal value)
+    // prepare PDFs for CohJ, IncJ, CohP and IncP from STARlight data generated with R_A = 7.330 fm (optimal value)
     // weigh hRec over the whole pT range:
     PtFit_PreparePDFs_modRA_all(kFALSE);
     // stop weighing at fPtStopWeigh[iMC]
@@ -287,21 +287,21 @@ void PtFit_PreparePDFs_modRA_CohJ(Bool_t bStopWeigh)
 
 void PtFit_PreparePDFs_modRA_all(Bool_t bStopWeigh)
 {
-    // Here the PDFs with R_A = 7.350 fm (optimal value) are created
+    // Here the PDFs with R_A = 7.330 fm (optimal value) are created
     TString name;
     if(!bStopWeigh) name = "Trees/" + str_subfolder + "PtFit/MCTemplates_modRA_all.root";
     else            name = "Trees/" + str_subfolder + "PtFit/MCTemplates_modRA_all_stopWeigh.root";
     TFile *file = TFile::Open(name.Data(),"read");
     if(file){
-        Printf("PDFs with R_A = 7.350 already created.");
+        Printf("PDFs with R_A = 7.330 already created.");
         return;
 
     } else { 
     
-        TString str_modRA[4] = {"hCohJ_modRA_7.350",
-                                "hIncJ_modRA_7.350",
-                                "hCohP_modRA_7.350",
-                                "hIncP_modRA_7.350"};
+        TString str_modRA[4] = {"hCohJ_modRA_7.330",
+                                "hIncJ_modRA_7.330",
+                                "hCohP_modRA_7.330",
+                                "hIncP_modRA_7.330"};
         if(bStopWeigh) for(Int_t iMC = 0; iMC < 4; iMC++) str_modRA[iMC] += "_stopWeigh";
 
         TList *l = new TList();
@@ -333,7 +333,7 @@ void PtFit_PreparePDFs_modRA_all(Bool_t bStopWeigh)
             tGenOld->SetBranchAddress("fPtGen", &fPtGenerated_PtFit);
 
             // Open fGenNew file and get the tree
-            TString str_in_new = Form("Trees/STARlight/tGen_%s_RA_7.350.root", NamesPDFs[iMC].Data());
+            TString str_in_new = Form("Trees/STARlight/tGen_%s_RA_7.330.root", NamesPDFs[iMC].Data());
             TFile *fGenNew = TFile::Open(str_in_new.Data(),"read");
             if(!fGenNew){
                 Printf("File fGenNew not found! Terminating...");
@@ -442,7 +442,7 @@ void PtFit_PreparePDFs_modRA_all(Bool_t bStopWeigh)
             l->Add(h_modRA[iMC]);
 
             // Print the results to the text file
-            TString name_out = "Results/" + str_subfolder + Form("PtFit_NoBkg/modRA_all_ratios/%s_RA_7.350", NamesPDFs[iMC].Data());
+            TString name_out = "Results/" + str_subfolder + Form("PtFit_NoBkg/modRA_all_ratios/%s_RA_7.330", NamesPDFs[iMC].Data());
             if(!bStopWeigh) name_out += ".txt";
             else            name_out += "_stopWeigh.txt"; 
             ofstream outfile(name_out.Data());

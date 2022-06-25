@@ -14,15 +14,19 @@ void _STARlight_PrepareSTARlightTree()
     // CohJ
     PrepareTrees_ChooseDataset(10);
     PrepareTrees_ChooseDataset(11);
+    PrepareTrees_ChooseDataset(12);
     // IncJ
     PrepareTrees_ChooseDataset(20);
     PrepareTrees_ChooseDataset(21);
+    PrepareTrees_ChooseDataset(22);
     // CohP
     PrepareTrees_ChooseDataset(30);
     PrepareTrees_ChooseDataset(31);
+    PrepareTrees_ChooseDataset(32);
     // IncP
     PrepareTrees_ChooseDataset(40);
     PrepareTrees_ChooseDataset(41);
+    PrepareTrees_ChooseDataset(42);
 
     // IncJ: |t| vs. pT of the J_psi
     PrepareTrees_ChooseDataset(68);
@@ -49,6 +53,12 @@ void PrepareTrees_ChooseDataset(Int_t iDS){
         nGenEv = 6000000;
         folder_in = "STARlight_src/installation/CohJ_7.350/";
         folder_out = "Trees/STARlight/CohJ_7.350/";
+    } else if(iDS == 12){
+        // June 25, 2022
+        // CohJ, R_A set to 7.330 fm in src/nucleus.cpp 
+        nGenEv = 6000000;
+        folder_in = "STARlight_src/installation/CohJ_7.330/";
+        folder_out = "Trees/STARlight/CohJ_7.330/";
     } else if(iDS == 20){
         // Mar 07, 2022
         // IncJ, R_A set to 6.624 fm in src/nucleus.cpp 
@@ -61,6 +71,12 @@ void PrepareTrees_ChooseDataset(Int_t iDS){
         nGenEv = 6000000;
         folder_in = "STARlight_src/installation/IncJ_7.350/";
         folder_out = "Trees/STARlight/IncJ_7.350/";
+    } else if(iDS == 22){
+        // June 25, 2022
+        // IncJ, R_A set to 7.330 fm in src/nucleus.cpp 
+        nGenEv = 6000000;
+        folder_in = "STARlight_src/installation/IncJ_7.330/";
+        folder_out = "Trees/STARlight/IncJ_7.330/";
     } else if(iDS == 30){
         // Mar 12, 2022
         // CohP, R_A set to 6.624 fm in src/nucleus.cpp 
@@ -73,6 +89,12 @@ void PrepareTrees_ChooseDataset(Int_t iDS){
         nGenEv = 6000000;
         folder_in = "STARlight_src/installation/CohP_7.350/";
         folder_out = "Trees/STARlight/CohP_7.350/";
+    } else if(iDS == 32){
+        // June 25, 2022
+        // CohP, R_A set to 7.330 fm in src/nucleus.cpp 
+        nGenEv = 6000000;
+        folder_in = "STARlight_src/installation/CohP_7.330/";
+        folder_out = "Trees/STARlight/CohP_7.330/";
     } else if(iDS == 40){
         // Mar 12, 2022
         // IncP, R_A set to 6.624 fm in src/nucleus.cpp 
@@ -85,6 +107,12 @@ void PrepareTrees_ChooseDataset(Int_t iDS){
         nGenEv = 6000000;
         folder_in = "STARlight_src/installation/IncP_7.350/";
         folder_out = "Trees/STARlight/IncP_7.350/";
+    } else if(iDS == 42){
+        // June 25, 2022
+        // IncP, R_A set to 7.330 fm in src/nucleus.cpp 
+        nGenEv = 6000000;
+        folder_in = "STARlight_src/installation/IncP_7.330/";
+        folder_out = "Trees/STARlight/IncP_7.330/";
     } else if(iDS == 68){
         // May 24, 2022
         // IncJ, R_A = 6.624 fm, PtGammaVMPom.txt produced

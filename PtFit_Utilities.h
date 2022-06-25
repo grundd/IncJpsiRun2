@@ -57,9 +57,9 @@ TString NamesPDFs[6] = {"CohJ","IncJ","CohP","IncP","Bkgr","Diss"};
 //  = 1011 => R_A = 7.60 fm
 //  = 1012 => R_A = 7.70 fm
 //  = 1013 => R_A = 7.80 fm
-// from the above study of various CohJ shapes, it was found that the value of R_A = 7.350 fm is optimal
+// from the above study of various CohJ shapes, it was found that the value of R_A = 7.330 fm is optimal
 // all shapes modified accordingly: CohJ, IncJ, CohP, IncP (~ no effect at the last three)
-//  = 4 => R_A = 7.350 fm for all shapes
+//  = 4 => R_A = 7.330 fm for all shapes
 // #############################################################################################
 
 // Functions and variables needed to define STARlight formfactor
@@ -205,7 +205,7 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t ifD = 0)
     Double_t fR_A = 0;
     if(iRecShape == 0) fR_A = 6.624;
     if(iRecShape == 1) fR_A = 7.53;
-    if(iRecShape == 4) fR_A = 7.35;
+    if(iRecShape == 4) fR_A = 7.33;
     if(iRecShape > 1000) fR_A = 6.6 + (Double_t)(iRecShape-1001) * 0.1;
     Printf("Pb radius used for CohJ: %.3f", fR_A);
     Printf("###########################################");
@@ -261,7 +261,7 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t ifD = 0)
         hIncP = (TH1D*)list->FindObject(("h" + NamesPDFs[3]).Data());
         if(hIncP) Printf("Histogram %s loaded.", hIncP->GetName());
     } 
-    // if all CohJ hIncJ, hCohP and hIncP taken with R_A = 7.350 fm
+    // if all CohJ hIncJ, hCohP and hIncP taken with R_A = 7.330 fm
     else if(iRecShape == 4)
     {
         if(!isPass3)
@@ -280,10 +280,10 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t ifD = 0)
 
         l_modRA->ls();
 
-        TString hNames_modRA[4] = {"hCohJ_modRA_7.350",
-                                   "hIncJ_modRA_7.350",
-                                   "hCohP_modRA_7.350",
-                                   "hIncP_modRA_7.350"};
+        TString hNames_modRA[4] = {"hCohJ_modRA_7.330",
+                                   "hIncJ_modRA_7.330",
+                                   "hCohP_modRA_7.330",
+                                   "hIncP_modRA_7.330"};
 
         // 1) kCohJpsiToMu
         hCohJ = (TH1D*)l_modRA->FindObject(hNames_modRA[0].Data());

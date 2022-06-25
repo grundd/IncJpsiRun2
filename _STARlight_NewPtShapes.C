@@ -57,7 +57,7 @@ void _STARlight_NewPtShapes()
     gStyle->SetOptStat(0);
 
     // to study which R_A is optimal for CohJ to describe the measured pT distribution
-    if(kTRUE){
+    if(kFALSE){
         // CohJ, 6.000.000 gen events,
         // R_A = 6.624 vs. 6.600-7.800 fm (step = 0.100 fm)
         for(Int_t i = 0; i < 13; i++){
@@ -69,33 +69,50 @@ void _STARlight_NewPtShapes()
         }
     }
 
-    if(kTRUE){
+    if(kFALSE){
         // CohJ, R_A = 6.624 vs. 7.350 fm, 6.000.000 gen events
         InitAnalysis(0,kTRUE);
         FillTreeGen("Trees/STARlight/CohJ_6.624/",6.624);
         FillTreeGen("Trees/STARlight/CohJ_7.350/",7.350);
         CalcAndPlotRatios("",7.350);
-    }
-    if(kTRUE){
         // IncJ, R_A = 6.624 vs. 7.350 fm, 6.000.000 gen events
         InitAnalysis(1,kTRUE);
         FillTreeGen("Trees/STARlight/IncJ_6.624/",6.624);
         FillTreeGen("Trees/STARlight/IncJ_7.350/",7.350);
         CalcAndPlotRatios("",7.350);
-    }
-    if(kTRUE){
         // CohP, R_A = 6.624 vs. 7.350 fm, 6.000.000 gen events
         InitAnalysis(2,kTRUE);
         FillTreeGen("Trees/STARlight/CohP_6.624/",6.624);
         FillTreeGen("Trees/STARlight/CohP_7.350/",7.350);
         CalcAndPlotRatios("",7.350);
-    }
-    if(kTRUE){
         // IncP, R_A = 6.624 vs. 7.350 fm, 6.000.000 gen events
         InitAnalysis(3,kTRUE);
         FillTreeGen("Trees/STARlight/IncP_6.624/",6.624);
         FillTreeGen("Trees/STARlight/IncP_7.350/",7.350);
         CalcAndPlotRatios("",7.350);
+    }
+
+    if(kTRUE){
+        // CohJ, R_A = 6.624 vs. 7.330 fm, 6.000.000 gen events
+        InitAnalysis(0,kTRUE);
+        FillTreeGen("Trees/STARlight/CohJ_6.624/",6.624);
+        FillTreeGen("Trees/STARlight/CohJ_7.330/",7.330);
+        CalcAndPlotRatios("",7.330);
+        // IncJ, R_A = 6.624 vs. 7.330 fm, 6.000.000 gen events
+        InitAnalysis(1,kTRUE);
+        FillTreeGen("Trees/STARlight/IncJ_6.624/",6.624);
+        FillTreeGen("Trees/STARlight/IncJ_7.330/",7.330);
+        CalcAndPlotRatios("",7.330);
+        // CohP, R_A = 6.624 vs. 7.330 fm, 6.000.000 gen events
+        InitAnalysis(2,kTRUE);
+        FillTreeGen("Trees/STARlight/CohP_6.624/",6.624);
+        FillTreeGen("Trees/STARlight/CohP_7.330/",7.330);
+        CalcAndPlotRatios("",7.330);
+        // IncP, R_A = 6.624 vs. 7.330 fm, 6.000.000 gen events
+        InitAnalysis(3,kTRUE);
+        FillTreeGen("Trees/STARlight/IncP_6.624/",6.624);
+        FillTreeGen("Trees/STARlight/IncP_7.330/",7.330);
+        CalcAndPlotRatios("",7.330);
     }
 
     return;
