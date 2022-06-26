@@ -9,9 +9,9 @@
 #include "AnalysisManager.h"
 #include "AnalysisConfig.h"
 #include "SetPtBinning.h"
+#include "VetoEfficiency_Utilities.h"
 
 // ******** options to set: **********
-const Int_t nBinsN = 5;
 const Int_t nBinsPt = 5;
 Double_t fBkgM_low = 1.8; // GeV
 Double_t fBkgM_upp = 2.8; // GeV
@@ -19,11 +19,6 @@ Double_t fBkgM_upp = 2.8; // GeV
 const Int_t nBins = 200;
 Double_t n_low = 0.; // number of neutrons
 Double_t n_upp = 50.;
-// arrays:
-Double_t fNumberOfN[nBinsN+1] = {0.0, 1.5, 5.5, 10.5, 20.5, 50.5};
-TString  sNumberOfN[nBinsN] = {"0-1", "2-5", "6-10", "11-20", "21-50"};
-Double_t fVetoIneff_A[nBinsN] = {0.085, 0.157, 0.265, 0.413, 0.579};
-Double_t fVetoIneff_C[nBinsN] = {0.146, 0.333, 0.425, 0.542, 0.844};
 // ***********************************
 // tree variables:
 Bool_t fZNA_hit, fZNC_hit;
@@ -32,10 +27,11 @@ Double_t fZNA_n, fZNC_n;
 Double_t NORM;
 
 void VetoEfficiency_ClassifyEventsToChannels(Int_t mass_range, Bool_t normalized);
+void VetoEfficiency_SubtractBackground();
+void VetoEfficiency_Calculate();
 void VetoEfficiency_PrepareTree();
 TCanvas* PlotNeutronDistribution(const char* name, TH1 *hZNA, TH1 *hZNC, Double_t fPtMin, Double_t fPtMax, Double_t fMMin, Double_t fMMax);
 void ConnectTreeVariables_tNeutrons(TTree *t);
-void normalize(Double_t &val){ val = val / NORM; return; }
 
 void VetoEfficiency(Int_t iAnalysis)
 {
@@ -48,6 +44,7 @@ void VetoEfficiency(Int_t iAnalysis)
     // prepare the tree containing information about mass, pT and ZN signal
     VetoEfficiency_PrepareTree();
 
+    /*
     // classify events into classes: background (mass from 1.8 to 2.8 GeV)
     VetoEfficiency_ClassifyEventsToChannels(0, kFALSE);
     VetoEfficiency_ClassifyEventsToChannels(0, kTRUE);
@@ -55,6 +52,11 @@ void VetoEfficiency(Int_t iAnalysis)
     // classify events into classes: signal+bkg (mass from 3.0 to 3.2 GeV)
     VetoEfficiency_ClassifyEventsToChannels(1, kFALSE);
     VetoEfficiency_ClassifyEventsToChannels(1, kTRUE);
+    */
+
+    VetoEfficiency_SubtractBackground();
+
+    VetoEfficiency_Calculate();
 
     return;
 }
@@ -63,32 +65,9 @@ void VetoEfficiency_ClassifyEventsToChannels(Int_t mass_range, Bool_t normalized
 // mass_range == 0 => background (mass range: fBkgM_low to fBkgM_upp; only 1 pT bin)
 //            == 1 => signal+bkg (mass range: 3.0 to 3.2 GeV; only 1 pT bin)
 {
-    // **********************************************************************
-    // numbers or fractions of events 
-    // total number of events
-    Double_t fEv_tot(0); 
-    // per ZN channel summing over the corresponding bin types
-    Double_t fEv_ch_Pt[4] = { 0 };
-    Double_t fEv_ch_N[4] = { 0 };
-    Double_t fEv_ch_PtN[4] = { 0 };
-    // per pT bin
-    Double_t fEv_BinsPt[nBinsPt] = { 0 };
-    // in neutron classes
-    Double_t fEv_0n0n(0), fEv_Xn0n(0), fEv_0nXn(0), fEv_XnXn(0);
-    // per neutron class and pT bin
-    Double_t fEv_0n0n_BinsPt[nBinsPt] = { 0 }; // 0n0n class, index = pT bin
-    Double_t fEv_Xn0n_BinsPt[nBinsPt] = { 0 }; // Xn0n class, index = pT bin
-    Double_t fEv_0nXn_BinsPt[nBinsPt] = { 0 }; // 0nXn class, index = pT bin
-    Double_t fEv_XnXn_BinsPt[nBinsPt] = { 0 }; // XnXn class, index = pT bin
-    // per neutron class and neutron bin
-    Double_t fEv_Xn0n_BinsN[nBinsN] = { 0 };   // Xn0n class, index = neutron bin (A)
-    Double_t fEv_0nXn_BinsN[nBinsN] = { 0 };   // 0nXn class, index = neutron bin (C)
-    Double_t fEv_XnXn_BinsN[nBinsN][nBinsN] = { 0 }; // XnXn class, first index = neutron bin (A), second index = neutron bin (C)
-    // per neutron class, pT bin and neutron bin
-    Double_t fEv_Xn0n_BinsPtN[nBinsPt][nBinsN] = { 0 }; // Xn0n class, first index = pT bin, second index = neutron bin (A)
-    Double_t fEv_0nXn_BinsPtN[nBinsPt][nBinsN] = { 0 }; // 0nXn class, first index = pT bin, second index = neutron bin (C)
-    Double_t fEv_XnXn_BinsPtN[nBinsPt][nBinsN][nBinsN] = { 0 }; // XnXn class, first index = pT bin, second index = neutron bin (A), third index = neutron bin (C)
-    // **********************************************************************
+    NeutronMatrix *nEv = new NeutronMatrix();
+    NeutronMatrix *nEv_PtBins[nBinsPt] = { NULL };
+    for(Int_t i = 0; i < nBinsPt; i++) nEv_PtBins[i] = new NeutronMatrix();
 
     Double_t m_low(0.), m_upp(0.);
     if(mass_range == 0){
@@ -133,41 +112,21 @@ void VetoEfficiency_ClassifyEventsToChannels(Int_t mass_range, Bool_t normalized
         if(fZNC_hit == kTRUE && fZNC_n > 50.5){ Printf("Ev %i: More than 50 neutrons on C side (%.2f). Skipping...", iEntry, fZNC_n); continue; }
         // find index of the neutron bin
         Int_t iBinN_A(0), iBinN_C(0);
-        if(fZNA_hit) while(fZNA_n > fNumberOfN[iBinN_A+1]) iBinN_A++;
-        if(fZNC_hit) while(fZNC_n > fNumberOfN[iBinN_C+1]) iBinN_C++;
+        if(fZNA_hit){
+            iBinN_A = 1;
+            while(fZNA_n > fNumberOfN[iBinN_A]) iBinN_A++;
+        } 
+        if(fZNC_hit){
+            iBinN_C = 1;
+            while(fZNC_n > fNumberOfN[iBinN_C]) iBinN_C++;
+        } 
         // find index of the pT bin
         Int_t iBinPt(0);
         while(fPt > ptBoundaries[iBinPt+1]) iBinPt++;
-        // 0n0n class
-        if(fZNA_hit == kFALSE && fZNC_hit == kFALSE)
-        {
-            fEv_0n0n++;
-            fEv_0n0n_BinsPt[iBinPt]++;
-        }
-        // Xn0n class
-        if(fZNA_hit == kTRUE && fZNC_hit == kFALSE)
-        {
-            fEv_Xn0n++;
-            fEv_Xn0n_BinsPt[iBinPt]++;
-            fEv_Xn0n_BinsN[iBinN_A]++;
-            fEv_Xn0n_BinsPtN[iBinPt][iBinN_A]++;
-        }
-        // 0nXn class
-        if(fZNA_hit == kFALSE && fZNC_hit == kTRUE)
-        {
-            fEv_0nXn++;
-            fEv_0nXn_BinsPt[iBinPt]++;
-            fEv_0nXn_BinsN[iBinN_C]++;
-            fEv_0nXn_BinsPtN[iBinPt][iBinN_C]++;
-        }
-        // XnXn class
-        if(fZNA_hit == kTRUE && fZNC_hit == kTRUE)
-        {
-            fEv_XnXn++;
-            fEv_XnXn_BinsPt[iBinPt]++;
-            fEv_XnXn_BinsN[iBinN_A][iBinN_C]++;
-            fEv_XnXn_BinsPtN[iBinPt][iBinN_A][iBinN_C]++;        
-        }
+
+        nEv->AddEvent(iBinN_A,iBinN_C);
+        nEv_PtBins[iBinPt]->AddEvent(iBinN_A,iBinN_C);
+
         // fill the histograms
         if(fZNA_hit) hZNA[0]->Fill(fZNA_n); 
         if(fZNC_hit) hZNC[0]->Fill(fZNC_n); 
@@ -177,62 +136,6 @@ void VetoEfficiency_ClassifyEventsToChannels(Int_t mass_range, Bool_t normalized
 
     f_in->Close();    
 
-    // ##########################################################################################################
-    // sum over classes in pT bins
-    for(Int_t iBinPt = 0; iBinPt < nPtBins; iBinPt++) fEv_BinsPt[iBinPt] = fEv_0n0n_BinsPt[iBinPt] + fEv_Xn0n_BinsPt[iBinPt] + fEv_0nXn_BinsPt[iBinPt] + fEv_XnXn_BinsPt[iBinPt];
-    // total sum 
-    fEv_tot = fEv_0n0n + fEv_Xn0n + fEv_0nXn + fEv_XnXn;
-    // total sum per ZN channel over pT bins
-    for(Int_t i = 0; i < nPtBins; i++){
-        fEv_ch_Pt[0] += fEv_0n0n_BinsPt[i];
-        fEv_ch_Pt[1] += fEv_Xn0n_BinsPt[i];
-        fEv_ch_Pt[2] += fEv_0nXn_BinsPt[i];
-        fEv_ch_Pt[3] += fEv_XnXn_BinsPt[i];
-    }
-    // total sum per ZN channel over neutron bins
-    fEv_ch_N[0] = fEv_0n0n;
-    for(Int_t i = 0; i < 5; i++){
-        fEv_ch_N[1] += fEv_Xn0n_BinsN[i];
-        fEv_ch_N[2] += fEv_0nXn_BinsN[i];
-        for(Int_t j = 0; j < 5; j++) fEv_ch_N[3] += fEv_XnXn_BinsN[i][j];
-    }
-    // total sum per ZN channel over pT bins and neutron bins
-    fEv_ch_PtN[0] = fEv_0n0n;
-    for(Int_t i = 0; i < 5; i++){
-        for(Int_t j = 0; j < 5; j++){
-            fEv_ch_PtN[1] += fEv_Xn0n_BinsPtN[i][j];
-            fEv_ch_PtN[2] += fEv_0nXn_BinsPtN[i][j];
-            for(Int_t k = 0; k < 5; k++) fEv_ch_PtN[3] += fEv_XnXn_BinsPtN[i][j][k];
-        }
-    }
-
-    // ##########################################################################################################
-    // calculate the fractions: normalize all numbers by the total number of events
-    if(!normalized) NORM = 1.0;
-    else            NORM = fEv_tot;
-    normalize(fEv_tot); normalize(fEv_0n0n); normalize(fEv_Xn0n); normalize(fEv_0nXn); normalize(fEv_XnXn);
-    for(Int_t i = 0; i < 4; i++){ 
-        normalize(fEv_ch_Pt[i]); 
-        normalize(fEv_ch_N[i]); 
-        normalize(fEv_ch_PtN[i]);
-    }
-    for(Int_t i = 0; i < nPtBins; i++){
-        normalize(fEv_BinsPt[i]);
-        normalize(fEv_0n0n_BinsPt[i]);
-        normalize(fEv_Xn0n_BinsPt[i]);
-        normalize(fEv_0nXn_BinsPt[i]);
-        normalize(fEv_XnXn_BinsPt[i]);
-        for(Int_t j = 0; j < nBinsN; j++){
-            normalize(fEv_Xn0n_BinsPtN[i][j]);
-            normalize(fEv_0nXn_BinsPtN[i][j]);
-            for(Int_t k = 0; k < nBinsN; k++) normalize(fEv_XnXn_BinsPtN[i][j][k]);
-        }
-    }
-    for(Int_t i = 0; i < nBinsN; i++){
-        normalize(fEv_Xn0n_BinsN[i]);
-        normalize(fEv_0nXn_BinsN[i]);
-        for(Int_t j = 0; j < nBinsN; j++) normalize(fEv_XnXn_BinsN[i][j]);
-    }
     // ##########################################################################################################
     // plot neutron distribution in allbins
     c[0] = PlotNeutronDistribution("c0",hZNA[0],hZNC[0],0.2,1.0,m_low,m_upp);
@@ -251,131 +154,97 @@ void VetoEfficiency_ClassifyEventsToChannels(Int_t mass_range, Bool_t normalized
     // ##########################################################################################################
     // print the numbers
     Int_t precision(0);
-    if(normalized) precision = 3;
-    // numbers of events per neutron class and pT bin
-    ofstream outfile;
-    if(!normalized) str_out = Form("Results/%sVetoEfficiency/%snEv_binsPt.txt", str_subfolder.Data(), str_mass_subfolder.Data());
-    else            str_out = Form("Results/%sVetoEfficiency/%sfEv_binsPt.txt", str_subfolder.Data(), str_mass_subfolder.Data());
-    outfile.open(str_out.Data());
-    outfile << "pT_low\tpT_upp\t0n0n\tXn0n\t0nXn\tXnXn\ttotal\n";
-    for(Int_t iBinPt = 0; iBinPt < nPtBins; iBinPt++)
-    {
-        outfile << std::fixed << std::setprecision(3)
-                << ptBoundaries[iBinPt] << "\t" << ptBoundaries[iBinPt+1] << "\t"
-                << std::fixed << std::setprecision(precision)
-                << fEv_0n0n_BinsPt[iBinPt] << "\t" << fEv_Xn0n_BinsPt[iBinPt] << "\t" << fEv_0nXn_BinsPt[iBinPt] << "\t" << fEv_XnXn_BinsPt[iBinPt] << "\t" << fEv_BinsPt[iBinPt] << "\n";
+    if(normalized){
+        // normalize by the total number of events
+        nEv->Multiply(1/nEv->CountEvents_tot());
+        for(Int_t i = 0; i < nBinsPt; i++) nEv_PtBins[i]->Multiply(1/nEv_PtBins[i]->CountEvents_tot());
+        precision = 4;
+    } 
+    // total pT range
+    if(!normalized) str_out = Form("Results/%sVetoEfficiency/%snEv_PtAll.txt", str_subfolder.Data(), str_mass_subfolder.Data());
+    else            str_out = Form("Results/%sVetoEfficiency/%snormalized_PtAll.txt", str_subfolder.Data(), str_mass_subfolder.Data());
+    nEv->PrintToFile(str_out, precision);
+    // in pT bins
+    for(Int_t i = 0; i < nBinsPt; i++){
+        if(!normalized) str_out = Form("Results/%sVetoEfficiency/%snEv_PtBin%i.txt", str_subfolder.Data(), str_mass_subfolder.Data(), i+1);
+        else            str_out = Form("Results/%sVetoEfficiency/%snormalized_PtBin%i.txt", str_subfolder.Data(), str_mass_subfolder.Data(), i+1);
+        nEv_PtBins[i]->PrintToFile(str_out, precision);
     }
-    outfile << "sum\t\t" << fEv_ch_Pt[0] << "\t" << fEv_ch_Pt[1] << "\t" << fEv_ch_Pt[2] << "\t" << fEv_ch_Pt[3] << "\t" << fEv_tot; 
-    outfile.close();
-    Printf("*** Results printed to %s. ***", str_out.Data());
-
-    // numbers of events per neutron class and neutron bin
-    if(!normalized) str_out = Form("Results/%sVetoEfficiency/%snEv_binsN.txt", str_subfolder.Data(), str_mass_subfolder.Data());
-    else            str_out = Form("Results/%sVetoEfficiency/%sfEv_binsN.txt", str_subfolder.Data(), str_mass_subfolder.Data());
-    outfile.open(str_out.Data());
-    // 0n0n
-    outfile << std::fixed << std::setprecision(precision)
-            << "0n0n:\n"
-            << "total: " << fEv_ch_N[0] << "\n\n";
-    // Xn0n
-    outfile << "Xn0n:\n" 
-            << "total: " << fEv_ch_N[1] << "\n"
-            << "0-1\t2-5\t6-10\t11-20\t21-50\n"
-            << fEv_Xn0n_BinsN[0] << "\t" 
-            << fEv_Xn0n_BinsN[1] << "\t" 
-            << fEv_Xn0n_BinsN[2] << "\t" 
-            << fEv_Xn0n_BinsN[3] << "\t" 
-            << fEv_Xn0n_BinsN[4] << "\n\n";
-    // 0nXn
-    outfile << "0nXn:\n" 
-            << "total: " << fEv_ch_N[2] << "\n"
-            << "0-1\t2-5\t6-10\t11-20\t21-50\n"
-            << fEv_0nXn_BinsN[0] << "\t" 
-            << fEv_0nXn_BinsN[1] << "\t" 
-            << fEv_0nXn_BinsN[2] << "\t" 
-            << fEv_0nXn_BinsN[3] << "\t" 
-            << fEv_0nXn_BinsN[4] << "\n\n";
-    // XnXn
-    outfile << "XnXn:\n"
-            << "total: " << fEv_ch_N[3] << "\n"
-            << "row: fZNA_n\ncol: fZNC_n\n"
-            << "\t0-1\t2-5\t6-10\t11-20\t21-50\n";
-    for(Int_t iBinN = 0; iBinN < 5; iBinN++){
-        outfile << sNumberOfN[iBinN] << "\t" << fEv_XnXn_BinsN[0][iBinN] << "\t" 
-                                             << fEv_XnXn_BinsN[1][iBinN] << "\t" 
-                                             << fEv_XnXn_BinsN[2][iBinN] << "\t" 
-                                             << fEv_XnXn_BinsN[3][iBinN] << "\t" 
-                                             << fEv_XnXn_BinsN[4][iBinN] << "\n";
-    }        
-    outfile.close();
-    Printf("*** Results printed to %s. ***", str_out.Data()); 
-
-    // numbers of events per neutron class, pT bin and neutron bin 
-    if(!normalized) str_out = Form("Results/%sVetoEfficiency/%snEv_binsPtN.txt", str_subfolder.Data(), str_mass_subfolder.Data());
-    else            str_out = Form("Results/%sVetoEfficiency/%sfEv_binsPtN.txt", str_subfolder.Data(), str_mass_subfolder.Data());
-    outfile.open(str_out.Data());
-    // 0n0n
-    outfile << std::fixed << std::setprecision(precision)
-            << "Xn0n:\n"
-            << "total: " << fEv_ch_PtN[0] << "\n" 
-            << "pT_low\tpT_upp\tfEv\n";
-    for(Int_t iBinPt = 0; iBinPt < nPtBins; iBinPt++){
-        outfile << std::fixed << std::setprecision(3)
-                << ptBoundaries[iBinPt] << "\t" << ptBoundaries[iBinPt+1] << "\t"
-                << std::fixed << std::setprecision(precision)
-                << fEv_0n0n_BinsPt[iBinPt] << "\n";
-    }
-    outfile << "\n";
-    // Xn0n
-    outfile << "Xn0n:\n"
-            << "total: " << fEv_ch_PtN[1] << "\n" 
-            << "pT_low\tpT_upp\t0-1\t2-5\t6-10\t11-20\t21-50\n";
-    for(Int_t iBinPt = 0; iBinPt < nPtBins; iBinPt++){
-        outfile << std::fixed << std::setprecision(3)
-                << ptBoundaries[iBinPt] << "\t" << ptBoundaries[iBinPt+1] << "\t"
-                << std::fixed << std::setprecision(precision)
-                << fEv_Xn0n_BinsPtN[iBinPt][0] << "\t"
-                << fEv_Xn0n_BinsPtN[iBinPt][1] << "\t"
-                << fEv_Xn0n_BinsPtN[iBinPt][2] << "\t"
-                << fEv_Xn0n_BinsPtN[iBinPt][3] << "\t"
-                << fEv_Xn0n_BinsPtN[iBinPt][4] << "\n";
-    }
-    outfile << "\n";
-    // 0nXn
-    outfile << "0nXn:\n"
-            << "total: " << fEv_ch_PtN[2] << "\n" 
-            << "pT_low\tpT_upp\t0-1\t2-5\t6-10\t11-20\t21-50\n";
-    for(Int_t iBinPt = 0; iBinPt < nPtBins; iBinPt++){
-        outfile << std::fixed << std::setprecision(3)
-                << ptBoundaries[iBinPt] << "\t" << ptBoundaries[iBinPt+1] << "\t"
-                << std::fixed << std::setprecision(precision)
-                << fEv_0nXn_BinsPtN[iBinPt][0] << "\t"
-                << fEv_0nXn_BinsPtN[iBinPt][1] << "\t"
-                << fEv_0nXn_BinsPtN[iBinPt][2] << "\t"
-                << fEv_0nXn_BinsPtN[iBinPt][3] << "\t"
-                << fEv_0nXn_BinsPtN[iBinPt][4] << "\n";
-    }
-    outfile << "\n";
-    // XnXn
-    outfile << "XnXn:\n"
-            << "total: " << fEv_ch_PtN[3] << "\n"
-            << "row: fZNA_n\ncol: fZNC_n\n";
-    // over pT bins
-    for(Int_t iBinPt = 0; iBinPt < nPtBins; iBinPt++){
-        outfile << Form("pT_low = %.3f, pT_upp = %.3f\n", ptBoundaries[iBinPt], ptBoundaries[iBinPt+1])
-                << "\t0-1\t2-5\t6-10\t11-20\t21-50\n";
-        for(Int_t i = 0; i < 5; i++){
-            outfile << sNumberOfN[i] << "\t";
-            for(Int_t j = 0; j < 5; j++) outfile << fEv_XnXn_BinsPtN[iBinPt][i][j] << "\t";
-            outfile << "\n";
-        }
-    }
-    outfile.close();
-    Printf("*** Results printed to %s. ***", str_out.Data()); 
 
     // ##########################################################################################################
     
     for(Int_t i = 0; i < 6; i++) {delete c[i]; delete hZNA[i]; delete hZNC[i];}
+
+    return;
+}
+
+void VetoEfficiency_SubtractBackground()
+{
+    // in full pT range
+    // load fractions of bkg events
+    NeutronMatrix *nEv_bkg = new NeutronMatrix();
+    nEv_bkg->LoadFromFile("Results/" + str_subfolder + "VetoEfficiency/mass_1.80to2.80/normalized_PtAll.txt");
+    Double_t nBkg = 205.; // from the invariant mass fit in allbins
+    nEv_bkg->Multiply(nBkg);
+    // first load all events (sig + bkg)
+    NeutronMatrix *nEv_sig = new NeutronMatrix();
+    nEv_sig->LoadFromFile("Results/" + str_subfolder + "VetoEfficiency/mass_3.00to3.20/nEv_PtAll.txt");
+    // subtract background
+    nEv_sig->SubtractMatrix(nEv_bkg);
+    nEv_sig->PrintToConsole();
+    Printf("Remaining number of events: %.2f", nEv_sig->CountEvents_tot());
+    gSystem->Exec("mkdir -p Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/");
+    nEv_bkg->PrintToFile("Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/nEv_bkg.txt",1);
+    nEv_sig->PrintToFile("Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/nEv_sig.txt",1);
+
+    // in pT bins
+    Double_t nBkg_PtBins[nBinsPt] = {26.,25.,40.,56.,57.}; // from the invariant mass fit in 5bins
+    for(Int_t i = 1; i < nBinsPt+1; i++){
+        NeutronMatrix *nEv_bkg = new NeutronMatrix();
+        nEv_bkg->LoadFromFile(Form("Results/" + str_subfolder + "VetoEfficiency/mass_1.80to2.80/normalized_PtBin%i.txt", i));
+        nEv_bkg->Multiply(nBkg_PtBins[i-1]);
+        // first load all events (sig + bkg)
+        NeutronMatrix *nEv_sig = new NeutronMatrix();
+        nEv_sig->LoadFromFile(Form("Results/" + str_subfolder + "VetoEfficiency/mass_3.00to3.20/nEv_PtBin%i.txt", i));
+        // subtract background
+        nEv_sig->SubtractMatrix(nEv_bkg);
+        nEv_sig->PrintToConsole();
+        Printf("Remaining number of events: %.2f", nEv_sig->CountEvents_tot());
+        gSystem->Exec("mkdir -p Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/");
+        nEv_bkg->PrintToFile(Form("Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/nEv_PtBin%i_bkg.txt", i),1);
+        nEv_sig->PrintToFile(Form("Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/nEv_PtBin%i_sig.txt", i),1);    
+    }
+
+    return;
+}
+
+void VetoEfficiency_Calculate()
+{
+    // calculate efficiencies from inefficiencies
+    for(Int_t i = 0; i < nBinsN+1; i++){
+        fVetoEff_A[i] = 1. - fVetoIneff_A[i];
+        fVetoEff_C[i] = 1. - fVetoIneff_C[i];
+    }
+    // in full pT range
+    NeutronMatrix *nEv_sig = new NeutronMatrix();
+    nEv_sig->LoadFromFile("Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/nEv_sig.txt");
+    Double_t nEv_uncorr = nEv_sig->CountEvents_tot();
+    nEv_sig->ApplyEfficiencies();
+    nEv_sig->PrintToFile("Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/nEv_corrected.txt",1);
+    Double_t nEv_corrected = nEv_sig->CountEvents_tot();
+    Double_t fEff_total = nEv_uncorr / nEv_corrected;
+    Printf("Total pile-up efficiency: %.3f", fEff_total);
+    // in pT bins
+    for(Int_t i = 1; i < nBinsPt+1; i++){
+        NeutronMatrix *nEv_sig = new NeutronMatrix();
+        nEv_sig->LoadFromFile(Form("Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/nEv_PtBin%i_sig.txt", i));
+        Double_t nEv_uncorr = nEv_sig->CountEvents_tot();
+        nEv_sig->ApplyEfficiencies();
+        nEv_sig->PrintToFile(Form("Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/nEv_PtBin%i_corrected.txt",i),1);
+        Double_t nEv_corrected = nEv_sig->CountEvents_tot();
+        Double_t fEff_total = nEv_uncorr / nEv_corrected;
+        Printf("Total pile-up efficiency in bin %i: %.3f", i, fEff_total);
+    }
 
     return;
 }
