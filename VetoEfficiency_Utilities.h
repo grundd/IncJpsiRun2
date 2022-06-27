@@ -5,16 +5,231 @@
 #include <stdio.h> // printf
 #include <iostream> // cout, cin
 // root headers
+#include "TH1D.h"
 #include "TString.h"
+#include "TRandom3.h"
+// my headers
+#include "AnalysisManager.h"
+#include "AnalysisConfig.h"
+#include "SetPtBinning.h"
+
+// tree variables:
+Bool_t fZNA_hit, fZNC_hit;
+Double_t fZNA_n, fZNC_n;
 
 // neutron bins:
 const Int_t nBinsN = 5; 
-Double_t fNumberOfN[nBinsN+1] = {0.0, 1.5, 5.5, 10.5, 20.5, 50.5};
+Double_t fNumberOfN[nBinsN+1] = {0.5, 1.5, 5.5, 10.5, 20.5, 50.5};
 TString  sNumberOfN[nBinsN] = {"0-1", "2-5", "6-10", "11-20", "21-50"};
-Double_t fVetoIneff_A[nBinsN+1] = {0.0, 0.085, 0.157, 0.265, 0.413, 0.579};
-Double_t fVetoIneff_C[nBinsN+1] = {0.0, 0.146, 0.333, 0.425, 0.542, 0.844};
-Double_t fVetoEff_A[nBinsN+1] = { 0 };
-Double_t fVetoEff_C[nBinsN+1] = { 0 };
+Double_t nEv_SelAD_A[nBinsN] = {4, 11, 13, 19, 55};
+Double_t nEv_SelAD_C[nBinsN] = {6, 23, 17, 26, 76};
+Double_t nEv_Sel_A[nBinsN] = {47, 70, 49, 46, 95};
+Double_t nEv_Sel_C[nBinsN] = {41, 69, 40, 48, 90};
+Double_t fInf_A_val[nBinsN+1] = { 0.0 };
+Double_t fInf_A_err[nBinsN+1] = { 0.0 };
+Double_t fInf_C_val[nBinsN+1] = { 0.0 };
+Double_t fInf_C_err[nBinsN+1] = { 0.0 };
+Double_t fEff_A_val[nBinsN+1] = { 0 };
+Double_t fEff_A_err[nBinsN+1] = { 0 };
+Double_t fEff_C_val[nBinsN+1] = { 0 };
+Double_t fEff_C_err[nBinsN+1] = { 0 };
+Double_t fInf_val[nBinsN+1] = { 0 };
+Double_t fInf_err[nBinsN+1] = { 0 };
+Double_t fEff_val[nBinsN+1] = { 0 };
+Double_t fEff_err[nBinsN+1] = { 0 };
+Double_t SampledEff_A_val[nBinsN+1] = { 0 };
+Double_t SampledEff_C_val[nBinsN+1] = { 0 };
+
+TH1D *hSampledEffPartial_A[nBinsN] = { NULL }; 
+TH1D *hSampledEffPartial_C[nBinsN] = { NULL }; 
+TH1D *hSampledEffTotal = new TH1D("hSampledEffTotal","hSampledEffTotal",100,0.,1.);
+
+Double_t CalculateErrorBinomial(Double_t k, Double_t n)
+{
+    Double_t var = k * (n - k) / n / n / n;
+    Double_t err = TMath::Sqrt(var);
+
+    return err;
+}
+
+void VetoEff_CalcEfficiencies()
+{
+    // calculate
+    // we leave first bins to be zero
+    fInf_A_val[0] = 0.;
+    fInf_A_err[0] = 0.;
+    fInf_C_val[0] = 0.;
+    fInf_C_err[0] = 0.;
+    fEff_A_val[0] = 1.;
+    fEff_A_err[0] = 0.;
+    fEff_C_val[0] = 1.;
+    fEff_C_err[0] = 0.;
+    fInf_val[0] = 0.;
+    fInf_err[0] = 0.;
+    fEff_val[0] = 1.;
+    fEff_err[0] = 0.;
+    for(Int_t iBinN = 0; iBinN < nBinsN; iBinN++)
+    {
+        fInf_A_val[iBinN+1] = nEv_SelAD_A[iBinN] / nEv_Sel_A[iBinN];
+        fInf_A_err[iBinN+1] = CalculateErrorBinomial(nEv_SelAD_A[iBinN], nEv_Sel_A[iBinN]); 
+        fInf_C_val[iBinN+1] = nEv_SelAD_C[iBinN] / nEv_Sel_C[iBinN];
+        fInf_C_err[iBinN+1] = CalculateErrorBinomial(nEv_SelAD_C[iBinN], nEv_Sel_C[iBinN]); 
+        fEff_A_val[iBinN+1] = (nEv_Sel_A[iBinN] - nEv_SelAD_A[iBinN]) / nEv_Sel_A[iBinN];
+        fEff_A_err[iBinN+1] = fInf_A_err[iBinN+1];
+        fEff_C_val[iBinN+1] = (nEv_Sel_C[iBinN] - nEv_SelAD_C[iBinN]) / nEv_Sel_C[iBinN];
+        fEff_C_err[iBinN+1] = fInf_C_err[iBinN+1];
+        fInf_val[iBinN+1] = (nEv_SelAD_A[iBinN] + nEv_SelAD_C[iBinN]) / (nEv_Sel_A[iBinN] + nEv_Sel_C[iBinN]);
+        fInf_err[iBinN+1] = CalculateErrorBinomial(nEv_SelAD_A[iBinN] + nEv_SelAD_C[iBinN], nEv_Sel_A[iBinN] + nEv_Sel_C[iBinN]); 
+        fEff_val[iBinN+1] = (nEv_Sel_A[iBinN] + nEv_Sel_C[iBinN] - nEv_SelAD_A[iBinN] - nEv_SelAD_C[iBinN]) / (nEv_Sel_A[iBinN] + nEv_Sel_C[iBinN]);
+        fEff_err[iBinN+1] = fInf_err[iBinN+1];
+    }
+    // print the results
+    ofstream outfile;
+    TString str_out = "Results/" + str_subfolder + "VetoEfficiency/efficiencies.txt";
+    outfile.open(str_out.Data());
+    outfile << std::fixed << std::setprecision(3);
+    for(Int_t iBinN = 0; iBinN < nBinsN+1; iBinN++)
+    {
+        outfile << fInf_A_val[iBinN] << "\t" << fInf_A_err[iBinN] << "\t" << fInf_C_val[iBinN] << "\t" << fInf_C_err[iBinN] << "\t"
+                << fEff_A_val[iBinN] << "\t" << fEff_A_err[iBinN] << "\t" << fEff_C_val[iBinN] << "\t" << fEff_C_err[iBinN] << "\t"
+                << fInf_val[iBinN] << "\t" << fInf_err[iBinN] << "\t" << fEff_val[iBinN] << "\t" << fEff_err[iBinN] << "\n";
+    }
+    outfile.close();
+    Printf("*** Efficiencies printed to %s. ***", str_out.Data());
+    return;
+}
+
+void VetoEff_SetEfficiencies(Bool_t sample)
+{
+    TRandom3 *ran = new TRandom3();
+    ran->SetSeed(0);
+    if(!sample){
+        for(Int_t iBinN = 0; iBinN < nBinsN+1; iBinN++){
+            SampledEff_A_val[iBinN] = fEff_A_val[iBinN];
+            SampledEff_C_val[iBinN] = fEff_C_val[iBinN];
+        }
+    } else {
+        SampledEff_A_val[0] = 1.;
+        SampledEff_C_val[0] = 1.;
+        for(Int_t iBinN = 1; iBinN < nBinsN+1; iBinN++){
+            // sample the values until both positive
+            Double_t val_A = ran->Gaus(fEff_A_val[iBinN],fEff_A_err[iBinN]);;
+            Double_t val_C = ran->Gaus(fEff_C_val[iBinN],fEff_C_err[iBinN]);;
+            while(val_A < 0.0 || val_C < 0.0 || val_A > 1.0 || val_C > 1.0){
+                Printf("Sampled values < 0 or > 1. Retrying.");
+                val_A = ran->Gaus(fEff_A_val[iBinN],fEff_A_err[iBinN]);
+                val_C = ran->Gaus(fEff_C_val[iBinN],fEff_C_err[iBinN]);
+            }
+            SampledEff_A_val[iBinN] = val_A;
+            SampledEff_C_val[iBinN] = val_C;
+            hSampledEffPartial_A[iBinN-1]->Fill(val_A);
+            hSampledEffPartial_C[iBinN-1]->Fill(val_C);
+        }
+    }
+    ofstream outfile;
+    TString str_out = "Results/" + str_subfolder + "VetoEfficiency/efficiencies_sampled.txt";
+    outfile.open(str_out.Data());
+    outfile << std::fixed << std::setprecision(3);
+    for(Int_t iBinN = 0; iBinN < nBinsN+1; iBinN++) outfile << SampledEff_A_val[iBinN] << "\t" << SampledEff_C_val[iBinN] << "\n";
+    outfile.close();
+    Printf("*** Efficiencies printed to %s. ***", str_out.Data());   
+    return;
+}
+
+void ConnectTreeVariables_tNeutrons(TTree *t)
+{
+    // Set branch addresses
+    t->SetBranchAddress("fPt", &fPt);
+    t->SetBranchAddress("fM", &fM);
+    t->SetBranchAddress("fZNA_time", &fZNA_time);
+    t->SetBranchAddress("fZNC_time", &fZNC_time);
+    t->SetBranchAddress("fZNA_hit", &fZNA_hit);
+    t->SetBranchAddress("fZNC_hit", &fZNC_hit);
+    t->SetBranchAddress("fZNA_energy", &fZNA_energy);
+    t->SetBranchAddress("fZNC_energy", &fZNC_energy);
+    t->SetBranchAddress("fZNA_n", &fZNA_n);
+    t->SetBranchAddress("fZNC_n", &fZNC_n);
+
+    Printf("Variables from %s connected.", t->GetName());
+
+    return;
+}
+
+void VetoEfficiency_PrepareTree()
+{
+    TString name = "Trees/" + str_subfolder + "VetoEfficiency/tNeutrons.root";
+
+    TFile *file = TFile::Open(name.Data(),"read");
+    if(file)
+    {
+        Printf("Tree already created.");
+        return;
+    } 
+    else 
+    {
+        Printf("Tree will be created.");
+
+        // data
+        TFile *f_in = TFile::Open((str_in_DT_fldr + "AnalysisResults.root").Data(), "read");
+        if(f_in) Printf("Input data loaded.");
+
+        TTree *t_in = dynamic_cast<TTree*> (f_in->Get(str_in_DT_tree.Data()));
+        if(t_in) Printf("Input tree loaded.");
+
+        ConnectTreeVariables(t_in);
+
+        // Create new data tree 
+        file = new TFile(name.Data(),"RECREATE");
+
+        TTree *t_out = new TTree("tNeutrons","tNeutrons");
+        t_out->Branch("fPt", &fPt, "fPt/D");
+        t_out->Branch("fM", &fM, "fM/D");
+        t_out->Branch("fZNA_time", &fZNA_time[0], "fZNA_time[4]/D");
+        t_out->Branch("fZNC_time", &fZNC_time[0], "fZNC_time[4]/D");
+        t_out->Branch("fZNA_hit", &fZNA_hit, "fZNA_hit/O");
+        t_out->Branch("fZNC_hit", &fZNC_hit, "fZNC_hit/O");
+        t_out->Branch("fZNA_energy", &fZNA_energy, "fZNA_energy/D");
+        t_out->Branch("fZNC_energy", &fZNC_energy, "fZNC_energy/D");
+        t_out->Branch("fZNA_n", &fZNA_n, "fZNA_n/D");
+        t_out->Branch("fZNC_n", &fZNC_n, "fZNC_n/D");
+
+        Printf("%lli entries found in the tree.", t_in->GetEntries());
+        Int_t nEntriesAnalysed = 0;
+    
+        for(Int_t iEntry = 0; iEntry < t_in->GetEntries(); iEntry++)
+        {
+            t_in->GetEntry(iEntry);
+            // no mass cut, pT in 0.2 to 1.0 GeV/c, then mass between 1.6 GeV and 3.2 GeV
+            if(EventPassed(-1, 3) && fM > 1.6 && fM < 3.2)
+            {
+                fZNA_hit = kFALSE;
+                fZNC_hit = kFALSE;
+                for(Int_t i = 0; i < 4; i++)
+                {
+                    // hit in ZNA
+                    if(TMath::Abs(fZNA_time[i]) < 2) fZNA_hit = kTRUE;
+                    // hit in ZNC
+                    if(TMath::Abs(fZNC_time[i]) < 2) fZNC_hit = kTRUE;
+                }
+                fZNA_n = fZNA_energy / 2510.;
+                fZNC_n = fZNC_energy / 2510.;
+                t_out->Fill();
+            }
+
+            if((iEntry+1) % 100000 == 0)
+            {
+                nEntriesAnalysed += 100000;
+                Printf("%i entries analysed.", nEntriesAnalysed);
+            }
+        }
+
+        Printf("Tree %s filled with %lli entries.", t_out->GetName(), t_out->GetEntries());
+
+        file->Write("",TObject::kWriteDelete);
+
+        return;
+    }
+}
 
 class NeutronMatrix
 {
@@ -104,7 +319,7 @@ void NeutronMatrix::ApplyEfficiencies()
 {
     for(Int_t iBinA = 0; iBinA < nBinsN+1; iBinA++){
         for(Int_t iBinC = 0; iBinC < nBinsN+1; iBinC++) 
-            fEv_neutron_bins[iBinA][iBinC] = fEv_neutron_bins[iBinA][iBinC] / fVetoEff_A[iBinA] / fVetoEff_C[iBinC];
+            fEv_neutron_bins[iBinA][iBinC] = fEv_neutron_bins[iBinA][iBinC] / SampledEff_A_val[iBinA] / SampledEff_C_val[iBinC];
     }
     return;
 }
