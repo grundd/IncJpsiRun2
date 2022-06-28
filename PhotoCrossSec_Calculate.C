@@ -37,8 +37,8 @@ Double_t ErrSyst_ZVertex[5] = { 0 };
 Double_t ErrSyst_fD[5] = { 0 };
 Double_t ErrSyst_fC[5] = { 0 };
 Double_t ErrSyst_lumi = 2.7;
-Double_t ErrSyst_veto = 3.0; // (!)
-Double_t ErrSyst_EMD = 2.0;
+Double_t ErrSyst_veto = 3.0;
+Double_t ErrSyst_EMD = 2.4;
 Double_t ErrSyst_tracks = 2.8;
 Double_t ErrSyst_CCUP31 = 1.3;
 Double_t ErrSyst_flux = 2.0;
@@ -49,9 +49,9 @@ Double_t BR_val = 0.05961;
 Double_t BR_err = 0.00033;
 Double_t ErrSyst_BR = BR_err / BR_val * 100.;
 Double_t RapWidth = 1.6;
-Double_t Eff_veto_val = 94.0; // (!)
-Double_t Eff_veto_err = Eff_veto_val * ErrSyst_veto / 100.; // (!)
-Double_t Eff_EMD_val = 92.0;
+Double_t Eff_veto_val = 94.0;
+Double_t Eff_veto_err = Eff_veto_val * ErrSyst_veto / 100.;
+Double_t Eff_EMD_val = 64.1;
 Double_t Eff_EMD_err = Eff_EMD_val * ErrSyst_EMD / 100.;
 Double_t PhotonFlux_val = 84.9;
 Double_t PhotonFlux_err = PhotonFlux_val * ErrSyst_flux / 100.;
@@ -141,17 +141,13 @@ void CalculateCrossSec_PtBins()
 
     //#####################################################################################################
     // 4) Load FD corrections per pT bin
-    TString str_FD = "Results/" + str_subfolder + "PtFit_NoBkg/RecSh4_fD0_fD.txt";
+    TString str_FD = "Results/" + str_subfolder + "PtFit_SystUncertainties/fD_syst_errors.txt";
     ifs.open(str_FD.Data());
     // Read data from the file
     if(!ifs.fail()){
-        Int_t i = 0;
-        std::string str;
-        while(std::getline(ifs,str)){
-            istringstream in_stream(str);
-            // skip first line
-            if(i > 0) in_stream >> i_bin >> CorrFD_val[i-1] >> CorrFD_err[i-1];
-            i++;   
+        for(Int_t i = 0; i < nPtBins; i++)
+        {
+            ifs >> CorrFD_val[i] >> CorrFD_err[i];
         }
     } else {
         PrintErr(str_FD);

@@ -6,6 +6,7 @@
 #include "TSystem.h"
 #include "TFile.h"
 #include "TCanvas.h"
+#include "TF1.h"
 // my headers
 #include "VetoEfficiency_Utilities.h"
 
@@ -52,7 +53,7 @@ void VetoEfficiency(Int_t iAnalysis)
     // calculate the total efficiency
     VetoEff_Calculate(kFALSE);
     // calculate systematic uncertainties
-    VetoEff_SystUncertainty();
+    //VetoEff_SystUncertainty();
 
     return;
 }
@@ -203,7 +204,9 @@ Double_t VetoEff_Calculate(Bool_t SystUncr)
     NeutronMatrix *nEv_sig = new NeutronMatrix();
     nEv_sig->LoadFromFile("Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/nEv_sig.txt");
     Double_t nEv_uncorr = nEv_sig->CountEvents_tot();
-    nEv_sig->ApplyEfficiencies();
+    //nEv_sig->ApplyEfficiencies_AC();
+    nEv_sig->ApplyEfficiencies_combined1();
+    //nEv_sig->ApplyEfficiencies_combined2();
     // save the new matrix only in not syst uncr calculation
     if(!SystUncr) nEv_sig->PrintToFile("Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/nEv_corrected.txt",1);
     // calculate the veto eff
@@ -223,9 +226,10 @@ void VetoEff_SystUncertainty()
     for(Int_t i = 0; i < nBinsN; i++){
         hSampledEffPartial_A[i] = new TH1D(Form("hSampledEffPartial_A%i",i+1),Form("hSampledEffPartial_A%i",i+1),100,0.,1.);
         hSampledEffPartial_C[i] = new TH1D(Form("hSampledEffPartial_C%i",i+1),Form("hSampledEffPartial_C%i",i+1),100,0.,1.);
+        hSampledEffPartial[i] = new TH1D(Form("hSampledEffPartial%i",i+1),Form("hSampledEffPartial%i",i+1),100,0.,1.);
     } 
 
-    for(Int_t i = 0; i < 1e5; i++)
+    for(Int_t i = 0; i < 1e4; i++)
     {
         Double_t fEff = VetoEff_Calculate(kTRUE);
         hSampledEffTotal->Fill(fEff);
@@ -233,20 +237,52 @@ void VetoEff_SystUncertainty()
 
     TCanvas *cA[5] = { NULL };
     TCanvas *cC[5] = { NULL };
+    TCanvas *c[5] = { NULL };
     for(Int_t i = 0; i < nBinsN; i++){
         cA[i] = new TCanvas(Form("cA%i", i+1), Form("cA%i", i+1), 900, 600);
         cC[i] = new TCanvas(Form("cC%i", i+1), Form("cC%i", i+1), 900, 600);
+        c[i] = new TCanvas(Form("c%i", i+1), Form("c%i", i+1), 900, 600);
         cA[i]->cd();
         hSampledEffPartial_A[i]->Draw();
         cC[i]->cd();
         hSampledEffPartial_C[i]->Draw();
+        c[i]->cd();
+        hSampledEffPartial[i]->Draw();
         // print the canvases
         cA[i]->Print("Results/" + str_subfolder + Form("VetoEfficiency/SystUncertainty/hSampledEff_A%i.pdf",i+1));
-        cA[i]->Print("Results/" + str_subfolder + Form("VetoEfficiency/SystUncertainty/hSampledEff_C%i.pdf",i+1));
+        cC[i]->Print("Results/" + str_subfolder + Form("VetoEfficiency/SystUncertainty/hSampledEff_C%i.pdf",i+1));
+        c[i]->Print("Results/" + str_subfolder + Form("VetoEfficiency/SystUncertainty/hSampledEff%i.pdf",i+1));
     }
+    // fit the gaussian peak
+    TF1 *fGauss = new TF1("fGauss", "gaus", 0.0, 1.0);
+    hSampledEffTotal->Fit(fGauss);
+    fGauss->SetLineWidth(3);
+    fGauss->SetLineColor(kRed);
+    // plot the results
     TCanvas *cTotal = new TCanvas("cTotal","cTotal",900,600);
     cTotal->cd();
+    cTotal->SetTopMargin(0.03);
+    cTotal->SetBottomMargin(0.14);
+    cTotal->SetRightMargin(0.04);
+    cTotal->SetLeftMargin(0.13);
+
+    hSampledEffTotal->SetTitle(";#varepsilon_{pile-up} [-];Counts");
+    hSampledEffTotal->SetLineWidth(3);
+    hSampledEffTotal->SetLineColor(kBlue);
+    // Vertical axis
+    hSampledEffTotal->GetYaxis()->SetTitleSize(0.06);
+    hSampledEffTotal->GetYaxis()->SetTitleOffset(1.12);
+    hSampledEffTotal->GetYaxis()->SetLabelSize(0.06);
+    hSampledEffTotal->GetYaxis()->SetDecimals(1);
+    // Horizontal axis
+    hSampledEffTotal->GetXaxis()->SetTitleSize(0.06);
+    hSampledEffTotal->GetXaxis()->SetTitleOffset(1.1);
+    hSampledEffTotal->GetXaxis()->SetLabelOffset(0.01);
+    hSampledEffTotal->GetXaxis()->SetLabelSize(0.06);
+    hSampledEffTotal->GetXaxis()->SetRangeUser(0.5,0.8);
+    hSampledEffTotal->GetXaxis()->SetDecimals(2);
     hSampledEffTotal->Draw();
+    fGauss->Draw("SAME");
     cTotal->Print("Results/" + str_subfolder + "VetoEfficiency/SystUncertainty/hSampledEffTotal.pdf");
 
     return;

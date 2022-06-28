@@ -86,7 +86,7 @@ void PlotWithRatios()
     fCSont->Draw("AXIS");
 
     // Create boxes with systematic uncertainties
-    SetupSysErrorBox(grData_syst,kGray);
+    SetupSysErrorBox(grData_syst,kGray+3);
 
     // Set data properties 
     gStyle->SetEndErrorSize(4);         
@@ -225,7 +225,7 @@ void PlotWithRatios()
     TGraphAsymmErrors *gr_stat_data = new TGraphAsymmErrors(nPtBins);
     TGraphAsymmErrors *gr_syst_data = new TGraphAsymmErrors(nPtBins);
 
-    SetupSysErrorBox(gr_syst_data,kGray);
+    SetupSysErrorBox(gr_syst_data,kGray+3);
 
     gr_stat_data->SetMarkerSize(0.);
     gr_stat_data->SetLineColor(kBlack);
@@ -261,7 +261,7 @@ void PlotWithRatios()
     gStyle->SetTickLength(0.02,"y");
     TCanvas *cDataModel = new TCanvas ("cDataModel","",1600,300);
     SetPadMargins(gPad,0.05,0.03,0.03,0.12);
-    TH1F* fCSratio = gPad->DrawFrame(0.04,0.0,1.0,4.5);
+    TH1F* fCSratio = gPad->DrawFrame(0.04,0.0,1.0,3.3);
     //TH1F* fCSratio = gPad->DrawFrame(0.04,0.01,1.0,9.5);
     SetFrame(fCSratio);
     fCSratio->SetTitle("Ratios model/data;|#it{t}| (GeV^{2} #it{c}^{-2});Model / Data");
@@ -277,7 +277,7 @@ void PlotWithRatios()
     // STARlight ratios
     grRatio_SL->SetLineColor(kBlue);
     grRatio_SL->SetMarkerColor(kBlue);
-    grRatio_SL->SetMarkerStyle(kOpenSquare);
+    grRatio_SL->SetMarkerStyle(kFullSquare);
     grRatio_SL->Draw("SAME P");
     cDataModel->Modified();
     cDataModel->Update();

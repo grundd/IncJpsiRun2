@@ -37,11 +37,13 @@ Double_t fInf_val[nBinsN+1] = { 0 };
 Double_t fInf_err[nBinsN+1] = { 0 };
 Double_t fEff_val[nBinsN+1] = { 0 };
 Double_t fEff_err[nBinsN+1] = { 0 };
-Double_t SampledEff_A_val[nBinsN+1] = { 0 };
-Double_t SampledEff_C_val[nBinsN+1] = { 0 };
+Double_t SampledEff_A[nBinsN+1] = { 0 };
+Double_t SampledEff_C[nBinsN+1] = { 0 };
+Double_t SampledEff[nBinsN+1] = { 0 };
 
 TH1D *hSampledEffPartial_A[nBinsN] = { NULL }; 
 TH1D *hSampledEffPartial_C[nBinsN] = { NULL }; 
+TH1D *hSampledEffPartial[nBinsN] = { NULL }; 
 TH1D *hSampledEffTotal = new TH1D("hSampledEffTotal","hSampledEffTotal",100,0.,1.);
 
 Double_t CalculateErrorBinomial(Double_t k, Double_t n)
@@ -105,32 +107,38 @@ void VetoEff_SetEfficiencies(Bool_t sample)
     ran->SetSeed(0);
     if(!sample){
         for(Int_t iBinN = 0; iBinN < nBinsN+1; iBinN++){
-            SampledEff_A_val[iBinN] = fEff_A_val[iBinN];
-            SampledEff_C_val[iBinN] = fEff_C_val[iBinN];
+            SampledEff_A[iBinN] = fEff_A_val[iBinN];
+            SampledEff_C[iBinN] = fEff_C_val[iBinN];
+            SampledEff[iBinN] = fEff_val[iBinN];
         }
     } else {
-        SampledEff_A_val[0] = 1.;
-        SampledEff_C_val[0] = 1.;
+        SampledEff_A[0] = 1.;
+        SampledEff_C[0] = 1.;
+        SampledEff[0] = 1.;
         for(Int_t iBinN = 1; iBinN < nBinsN+1; iBinN++){
             // sample the values until both positive
-            Double_t val_A = ran->Gaus(fEff_A_val[iBinN],fEff_A_err[iBinN]);;
-            Double_t val_C = ran->Gaus(fEff_C_val[iBinN],fEff_C_err[iBinN]);;
+            Double_t val_A = ran->Gaus(fEff_A_val[iBinN],fEff_A_err[iBinN]);
+            Double_t val_C = ran->Gaus(fEff_C_val[iBinN],fEff_C_err[iBinN]);
+            Double_t val = ran->Gaus(fEff_val[iBinN],fEff_err[iBinN]);
             while(val_A < 0.0 || val_C < 0.0 || val_A > 1.0 || val_C > 1.0){
                 Printf("Sampled values < 0 or > 1. Retrying.");
                 val_A = ran->Gaus(fEff_A_val[iBinN],fEff_A_err[iBinN]);
                 val_C = ran->Gaus(fEff_C_val[iBinN],fEff_C_err[iBinN]);
+                val = ran->Gaus(fEff_val[iBinN],fEff_err[iBinN]);
             }
-            SampledEff_A_val[iBinN] = val_A;
-            SampledEff_C_val[iBinN] = val_C;
+            SampledEff_A[iBinN] = val_A;
+            SampledEff_C[iBinN] = val_C;
+            SampledEff[iBinN] = val;
             hSampledEffPartial_A[iBinN-1]->Fill(val_A);
             hSampledEffPartial_C[iBinN-1]->Fill(val_C);
+            hSampledEffPartial[iBinN-1]->Fill(val);
         }
     }
     ofstream outfile;
     TString str_out = "Results/" + str_subfolder + "VetoEfficiency/efficiencies_sampled.txt";
     outfile.open(str_out.Data());
     outfile << std::fixed << std::setprecision(3);
-    for(Int_t iBinN = 0; iBinN < nBinsN+1; iBinN++) outfile << SampledEff_A_val[iBinN] << "\t" << SampledEff_C_val[iBinN] << "\n";
+    for(Int_t iBinN = 0; iBinN < nBinsN+1; iBinN++) outfile << SampledEff_A[iBinN] << "\t" << SampledEff_C[iBinN] << "\t" << SampledEff[iBinN] << "\n";
     outfile.close();
     Printf("*** Efficiencies printed to %s. ***", str_out.Data());   
     return;
@@ -248,7 +256,9 @@ class NeutronMatrix
         Double_t CountEvents_XnXn();
         void     Multiply(Double_t x);
         void     SubtractMatrix(NeutronMatrix *nm);
-        void     ApplyEfficiencies();
+        void     ApplyEfficiencies_AC();
+        void     ApplyEfficiencies_combined1();
+        void     ApplyEfficiencies_combined2();
         void     PrintToConsole();
         void     PrintToFile(TString name, Int_t precision = 0);
         void     LoadFromFile(TString name);
@@ -310,16 +320,47 @@ void NeutronMatrix::SubtractMatrix(NeutronMatrix *nm)
 {
     for(Int_t iBinA = 0; iBinA < nBinsN+1; iBinA++){
         for(Int_t iBinC = 0; iBinC < nBinsN+1; iBinC++) 
-            fEv_neutron_bins[iBinA][iBinC] = fEv_neutron_bins[iBinA][iBinC] - nm->GetBinContent(iBinA,iBinC);
+            if(fEv_neutron_bins[iBinA][iBinC] < nm->GetBinContent(iBinA,iBinC)) fEv_neutron_bins[iBinA][iBinC] = 0;
+            else fEv_neutron_bins[iBinA][iBinC] = fEv_neutron_bins[iBinA][iBinC] - nm->GetBinContent(iBinA,iBinC);
     }
     return;
 }
 
-void NeutronMatrix::ApplyEfficiencies()
+void NeutronMatrix::ApplyEfficiencies_AC()
 {
     for(Int_t iBinA = 0; iBinA < nBinsN+1; iBinA++){
         for(Int_t iBinC = 0; iBinC < nBinsN+1; iBinC++) 
-            fEv_neutron_bins[iBinA][iBinC] = fEv_neutron_bins[iBinA][iBinC] / SampledEff_A_val[iBinA] / SampledEff_C_val[iBinC];
+            fEv_neutron_bins[iBinA][iBinC] = fEv_neutron_bins[iBinA][iBinC] / SampledEff_A[iBinA] / SampledEff_C[iBinC];
+    }
+    return;
+}
+
+void NeutronMatrix::ApplyEfficiencies_combined1()
+{
+    // 0n0n => we no correct at all
+    // 0nXn
+    for(Int_t iBinC = 1; iBinC < nBinsN+1; iBinC++){
+        fEv_neutron_bins[0][iBinC] = fEv_neutron_bins[0][iBinC] / SampledEff[iBinC];
+    }
+    // Xn + whatever
+    for(Int_t iBinA = 1; iBinA < nBinsN+1; iBinA++){
+        for(Int_t iBinC = 0; iBinC < nBinsN+1; iBinC++) 
+            fEv_neutron_bins[iBinA][iBinC] = fEv_neutron_bins[iBinA][iBinC] / SampledEff[iBinA];
+    }
+    return;
+}
+
+void NeutronMatrix::ApplyEfficiencies_combined2()
+{
+    // 0n0n => we no correct at all
+    // Xn0n
+    for(Int_t iBinA = 1; iBinA < nBinsN+1; iBinA++){
+        fEv_neutron_bins[iBinA][0] = fEv_neutron_bins[iBinA][0] / SampledEff[iBinA];
+    }
+    // whatever + Xn
+    for(Int_t iBinA = 0; iBinA < nBinsN+1; iBinA++){
+        for(Int_t iBinC = 1; iBinC < nBinsN+1; iBinC++) 
+            fEv_neutron_bins[iBinA][iBinC] = fEv_neutron_bins[iBinA][iBinC] / SampledEff[iBinC];
     }
     return;
 }
