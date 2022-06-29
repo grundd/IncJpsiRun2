@@ -92,16 +92,16 @@ void AxE_PtDep(Int_t iAnalysis)
     //#########################################################################
     // AxE plots:
     gSystem->Exec("mkdir -p Results/" + str_subfolder + "AxE_PtDep/fig/");
-    ///*
+    /*
     // vs pT rec, all selections:
     cuts[0] = 0;
     for(Int_t i = 1; i < nCuts; i++) cuts[i] = 1;
     CalculateAxEPtDep();
-    //*/
+    */
     // vs pT rec, no other selection:
     for(Int_t i = 0; i < nCuts; i++) cuts[i] = 0;
     CalculateAxEPtDep();
-    ///*
+    /*
     // vs pT rec, only 0STG:
     for(Int_t i = 0; i < nCuts; i++) cuts[i] = 0;
     cuts[3] = 1; // 0STG
@@ -130,13 +130,13 @@ void AxE_PtDep(Int_t iAnalysis)
 
     // ratios vs pt rec
     //cuts[0] = 0;
-    //CalculateRatiosOfNRec();
+    CalculateRatiosOfNRec();
 
     // ratios vs pt gen
     //cuts[0] = 1;
     //CalculateRatiosOfNRec();
     //#########################################################################
-    //*/
+    */
 
     return;
 }
@@ -176,7 +176,7 @@ void CalculateAxEPtDep()
     hAxE->GetYaxis()->SetTitleOffset(1.3);
     hAxE->GetYaxis()->SetLabelSize(0.056);
     hAxE->GetYaxis()->SetDecimals(3);
-    //hAxE->GetYaxis()->SetRangeUser(0.10,hAxE->GetBinContent(1)*1.5); // for pt cut only
+    hAxE->GetYaxis()->SetRangeUser(0.10,hAxE->GetBinContent(1)*1.5); // for pt cut only
     // Horizontal axis
     if(cuts[0] == 0) hAxE->GetXaxis()->SetTitle("#it{p}_{T}^{rec} (GeV/#it{c})");
     if(cuts[0] == 1) hAxE->GetXaxis()->SetTitle("#it{p}_{T}^{gen} (GeV/#it{c})");

@@ -57,7 +57,7 @@ void _STARlight_NewPtShapes()
     gStyle->SetOptStat(0);
 
     // to study which R_A is optimal for CohJ to describe the measured pT distribution
-    if(kFALSE){
+    if(kTRUE){
         // CohJ, 6.000.000 gen events,
         // R_A = 6.624 vs. 6.600-7.800 fm (step = 0.100 fm)
         for(Int_t i = 0; i < 13; i++){
@@ -69,7 +69,7 @@ void _STARlight_NewPtShapes()
         }
     }
 
-    if(kFALSE){
+    if(kTRUE){
         // CohJ, R_A = 6.624 vs. 7.350 fm, 6.000.000 gen events
         InitAnalysis(0,kTRUE);
         FillTreeGen("Trees/STARlight/CohJ_6.624/",6.624);
@@ -92,7 +92,7 @@ void _STARlight_NewPtShapes()
         CalcAndPlotRatios("",7.350);
     }
 
-    if(kTRUE){
+    if(kFALSE){
         // CohJ, R_A = 6.624 vs. 7.330 fm, 6.000.000 gen events
         InitAnalysis(0,kTRUE);
         FillTreeGen("Trees/STARlight/CohJ_6.624/",6.624);

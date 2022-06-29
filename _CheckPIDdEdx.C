@@ -62,7 +62,7 @@ void _CheckPIDdEdx()
     gSystem->Exec("mkdir -p Results/_CheckPIDdEdx/");
 
     // datasets in DatasetsMCNames[8]
-    if(kFALSE)
+    if(kTRUE)
     {
         // data
         PlotAndFitHistograms(0);
@@ -93,7 +93,7 @@ void _CheckPIDdEdx()
         for(Int_t i = 1; i <= 4; i++) PlotAndFitHistograms_2(i, kFALSE);
 
         // repair NSigmas and kinematics in: kCohPsi2sToMuPi_2 and kIncohPsi2sToMuPi_2
-        for(Int_t i = 1; i <= 4; i++) ShiftPIDSignal_2(i);
+        //for(Int_t i = 1; i <= 4; i++) ShiftPIDSignal_2(i);
 
         // MC datasets after NSigmas are calibrated
         for(Int_t i = 1; i <= 4; i++) PlotAndFitHistograms_2(i, kTRUE); 
@@ -241,8 +241,8 @@ void PlotAndFitHistograms(Int_t iDataset, Bool_t calibrated)
         }
         // Cut 3: more than 2 tracks associated with the primary vertex
         if(fVertexContrib < 2) continue;
-        // Cut 4: z-distance from the IP lower than 15 cm
-        if(fVertexZ > 15) continue;
+        // Cut 4: z-distance from the IP lower than 10 cm
+        if(fVertexZ > 10) continue;
         // Cut 5a: ADA offline veto (no effect on MC)
         if(!(fADA_dec == 0)) continue;
         // Cut 5b: ADC offline veto (no effect on MC)
@@ -945,8 +945,8 @@ void PlotAndFitHistograms_2(Int_t iDataset, Bool_t calibrated)
         }
         // Cut 3: more than 2 tracks associated with the primary vertex
         if(fVertexContrib < 2) continue;
-        // Cut 4: z-distance from the IP lower than 15 cm
-        if(fVertexZ > 15) continue;
+        // Cut 4: z-distance from the IP lower than 10 cm
+        if(fVertexZ > 10) continue;
         // Cut 5a: ADA offline veto (no effect on MC)
         if(!(fADA_dec == 0)) continue;
         // Cut 5b: ADC offline veto (no effect on MC)

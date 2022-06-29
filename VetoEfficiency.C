@@ -5,7 +5,6 @@
 #include "TString.h"
 #include "TSystem.h"
 #include "TFile.h"
-#include "TCanvas.h"
 #include "TF1.h"
 // my headers
 #include "VetoEfficiency_Utilities.h"
@@ -158,8 +157,8 @@ void VetoEff_ClassifyEvents(Int_t mass_range, Bool_t normalized)
         precision = 4;
     } 
     // total pT range
-    if(!normalized) str_out = Form("Results/%sVetoEfficiency/%snEv_PtAll.txt", str_subfolder.Data(), str_mass_subfolder.Data());
-    else            str_out = Form("Results/%sVetoEfficiency/%snormalized_PtAll.txt", str_subfolder.Data(), str_mass_subfolder.Data());
+    if(!normalized) str_out = Form("Results/%sVetoEfficiency/%snEv_all.txt", str_subfolder.Data(), str_mass_subfolder.Data());
+    else            str_out = Form("Results/%sVetoEfficiency/%snormalized_all.txt", str_subfolder.Data(), str_mass_subfolder.Data());
     nEv->PrintToFile(str_out, precision);
     // in pT bins
     for(Int_t i = 0; i < nBinsPt; i++){
@@ -180,19 +179,22 @@ void VetoEff_SubtractBkg()
     // in full pT range
     // load fractions of bkg events
     NeutronMatrix *nEv_bkg = new NeutronMatrix();
-    nEv_bkg->LoadFromFile("Results/" + str_subfolder + "VetoEfficiency/mass_1.80to2.80/normalized_PtAll.txt");
+    nEv_bkg->LoadFromFile("Results/" + str_subfolder + "VetoEfficiency/mass_1.80to2.80/normalized_all.txt");
     Double_t nBkg = 205.; // from the invariant mass fit in allbins
     nEv_bkg->Multiply(nBkg);
     // first load all events (sig + bkg)
     NeutronMatrix *nEv_sig = new NeutronMatrix();
-    nEv_sig->LoadFromFile("Results/" + str_subfolder + "VetoEfficiency/mass_3.00to3.20/nEv_PtAll.txt");
+    nEv_sig->LoadFromFile("Results/" + str_subfolder + "VetoEfficiency/mass_3.00to3.20/nEv_all.txt");
+    nEv_sig->Plot("Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/nEv_all.pdf");
     // subtract background
     nEv_sig->SubtractMatrix(nEv_bkg);
     nEv_sig->PrintToConsole();
     Printf("Remaining number of events: %.2f", nEv_sig->CountEvents_tot());
     gSystem->Exec("mkdir -p Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/");
     nEv_bkg->PrintToFile("Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/nEv_bkg.txt",1);
+    nEv_bkg->Plot("Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/nEv_bkg.pdf");
     nEv_sig->PrintToFile("Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/nEv_sig.txt",1);
+    nEv_sig->Plot("Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/nEv_sig.pdf");
 
     return;
 }
@@ -205,15 +207,18 @@ Double_t VetoEff_Calculate(Bool_t SystUncr)
     nEv_sig->LoadFromFile("Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/nEv_sig.txt");
     Double_t nEv_uncorr = nEv_sig->CountEvents_tot();
     //nEv_sig->ApplyEfficiencies_AC();
-    nEv_sig->ApplyEfficiencies_combined1();
-    //nEv_sig->ApplyEfficiencies_combined2();
+    //nEv_sig->ApplyEfficiencies_combined1();
+    nEv_sig->ApplyEfficiencies_combined2();
     // save the new matrix only in not syst uncr calculation
-    if(!SystUncr) nEv_sig->PrintToFile("Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/nEv_corrected.txt",1);
+    if(!SystUncr){
+        nEv_sig->PrintToFile("Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/nEv_corr.txt",1);
+        nEv_sig->Plot("Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/nEv_corr.pdf");
+    } 
     // calculate the veto eff
     Double_t nEv_corrected = nEv_sig->CountEvents_tot();
     Double_t fEff_total = nEv_uncorr / nEv_corrected;
-    //Printf("nEv uncorr: %.3f", nEv_uncorr);
-    //Printf("nEv corr: %.3f", nEv_corrected);
+    Printf("nEv uncorr: %.3f", nEv_uncorr);
+    Printf("nEv corr: %.3f", nEv_corrected);
     Printf("Total pile-up efficiency: %.3f", fEff_total);
 
     return fEff_total;
@@ -266,7 +271,7 @@ void VetoEff_SystUncertainty()
     cTotal->SetRightMargin(0.04);
     cTotal->SetLeftMargin(0.13);
 
-    hSampledEffTotal->SetTitle(";#varepsilon_{pile-up} [-];Counts");
+    hSampledEffTotal->SetTitle(";#varepsilon_{veto} [-];Counts");
     hSampledEffTotal->SetLineWidth(3);
     hSampledEffTotal->SetLineColor(kBlue);
     // Vertical axis

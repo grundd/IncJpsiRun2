@@ -5,7 +5,10 @@
 #include <stdio.h> // printf
 #include <iostream> // cout, cin
 // root headers
-#include "TH1D.h"
+#include "TH1.h"
+#include "TH2.h"
+#include "TCanvas.h"
+#include "TStyle.h"
 #include "TString.h"
 #include "TRandom3.h"
 // my headers
@@ -19,8 +22,8 @@ Double_t fZNA_n, fZNC_n;
 
 // neutron bins:
 const Int_t nBinsN = 5; 
-Double_t fNumberOfN[nBinsN+1] = {0.5, 1.5, 5.5, 10.5, 20.5, 50.5};
-TString  sNumberOfN[nBinsN] = {"0-1", "2-5", "6-10", "11-20", "21-50"};
+Double_t fNumberOfN[nBinsN+1] = {0.0, 1.5, 5.5, 10.5, 20.5, 50.5};
+TString  sNumberOfN[nBinsN+1] = {"none","0.0,1.5","1.5,5.5","5.5,10.5","10.5,20.5","20.5,50.5"};
 Double_t nEv_SelAD_A[nBinsN] = {4, 11, 13, 19, 55};
 Double_t nEv_SelAD_C[nBinsN] = {6, 23, 17, 26, 76};
 Double_t nEv_Sel_A[nBinsN] = {47, 70, 49, 46, 95};
@@ -259,6 +262,7 @@ class NeutronMatrix
         void     ApplyEfficiencies_AC();
         void     ApplyEfficiencies_combined1();
         void     ApplyEfficiencies_combined2();
+        void     Plot(TString path);
         void     PrintToConsole();
         void     PrintToFile(TString name, Int_t precision = 0);
         void     LoadFromFile(TString name);
@@ -362,6 +366,43 @@ void NeutronMatrix::ApplyEfficiencies_combined2()
         for(Int_t iBinC = 1; iBinC < nBinsN+1; iBinC++) 
             fEv_neutron_bins[iBinA][iBinC] = fEv_neutron_bins[iBinA][iBinC] / SampledEff[iBinC];
     }
+    return;
+}
+
+void NeutronMatrix::Plot(TString path)
+{
+    TH2D *h = new TH2D("h","h",nBinsN+1,0.,6.,nBinsN+1,0.,6.);
+    for(Int_t iBinA = 0; iBinA < nBinsN+1; iBinA++){
+        for(Int_t iBinC = 0; iBinC < nBinsN+1; iBinC++) h->SetBinContent(iBinA+1, iBinC+1, fEv_neutron_bins[iBinA][iBinC]);
+    }
+    TCanvas *c = new TCanvas("c","c",1050,900);
+    c->SetTopMargin(0.03);
+    c->SetBottomMargin(0.14);
+    c->SetRightMargin(0.12);
+    c->SetLeftMargin(0.16);
+    c->cd();
+    h->SetStats(0);
+    h->SetTitle(0);
+    gStyle->SetPaintTextFormat(".1f");
+    h->GetXaxis()->SetTitle("A side, # of neutrons");
+    h->GetXaxis()->SetTitleSize(0.05);
+    h->GetYaxis()->SetTitle("C side, # of neutrons");
+    h->GetYaxis()->SetTitleSize(0.05);
+    h->GetYaxis()->SetTitleOffset(1.65);
+    h->GetXaxis()->SetLabelSize(0.05);
+    h->GetYaxis()->SetLabelSize(0.05);
+    h->GetZaxis()->SetLabelSize(0.05);
+    h->SetMarkerSize(2.5);
+    h->Draw("colz,text");
+    for(Int_t i = 0; i < nBinsN+1; i++)
+    {
+        h->GetXaxis()->SetBinLabel(i+1,sNumberOfN[i]);
+        h->GetYaxis()->SetBinLabel(i+1,sNumberOfN[i]);
+    }
+    h->Draw("COLZ,TEXT");
+    c->Print(path.Data());
+    //delete h;
+    //delete c;
     return;
 }
 
