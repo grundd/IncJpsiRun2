@@ -44,6 +44,8 @@ Double_t PtBinsNew_5bins[6] = {0.2, 0., 0., 0., 0., 1.0};
 Double_t YieldPerBin_val[5] = { 0 };
 Double_t YieldPerBin_err[5] = { 0 };
 
+Bool_t UniformBinYields = kFALSE;
+
 void BinsThroughMassFit(Int_t iAnalysis)
 {
     InitAnalysis(iAnalysis);
@@ -60,18 +62,39 @@ void BinsThroughMassFit(Int_t iAnalysis)
     // Load the total number of signal events
     TString str_ifs = "Results/" + str_subfolder + "InvMassFit/allbins/allbins_signal.txt";
     ifstream ifs;
-    ifs.open(str_ifs.Data());   
+    ifs.open(str_ifs.Data());
     while(!ifs.eof()){
         ifs >> EvTotal >> EvTotalErr;
     }
     ifs.close();
     Printf("Total number of events loaded: %.3f pn %.3f", EvTotal, EvTotalErr);
 
-    Double_t EvPerBin = -1;
-    if(!isPass3)    EvPerBin = (EvTotal / (Double_t)nPtBins) - 1.0;
-    else            EvPerBin = (EvTotal / (Double_t)nPtBins) - 0.8;
-    Printf("Optimal number of ev per bin: %.3f", EvPerBin);
-
+    Double_t EvPerBin_arr[5] = { 0 };
+    Double_t correction(0.);
+    if(!isPass3) correction = -1.0;
+    else         correction = -0.8;
+    if(UniformBinYields) // if uniform bin yields
+    {
+        Double_t EvPerBin = (EvTotal / (Double_t)nPtBins) + correction;
+        for(Int_t i = 0; i < nPtBins; i++) EvPerBin_arr[i] = EvPerBin;
+        Printf("Optimal yields per bin: %.2f", EvPerBin);
+    }
+    else // non-uniform bin yields: aprox 125, 125, 80, 80, 80
+    {
+        if(nPtBins == 5)
+        {
+            Double_t nEvOpt4bins = (EvTotal / (Double_t)(nPtBins-1));
+            EvPerBin_arr[0] = nEvOpt4bins + correction;
+            EvPerBin_arr[1] = nEvOpt4bins + correction;
+            EvPerBin_arr[2] = (EvTotal - 2 * nEvOpt4bins) / 3 - 0.3;
+            EvPerBin_arr[3] = (EvTotal - 2 * nEvOpt4bins) / 3 - 0.3;
+            EvPerBin_arr[4] = (EvTotal - 2 * nEvOpt4bins) / 3 - 0.3;
+            Printf("Optimal yields per bins: %.2f, %.2f, %.2f, %.2f, %.2f", 
+                EvPerBin_arr[0], EvPerBin_arr[1], EvPerBin_arr[2], EvPerBin_arr[3], EvPerBin_arr[4]);
+        }
+        else return;
+    }
+    
     // Small delay to be able to read the console
     sleep_until(system_clock::now() + seconds(3));
 
@@ -83,7 +106,7 @@ void BinsThroughMassFit(Int_t iAnalysis)
 
     for(Int_t i = 0; i < nPtBins-1; i++){
         // While the yield of J/psi candidates in the current bin is smaller than then optimal one
-        while(YieldJpsi_val <= EvPerBin){
+        while(YieldJpsi_val <= EvPerBin_arr[i]){
             CurrPtCutUpp += ptStep;
             BinsThroughMassFit_DoFit(PtBinsNew[i], CurrPtCutUpp);
             out_1 << Form("(%.3f, %.3f): %.3f\n", PtBinsNew[i], CurrPtCutUpp, YieldJpsi_val);

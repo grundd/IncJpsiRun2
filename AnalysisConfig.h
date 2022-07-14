@@ -41,6 +41,15 @@ void InitAnalysis(Int_t iAnalysis){
         isPIDCalibrated = kTRUE;
         isNParInDSCBFixed = kFALSE;
     }
+    // pass3, 5bins, calibrated MC PID, N params in DSCB left free, NON-UNIFORM BIN YIELDS
+    if(iAnalysis == 3)
+    {
+        str_subfolder = "5bins_pass3_NonUnfYields/";
+        nPtBins = 5;
+        isPass3 = kTRUE;
+        isPIDCalibrated = kTRUE;
+        isNParInDSCBFixed = kTRUE;
+    }
     // set reduced run lists for the given pass
     SetReducedRunList(isPass3);
     // set the path to the input data

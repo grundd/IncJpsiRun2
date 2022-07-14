@@ -52,7 +52,7 @@ void VetoEfficiency(Int_t iAnalysis)
     // calculate the total efficiency
     VetoEff_Calculate(kFALSE);
     // calculate systematic uncertainties
-    //VetoEff_SystUncertainty();
+    VetoEff_SystUncertainty();
 
     return;
 }
@@ -261,6 +261,7 @@ void VetoEff_SystUncertainty()
     // fit the gaussian peak
     TF1 *fGauss = new TF1("fGauss", "gaus", 0.0, 1.0);
     hSampledEffTotal->Fit(fGauss);
+    hSampledEffTotal->SetStats(0);
     fGauss->SetLineWidth(3);
     fGauss->SetLineColor(kRed);
     // plot the results
@@ -271,7 +272,7 @@ void VetoEff_SystUncertainty()
     cTotal->SetRightMargin(0.04);
     cTotal->SetLeftMargin(0.13);
 
-    hSampledEffTotal->SetTitle(";#varepsilon_{veto} [-];Counts");
+    hSampledEffTotal->SetTitle(";#varepsilon^{veto}_{diss} [-];Counts");
     hSampledEffTotal->SetLineWidth(3);
     hSampledEffTotal->SetLineColor(kBlue);
     // Vertical axis
