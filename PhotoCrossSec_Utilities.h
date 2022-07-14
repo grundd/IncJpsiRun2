@@ -209,6 +209,119 @@ void ReadInput_STARlight()
 }
 
 //#####################################################################################################
+// Function to integrate a graph in a given range:
+
+Double_t GraphIntegral_Calculate(TCanvas *c, TString str_name, Int_t n_data, Double_t *abs_t_val, Double_t *sig_val, Double_t t_min, Double_t t_max)
+{
+    vector<Double_t> t_edges; 
+    vector<Double_t> sigmas;
+    t_edges.push_back(t_min);
+    Int_t iPoint = 0;
+    Double_t new_t_edge = 0;
+    // while below desired range of |t|
+    while(abs_t_val[iPoint] <= t_min) iPoint++;
+    // while within desired range of |t|
+    while(abs_t_val[iPoint] <= t_max)
+    {
+        // save the value of the cross section at this point
+        sigmas.push_back(sig_val[iPoint]);
+        // if last point from the dataset
+        if(iPoint == n_data-1)
+        {
+            /*
+            // Previous implementation:
+            new_t_edge = abs_t_val[iPoint] + (abs_t_val[iPoint] - t_edges.back());
+            t_edges.push_back(new_t_edge);
+            */
+            t_edges.push_back(t_max);
+            //Printf("%i \t%.4f \t%.5f", iPoint, new_t_edge, sig_val[iPoint]);
+            break;
+        } 
+        if((abs_t_val[iPoint] + abs_t_val[iPoint+1]) / 2. < t_max)
+        {
+            new_t_edge = (abs_t_val[iPoint] + abs_t_val[iPoint+1]) / 2.;
+            t_edges.push_back(new_t_edge);
+            //Printf("%i \t%.4f \t%.5f", iPoint, new_t_edge, sig_val[iPoint]);
+            iPoint++;
+        } 
+        // if |t| extends beyond t_max before the dataset ends
+        else 
+        {
+            new_t_edge = t_max;
+            t_edges.push_back(new_t_edge);
+            //Printf("%i \t%.4f \t%.5f", iPoint, new_t_edge, sig_val[iPoint]);
+            break;
+        }
+    }
+
+    // Histograms
+    Double_t *t_edges_ptr;
+    t_edges_ptr = &t_edges[0];
+    TH1D *hist = new TH1D("hist","hist",sigmas.size(),t_edges_ptr);
+    for(unsigned i = 1; i <= sigmas.size(); i++) hist->SetBinContent(i, sigmas[i-1]);
+    // Graph
+    TGraph *graph = new TGraph(n_data, abs_t_val, sig_val);
+
+    // TStyle settings
+    gStyle->SetOptStat(0);
+    gStyle->SetOptTitle(0);
+    // Plots
+    c->cd();
+    c->SetLogy(); 
+    // Margins
+    c->SetTopMargin(0.03);
+    c->SetBottomMargin(0.14);
+    c->SetRightMargin(0.03);
+    c->SetLeftMargin(0.12);
+    // Histogram settings
+    hist->SetTitle(";|#it{t}| (GeV^{2}); d#sigma_{#gammaPb}/d|#it{t}| (mb/GeV^{2})");    
+    hist->SetLineColor(kBlue);
+    hist->SetLineWidth(2);
+    // Vertical axis
+    hist->GetYaxis()->SetTitleSize(0.05);
+    hist->GetYaxis()->SetTitleOffset(1.2);
+    hist->GetYaxis()->SetLabelSize(0.05);
+    //hist->GetYaxis()->SetRangeUser(1e-8,1e-1);
+    // Horizontal axis
+    hist->GetXaxis()->SetTitleSize(0.05);
+    hist->GetXaxis()->SetTitleOffset(1.2);
+    hist->GetXaxis()->SetLabelSize(0.05);
+    //hist->GetXaxis()->SetRangeUser(t_min,t_max);
+    // Draw histogram
+    hist->Draw("");
+    // Draw graph
+    graph->SetLineStyle(2);
+    graph->SetLineColor(kRed);
+    graph->SetLineWidth(2);  
+    graph->Draw("C SAME");
+    // Calculate integral
+    Double_t integral_histo = 0;
+    Double_t integral_graph = 0;
+    for(unsigned i = 1; i <= sigmas.size(); i++){
+        integral_graph += sigmas[i-1] * (t_edges[i] - t_edges[i-1]);
+        integral_histo += hist->GetBinContent(i) * (hist->GetBinLowEdge(i+1) - hist->GetBinLowEdge(i));
+    }
+    if(TMath::Abs(integral_graph - integral_histo) > 1e-5){
+        Printf("Error calculating integral.");
+        return -1;
+    }
+    // Legend
+    TLegend *l = new TLegend(0.55,0.75,0.80,0.95);
+    l->SetMargin(0.);
+    l->AddEntry((TObject*)0,Form("%s",str_name.Data()), "");
+    l->AddEntry((TObject*)0,Form("In range |#it{t}| #in (%.2f,%.2f) GeV^{2} #it{c}^{-2}:", t_min, t_max), "");
+    l->AddEntry((TObject*)0,Form("integral = %.3f #mub", integral_graph * 1000.), "");
+    l->SetTextSize(0.045);
+    l->SetBorderSize(0); // no border
+    l->SetFillStyle(0);  // legend is transparent
+    l->Draw();
+
+    
+
+    return integral_graph;
+}
+
+//#####################################################################################################
 // Roman's functions:
 
 TLegend *SetLegend(Double_t x_leftdown, Double_t y_leftdown, Double_t x_rightup, Double_t y_rightup)

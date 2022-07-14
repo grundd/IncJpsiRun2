@@ -19,7 +19,7 @@ Double_t err_stat_low(0), err_syst_low(0),
     err_tot(0);
 
 Double_t GraphIntegral(TString str_name, Int_t n_data, Double_t *abs_t_val, Double_t *sig_val, Double_t t_min, Double_t t_max);
-void GraphIntegralAll(Double_t t_min, Double_t t_max);
+void GraphIntegral_All(Double_t t_min, Double_t t_max);
 void PlotTotal();
 void ModelsRatios(Double_t t_low_1, Double_t t_upp_1, Double_t t_low_2, Double_t t_upp_2);
 
@@ -34,126 +34,30 @@ void PhotoCrossSec_Total(Int_t iAnalysis)
     //ModelsRatios(0.04,1.00,0.00,2.00);
 
     return;
-}    
+}
 
 Double_t GraphIntegral(TString str_name, Int_t n_data, Double_t *abs_t_val, Double_t *sig_val, Double_t t_min = 0.04, Double_t t_max = 1.00)
 {
-    vector<Double_t> t_edges; 
-    vector<Double_t> sigmas;
-    t_edges.push_back(t_min);
-    Int_t iPoint = 0;
-    Double_t new_t_edge = 0;
-    // while below desired range of |t|
-    while(abs_t_val[iPoint] <= t_min) iPoint++;
-    // while within desired range of |t|
-    while(abs_t_val[iPoint] <= t_max)
-    {
-        // save the value of the cross section at this point
-        sigmas.push_back(sig_val[iPoint]);
-        // if last point from the dataset
-        if(iPoint == n_data-1)
-        {
-            new_t_edge = abs_t_val[iPoint] + (abs_t_val[iPoint] - t_edges.back());
-            t_edges.push_back(new_t_edge);
-            //Printf("%i \t%.4f \t%.5f", iPoint, new_t_edge, sig_val[iPoint]);
-            break;
-        } 
-        if((abs_t_val[iPoint] + abs_t_val[iPoint+1]) / 2. < t_max)
-        {
-            new_t_edge = (abs_t_val[iPoint] + abs_t_val[iPoint+1]) / 2.;
-            t_edges.push_back(new_t_edge);
-            //Printf("%i \t%.4f \t%.5f", iPoint, new_t_edge, sig_val[iPoint]);
-            iPoint++;
-        } 
-        // if |t| extends beyond t_max before the dataset ends
-        else 
-        {
-            new_t_edge = t_max;
-            t_edges.push_back(new_t_edge);
-            //Printf("%i \t%.4f \t%.5f", iPoint, new_t_edge, sig_val[iPoint]);
-            break;
-        }
-    }
+    TCanvas *c = new TCanvas("c","c",900,600);
 
-    // Histograms
-    Double_t *t_edges_ptr;
-    t_edges_ptr = &t_edges[0];
-    TH1D *hist = new TH1D("hist","hist",sigmas.size(),t_edges_ptr);
-    for(unsigned i = 1; i <= sigmas.size(); i++) hist->SetBinContent(i, sigmas[i-1]);
-    // Graph
-    TGraph *graph = new TGraph(n_data, abs_t_val, sig_val);
-
-    // TStyle settings
-    gStyle->SetOptStat(0);
-    gStyle->SetOptTitle(0);
-    // Plots
-    TCanvas *c1 = new TCanvas("c1","c1",900,600);
-    c1->SetLogy(); 
-    // Margins
-    c1->SetTopMargin(0.03);
-    c1->SetBottomMargin(0.14);
-    c1->SetRightMargin(0.03);
-    c1->SetLeftMargin(0.12);
-    // Histogram settings
-    hist->SetTitle(";|#it{t}| (GeV^{2}); d#sigma_{#gammaPb}/d|#it{t}| (mb/GeV^{2})");    
-    hist->SetLineColor(kBlue);
-    hist->SetLineWidth(2);
-    // Vertical axis
-    hist->GetYaxis()->SetTitleSize(0.05);
-    hist->GetYaxis()->SetTitleOffset(1.2);
-    hist->GetYaxis()->SetLabelSize(0.05);
-    //hist->GetYaxis()->SetRangeUser(1e-8,1e-1);
-    // Horizontal axis
-    hist->GetXaxis()->SetTitleSize(0.05);
-    hist->GetXaxis()->SetTitleOffset(1.2);
-    hist->GetXaxis()->SetLabelSize(0.05);
-    //hist->GetXaxis()->SetRangeUser(t_min,t_max);
-    // Draw histogram
-    hist->Draw("");
-    // Draw graph
-    graph->SetLineStyle(2);
-    graph->SetLineColor(kRed);
-    graph->SetLineWidth(2);  
-    graph->Draw("C SAME");
-    // Calculate integral
-    Double_t integral_histo = 0;
-    Double_t integral_graph = 0;
-    for(unsigned i = 1; i <= sigmas.size(); i++){
-        integral_graph += sigmas[i-1] * (t_edges[i] - t_edges[i-1]);
-        integral_histo += hist->GetBinContent(i) * (hist->GetBinLowEdge(i+1) - hist->GetBinLowEdge(i));
-    }
-    if(TMath::Abs(integral_graph - integral_histo) > 1e-5){
-        Printf("Error calculating integral.");
-        return -1;
-    }
-    // Legend
-    TLegend *l = new TLegend(0.55,0.75,0.80,0.95);
-    l->SetMargin(0.);
-    l->AddEntry((TObject*)0,Form("%s",str_name.Data()), "");
-    l->AddEntry((TObject*)0,Form("In range |#it{t}| #in (%.2f,%.2f) GeV^{2} #it{c}^{-2}:", t_min, t_max), "");
-    l->AddEntry((TObject*)0,Form("integral = %.3f #mub", integral_graph * 1000.), "");
-    l->SetTextSize(0.045);
-    l->SetBorderSize(0); // no border
-    l->SetFillStyle(0);  // legend is transparent
-    l->Draw();
+    Double_t integral = GraphIntegral_Calculate(c,str_name,n_data,abs_t_val,sig_val,t_min,t_max);
 
     Int_t oldLevel = gErrorIgnoreLevel; 
     gErrorIgnoreLevel = kWarning; 
     gSystem->Exec("mkdir -p Results/" + str_subfolder + Form("PhotoCrossSec/Total/%.2f-%.2f/", t_min, t_max));
     TString path = "Results/" + str_subfolder + Form("PhotoCrossSec/Total/%.2f-%.2f/%s", t_min, t_max, str_name.Data());
-    c1->Print((path + ".pdf").Data());
-    c1->Print((path + ".png").Data());
+    c->Print((path + ".pdf").Data());
+    c->Print((path + ".png").Data());
     gErrorIgnoreLevel = oldLevel; 
 
-    Printf("%s: %.3f micro barns.", str_name.Data(), integral_graph * 1e3);
+    Printf("%s: %.3f micro barns.", str_name.Data(), integral * 1e3);
 
-    delete c1;
-    delete hist;
+    delete c;
 
-    return integral_graph;
+    return integral;
 }
 
-void GraphIntegralAll(Double_t t_min, Double_t t_max)
+void GraphIntegral_All(Double_t t_min, Double_t t_max)
 {
     // STARlight
     ReadInput_STARlight();
@@ -225,7 +129,7 @@ void PlotTotal()
     Printf("Data: (%.3f pm %.3f) micro barns (stat. and syst. added in quadrature).", 
         integral_data * 1e3, err_tot * 1e3);
 
-    GraphIntegralAll(0.04, 1.00);
+    GraphIntegral_All(0.04, 1.00);
 
     // Graph with data point and stat uncertainty
     TGraphErrors *gr_data = new TGraphErrors(); 
@@ -333,7 +237,7 @@ void PlotTotal()
 
 void ModelsRatios(Double_t t_low_1, Double_t t_upp_1, Double_t t_low_2, Double_t t_upp_2)
 {
-    GraphIntegralAll(t_low_1, t_upp_1);
+    GraphIntegral_All(t_low_1, t_upp_1);
     Double_t int_SL_1 = integral_SL;
     Double_t int_HS_hs_1 = integral_HS_hs;
     Double_t int_HS_n_1 = integral_HS_n;
@@ -341,7 +245,7 @@ void ModelsRatios(Double_t t_low_1, Double_t t_upp_1, Double_t t_low_2, Double_t
     Double_t int_MS_nf_1 = integral_MS_nf;
     Double_t int_GZ_up_1 = integral_GZ_up;
     Double_t int_GZ_lo_1 = integral_GZ_lo;
-    GraphIntegralAll(t_low_2, t_upp_2);
+    GraphIntegral_All(t_low_2, t_upp_2);
     Double_t int_SL_2 = integral_SL;
     Double_t int_HS_hs_2 = integral_HS_hs;
     Double_t int_HS_n_2 = integral_HS_n;
