@@ -261,7 +261,6 @@ Double_t GraphIntegral_Calculate(TCanvas *c, TString str_name, Int_t n_data, Dou
     for(unsigned i = 1; i <= sigmas.size(); i++) hist->SetBinContent(i, sigmas[i-1]);
     // Graph
     TGraph *graph = new TGraph(n_data, abs_t_val, sig_val);
-
     // TStyle settings
     gStyle->SetOptStat(0);
     gStyle->SetOptTitle(0);
@@ -315,8 +314,6 @@ Double_t GraphIntegral_Calculate(TCanvas *c, TString str_name, Int_t n_data, Dou
     l->SetBorderSize(0); // no border
     l->SetFillStyle(0);  // legend is transparent
     l->Draw();
-
-    
 
     return integral_graph;
 }
