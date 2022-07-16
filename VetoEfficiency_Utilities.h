@@ -242,6 +242,28 @@ void VetoEfficiency_PrepareTree()
     }
 }
 
+Double_t VetoEffiency_LoadBkg(Int_t iPt)
+// iPt == 0 => allbins (0.2 to 1.0 GeV/c)
+//     == i => bin i (1, 2, 3, 4, 5)
+{
+    TString str_bkg = "";
+    if(iPt == 0) str_bkg = "Results/" + str_subfolder + "InvMassFit/allbins/allbins_bkg.txt";
+    if(iPt >= 1) str_bkg = "Results/" + str_subfolder + "InvMassFit/" + Form("%ibins/bin%i_bkg.txt",nPtBins,iPt);
+    Double_t fBkg_val(-1.), fBkg_err(-1.);
+    ifstream ifs;
+    ifs.open(str_bkg.Data());
+    if(!ifs.fail())
+    {
+        // Read data from the file
+        ifs >> fBkg_val >> fBkg_err;
+        Printf("Loaded number of bkg events: %.1f.", fBkg_val);
+    } else {
+        Printf("Cannot open the file %s.", str_bkg.Data());
+    }
+    ifs.close();
+    return fBkg_val;
+}
+
 class NeutronMatrix
 {
     // first index (rows) = neutron bin in A
@@ -401,8 +423,8 @@ void NeutronMatrix::Plot(TString path)
     }
     h->Draw("COLZ,TEXT");
     c->Print(path.Data());
-    //delete h;
-    //delete c;
+    delete h;
+    delete c;
     return;
 }
 

@@ -48,11 +48,11 @@ void Plot()
     TGraphAsymmErrors *grData_stat = new TGraphAsymmErrors(nPtBins,abs_t_val,sig_val,abs_t_err_low,abs_t_err_upp,sig_err_stat_low,sig_err_stat_upp);
     TGraphAsymmErrors *grData_syst = new TGraphAsymmErrors(nPtBins,abs_t_val,sig_val,abs_t_err_low,abs_t_err_upp,sig_err_syst_low,sig_err_syst_upp);
     // with stat errors
-    grData_stat->SetLineStyle(1);
+    gStyle->SetEndErrorSize(4);         
+    grData_stat->SetMarkerStyle(kFullCircle);
+    grData_stat->SetMarkerSize(0.7);
     grData_stat->SetLineColor(kBlack);
-    grData_stat->SetLineWidth(1);
-    grData_stat->SetMarkerSize(1);
-    grData_stat->SetMarkerStyle(8);
+    grData_stat->SetLineWidth(2);
     grData_stat->SetMarkerColor(kBlack);
     // with syst errors 
     grData_syst->SetFillColor(17);
@@ -184,6 +184,51 @@ void Plot()
     TString path = "Results/" + str_subfolder + Form("PhotoCrossSec/Plot/plot_%ibins", nPtBins);
     c->Print((path + ".pdf").Data());
     c->Print((path + ".png").Data());
+
+    // Plot the measurement only
+    TCanvas *cMeas = new TCanvas("cMeas","cMeas",800,600);
+    cMeas->SetLogy();  
+    // Margins
+    cMeas->SetTopMargin(0.03);
+    cMeas->SetBottomMargin(0.14);
+    cMeas->SetRightMargin(0.03);
+    cMeas->SetLeftMargin(0.12);
+    //Plot the graphs
+    TH1 *h2 = (TH1*) grData_syst->GetHistogram();
+    h2->SetTitle(";|#it{t}| (GeV^{2} #it{c}^{-2}); d#sigma_{#gammaPb}/d|#it{t}| (mb #it{c}^{2} GeV^{-2})");
+    //h->SetMinimum(1e-6);
+    h->SetMaximum(0.2);
+    // Vertical axis
+    h2->GetYaxis()->SetTitleSize(0.05);
+    h2->GetYaxis()->SetTitleOffset(1.1);
+    h2->GetYaxis()->SetLabelSize(0.05);
+    // Horizontal axis
+    h2->GetXaxis()->SetTitleSize(0.05);
+    h2->GetXaxis()->SetTitleOffset(1.2);
+    h2->GetXaxis()->SetLabelSize(0.05);
+    h2->GetXaxis()->SetRangeUser(0.04,1.0);
+    // Draw everything
+    grData_syst->Draw("A5");
+    grData_stat->Draw("P SAME");
+    // legends
+    TLatex* latex = new TLatex();
+    latex->SetTextSize(0.05);
+    latex->SetTextAlign(21);
+    latex->SetNDC();
+    latex->DrawLatex(0.55,0.92,"ALICE Pb+Pb #rightarrow Pb+Pb+J/#psi   #sqrt{#it{s}_{NN}} = 5.02 TeV");
+    // Draw legend with data+unc. description
+    gStyle->SetLegendBorderSize(0);
+    TLegend *leg2 = SetLegend(0.45,0.70,0.94,0.88);
+    leg2->SetTextSize(0.05);
+    leg2->SetMargin(0.15);
+    leg2->AddEntry((TObject*)0,"ALICE incoherent J/#psi, |y|<0.8", "");
+    leg2->AddEntry(grData_stat,"Experimental stat.", "EPL");
+    leg2->AddEntry(grData_syst,"Experimental syst.", "F");
+    leg2->Draw();
+
+    TString pathMeas = "Results/" + str_subfolder + Form("PhotoCrossSec/Plot/measurement_%ibins", nPtBins);
+    cMeas->Print((pathMeas + ".pdf").Data());
+    cMeas->Print((pathMeas + ".png").Data());
 
     return;
 }

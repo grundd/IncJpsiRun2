@@ -102,37 +102,37 @@ void PtFit_NoBkg_DrawCorrMatrix(TCanvas *cCM, RooFitResult* ResFit, Int_t iRecSh
     if(iRecShape == 0 || iRecShape == 1 || iRecShape == 4 || iRecShape > 1000){
         // CohJ from STARlight
         // x axis
-        hCorr->GetXaxis()->SetBinLabel(1,"#it{N}_{coh}");
-        hCorr->GetXaxis()->SetBinLabel(2,"#it{N}_{diss}");
-        hCorr->GetXaxis()->SetBinLabel(3,"#it{N}_{inc}");
+        hCorr->GetXaxis()->SetBinLabel(1,"#it{N}^{coh}_{J/#psi}");
+        hCorr->GetXaxis()->SetBinLabel(2,"#it{N}^{inc}_{H1}");
+        hCorr->GetXaxis()->SetBinLabel(3,"#it{N}^{inc}_{SL}");
         // y axis
-        hCorr->GetYaxis()->SetBinLabel(1,"#it{N}_{inc}");
-        hCorr->GetYaxis()->SetBinLabel(2,"#it{N}_{diss}");
-        hCorr->GetYaxis()->SetBinLabel(3,"#it{N}_{coh}");
+        hCorr->GetYaxis()->SetBinLabel(1,"#it{N}^{inc}_{SL}");
+        hCorr->GetYaxis()->SetBinLabel(2,"#it{N}^{inc}_{H1}");
+        hCorr->GetYaxis()->SetBinLabel(3,"#it{N}^{coh}_{J/#psi}");
     } else if(iRecShape == 2){
         // Fit with a Gaussian
         // x axis
-        hCorr->GetXaxis()->SetBinLabel(1,"#it{N}_{coh}");
-        hCorr->GetXaxis()->SetBinLabel(2,"#it{N}_{diss}");
-        hCorr->GetXaxis()->SetBinLabel(3,"#it{N}_{inc}");
+        hCorr->GetXaxis()->SetBinLabel(1,"#it{N}^{coh}_{J/#psi}");
+        hCorr->GetXaxis()->SetBinLabel(2,"#it{N}^{inc}_{H1}");
+        hCorr->GetXaxis()->SetBinLabel(3,"#it{N}^{inc}_{SL}");
         hCorr->GetXaxis()->SetBinLabel(4,"#it{b}");
         // y axis
         hCorr->GetYaxis()->SetBinLabel(1,"#it{b}");
-        hCorr->GetYaxis()->SetBinLabel(2,"#it{N}_{inc}");
-        hCorr->GetYaxis()->SetBinLabel(3,"#it{N}_{diss}");
-        hCorr->GetYaxis()->SetBinLabel(4,"#it{N}_{coh}");        
+        hCorr->GetYaxis()->SetBinLabel(2,"#it{N}^{inc}_{SL}");
+        hCorr->GetYaxis()->SetBinLabel(3,"#it{N}^{inc}_{H1}");
+        hCorr->GetYaxis()->SetBinLabel(4,"#it{N}^{coh}_{J/#psi}");        
     } else if(iRecShape == 3){
         // Fit with the STARlight formfactor
         // x axis
-        hCorr->GetXaxis()->SetBinLabel(1,"#it{N}_{coh}");
-        hCorr->GetXaxis()->SetBinLabel(2,"#it{N}_{diss}");
-        hCorr->GetXaxis()->SetBinLabel(3,"#it{N}_{inc}");
+        hCorr->GetXaxis()->SetBinLabel(1,"#it{N}^{coh}_{J/#psi}");
+        hCorr->GetXaxis()->SetBinLabel(2,"#it{N}^{inc}_{H1}");
+        hCorr->GetXaxis()->SetBinLabel(3,"#it{N}^{inc}_{SL}");
         hCorr->GetXaxis()->SetBinLabel(4,"#it{R}_{A}");
         // y axis
         hCorr->GetYaxis()->SetBinLabel(1,"#it{R}_{A}");
-        hCorr->GetYaxis()->SetBinLabel(2,"#it{N}_{inc}");
-        hCorr->GetYaxis()->SetBinLabel(3,"#it{N}_{diss}");
-        hCorr->GetYaxis()->SetBinLabel(4,"#it{N}_{coh}");            
+        hCorr->GetYaxis()->SetBinLabel(2,"#it{N}^{inc}_{SL}");
+        hCorr->GetYaxis()->SetBinLabel(3,"#it{N}^{inc}_{H1}");
+        hCorr->GetYaxis()->SetBinLabel(4,"#it{N}^{coh}_{J/#psi}");            
     }
 
     // Set corr hist and draw it

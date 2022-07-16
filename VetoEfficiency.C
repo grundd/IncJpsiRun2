@@ -20,7 +20,10 @@ Double_t n_upp = 50.;
 
 void VetoEff_ClassifyEvents(Int_t mass_range, Bool_t normalized);
 void VetoEff_SubtractBkg();
-Double_t VetoEff_Calculate(Bool_t SystUncr = kFALSE);
+Double_t VetoEff_Calculate(Int_t iEff, Bool_t SystUncr = kFALSE);
+// iEff == 0 => weight both the A and C side (XnXn)
+//      == 1 => weight as 0nXn and XnYn(whatever) (combined1)
+//      == 2 => weight as Xn0n and (whatever)YnXn (combined2)
 void VetoEff_SystUncertainty();
 TCanvas* PlotNeutronDistribution(const char* name, TH1 *hZNA, TH1 *hZNC, Double_t fPtMin, Double_t fPtMax, Double_t fMMin, Double_t fMMax);
 
@@ -35,24 +38,26 @@ void VetoEfficiency(Int_t iAnalysis)
     // prepare the tree containing information about mass, pT and ZN signal
     VetoEfficiency_PrepareTree();
 
-    /*
-    // classify events into classes: background (mass from 1.8 to 2.8 GeV)
-    VetoEff_ClassifyEvents(0, kFALSE);
-    VetoEff_ClassifyEvents(0, kTRUE);
-
-    // classify events into classes: signal+bkg (mass from 3.0 to 3.2 GeV)
-    VetoEff_ClassifyEvents(1, kFALSE);
-    VetoEff_ClassifyEvents(1, kTRUE);
-    */
+    if(kTRUE)
+    {
+        // classify events into classes: background (mass from 1.8 to 2.8 GeV)
+        VetoEff_ClassifyEvents(0, kFALSE);
+        VetoEff_ClassifyEvents(0, kTRUE);
+        // classify events into classes: signal+bkg (mass from 3.0 to 3.2 GeV)
+        VetoEff_ClassifyEvents(1, kFALSE);
+        VetoEff_ClassifyEvents(1, kTRUE);
+    }
 
     // calculate partial (in)efficiencies in neutron bins
     VetoEff_CalcEfficiencies();
     // subtract bkg from signal in 3.0 to 3.2 GeV in mass
     VetoEff_SubtractBkg();
     // calculate the total efficiency
-    VetoEff_Calculate(kFALSE);
+    VetoEff_Calculate(0,kFALSE);
+    VetoEff_Calculate(1,kFALSE);
+    VetoEff_Calculate(2,kFALSE);
     // calculate systematic uncertainties
-    VetoEff_SystUncertainty();
+    if(kFALSE) VetoEff_SystUncertainty();
 
     return;
 }
@@ -136,16 +141,14 @@ void VetoEff_ClassifyEvents(Int_t mass_range, Bool_t normalized)
     // plot neutron distribution in allbins
     c[0] = PlotNeutronDistribution("c0",hZNA[0],hZNC[0],0.2,1.0,m_low,m_upp);
     c[0]->Draw();
-    TString str_out = "Results/" + str_subfolder + "VetoEfficiency/" + str_mass_subfolder + "ZN_n_allbins";
+    TString str_out = "Results/" + str_subfolder + "VetoEfficiency/" + str_mass_subfolder + "ZN_n_all";
     c[0]->Print((str_out + ".pdf").Data());
-    c[0]->Print((str_out + ".png").Data());
     // plots neutron distribution in bins
     for(Int_t i = 1; i < nPtBins+1; i++){
         c[i] = PlotNeutronDistribution(Form("c%i",i),hZNA[i],hZNC[i],ptBoundaries[i-1],ptBoundaries[i],m_low,m_upp);
         c[i]->Draw();
         str_out = Form("Results/%sVetoEfficiency/%sZN_n_bin%i", str_subfolder.Data(), str_mass_subfolder.Data(), i);
         c[i]->Print((str_out + ".pdf").Data());
-        c[i]->Print((str_out + ".png").Data());
     }
     // ##########################################################################################################
     // print the numbers
@@ -176,11 +179,12 @@ void VetoEff_ClassifyEvents(Int_t mass_range, Bool_t normalized)
 
 void VetoEff_SubtractBkg()
 {
+    gSystem->Exec("mkdir -p Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/");
     // in full pT range
     // load fractions of bkg events
     NeutronMatrix *nEv_bkg = new NeutronMatrix();
     nEv_bkg->LoadFromFile("Results/" + str_subfolder + "VetoEfficiency/mass_1.80to2.80/normalized_all.txt");
-    Double_t nBkg = 205.; // from the invariant mass fit in allbins
+    Double_t nBkg = VetoEffiency_LoadBkg(0); // from the invariant mass fit in allbins
     nEv_bkg->Multiply(nBkg);
     // first load all events (sig + bkg)
     NeutronMatrix *nEv_sig = new NeutronMatrix();
@@ -190,36 +194,78 @@ void VetoEff_SubtractBkg()
     nEv_sig->SubtractMatrix(nEv_bkg);
     nEv_sig->PrintToConsole();
     Printf("Remaining number of events: %.2f", nEv_sig->CountEvents_tot());
-    gSystem->Exec("mkdir -p Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/");
     nEv_bkg->PrintToFile("Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/nEv_bkg.txt",1);
     nEv_bkg->Plot("Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/nEv_bkg.pdf");
     nEv_sig->PrintToFile("Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/nEv_sig.txt",1);
     nEv_sig->Plot("Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/nEv_sig.pdf");
+    // in pT bins
+    gSystem->Exec("mkdir -p Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/PtBins/");
+    NeutronMatrix *nEv_bkg_bins[5] = { NULL };
+    NeutronMatrix *nEv_sig_bins[5] = { NULL };
+    for(Int_t i = 0; i < nPtBins; i++)
+    {
+        // load fractions of bkg events
+        nEv_bkg_bins[i] = new NeutronMatrix();
+        nEv_bkg_bins[i]->LoadFromFile("Results/" + str_subfolder + Form("VetoEfficiency/mass_1.80to2.80/normalized_PtBin%i.txt",i+1));
+        Double_t nBkgPtBin = VetoEffiency_LoadBkg(i+1); // from the invariant mass fit in allbins
+        nEv_bkg_bins[i]->Multiply(nBkgPtBin);
+        // first load all events (sig + bkg)
+        nEv_sig_bins[i] = new NeutronMatrix();
+        nEv_sig_bins[i]->LoadFromFile("Results/" + str_subfolder + Form("VetoEfficiency/mass_3.00to3.20/nEv_PtBin%i.txt",i+1));
+        nEv_sig_bins[i]->Plot("Results/" + str_subfolder + Form("VetoEfficiency/bkg_subtracted/PtBins/nEv_bin%i.pdf",i+1));
+        // subtract background
+        nEv_sig_bins[i]->SubtractMatrix(nEv_bkg_bins[i]);
+        nEv_sig_bins[i]->PrintToConsole();
+        Printf("Remaining number of events: %.2f", nEv_sig_bins[i]->CountEvents_tot());
+        //nEv_bkg_bins[i]->PrintToFile("Results/" + str_subfolder + Form("VetoEfficiency/bkg_subtracted/PtBins/nEv_bkg_bin%i.txt",i+1),1);
+        nEv_bkg_bins[i]->Plot("Results/" + str_subfolder + Form("VetoEfficiency/bkg_subtracted/PtBins/nEv_bkg_bin%i.pdf",i+1));
+        //nEv_sig_bins[i]->PrintToFile("Results/" + str_subfolder + Form("VetoEfficiency/bkg_subtracted/PtBins/nEv_sig_bin%i.txt",i+1),1);
+        nEv_sig_bins[i]->Plot("Results/" + str_subfolder + Form("VetoEfficiency/bkg_subtracted/PtBins/nEv_sig_bin%i.pdf",i+1));
+    }
 
     return;
 }
 
-Double_t VetoEff_Calculate(Bool_t SystUncr)
+Double_t VetoEff_Calculate(Int_t iEff, Bool_t SystUncr)
 {
     VetoEff_SetEfficiencies(SystUncr);
     // in full pT range
     NeutronMatrix *nEv_sig = new NeutronMatrix();
     nEv_sig->LoadFromFile("Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/nEv_sig.txt");
     Double_t nEv_uncorr = nEv_sig->CountEvents_tot();
-    //nEv_sig->ApplyEfficiencies_AC();
-    //nEv_sig->ApplyEfficiencies_combined1();
-    nEv_sig->ApplyEfficiencies_combined2();
-    // save the new matrix only in not syst uncr calculation
-    if(!SystUncr){
-        nEv_sig->PrintToFile("Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/nEv_corr.txt",1);
-        nEv_sig->Plot("Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/nEv_corr.pdf");
-    } 
+    TString name = "";
+    switch(iEff)
+    {
+        case 0:
+            nEv_sig->ApplyEfficiencies_AC();
+            name = "XnXn";
+            break;
+        case 1:
+            nEv_sig->ApplyEfficiencies_combined1();
+            name = "XnYn";
+            break;
+        case 2:
+            nEv_sig->ApplyEfficiencies_combined2();
+            name = "YnXn";
+            break;
+    }
     // calculate the veto eff
-    Double_t nEv_corrected = nEv_sig->CountEvents_tot();
-    Double_t fEff_total = nEv_uncorr / nEv_corrected;
-    Printf("nEv uncorr: %.3f", nEv_uncorr);
-    Printf("nEv corr: %.3f", nEv_corrected);
+    Double_t nEv_corr = nEv_sig->CountEvents_tot();
+    Double_t fEff_total = nEv_uncorr / nEv_corr;
+    Printf("nEv uncorr: %.1f corr: %.1f", nEv_uncorr, nEv_corr);
     Printf("Total pile-up efficiency: %.3f", fEff_total);
+    // if not the syst uncr calculation
+    if(!SystUncr){
+        // save the matrix containing corrected nEv
+        nEv_sig->PrintToFile("Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/nEv_corr_" + name + ".txt",1);
+        nEv_sig->Plot("Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/nEv_corr_" + name + ".pdf");
+        // print the result to a text file
+        ofstream outfile;
+        outfile.open("Results/" + str_subfolder + "VetoEfficiency/bkg_subtracted/VetoEff_" + name + ".txt");
+        outfile << std::fixed << std::setprecision(3);
+        outfile << fEff_total;
+        outfile.close();
+    }
 
     return fEff_total;
 }
@@ -236,7 +282,7 @@ void VetoEff_SystUncertainty()
 
     for(Int_t i = 0; i < 1e4; i++)
     {
-        Double_t fEff = VetoEff_Calculate(kTRUE);
+        Double_t fEff = VetoEff_Calculate(1,kTRUE);
         hSampledEffTotal->Fill(fEff);
     }
 

@@ -194,7 +194,7 @@ void AxE_PtBins_Calculate(Double_t fCutZ)
     AxE_PtBins_hAxE->SetLineColor(kBlue);
     AxE_PtBins_hAxE->SetLineWidth(1.0);
     // Vertical axis
-    AxE_PtBins_hAxE->GetYaxis()->SetTitle("#it{N}_{rec}/#it{N}_{gen}");
+    AxE_PtBins_hAxE->GetYaxis()->SetTitle("#it{N}_{rec}^{MC}/#it{N}_{gen}^{MC}");
     AxE_PtBins_hAxE->GetYaxis()->SetTitleSize(0.056);
     AxE_PtBins_hAxE->GetYaxis()->SetTitleOffset(1.3);
     AxE_PtBins_hAxE->GetYaxis()->SetLabelSize(0.056);

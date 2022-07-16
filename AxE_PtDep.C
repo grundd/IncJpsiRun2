@@ -171,7 +171,7 @@ void CalculateAxEPtDep()
     hAxE->SetLineColor(kBlue);
     hAxE->SetLineWidth(1.0);
     // Vertical axis
-    hAxE->GetYaxis()->SetTitle("#it{N}_{rec}/#it{N}_{gen}");
+    hAxE->GetYaxis()->SetTitle("#it{N}_{rec}^{MC}/#it{N}_{gen}^{MC}");
     hAxE->GetYaxis()->SetTitleSize(0.056);
     hAxE->GetYaxis()->SetTitleOffset(1.3);
     hAxE->GetYaxis()->SetLabelSize(0.056);
@@ -393,7 +393,7 @@ void CalculateRatiosOfNRec()
     hOne->SetLineColor(kBlack);
     hOne->SetLineWidth(2.0);
     // Vertical axis
-    hOne->GetYaxis()->SetTitle("#it{N}_{rec}[#it{p}_{T} sel. + add. sel.]/#it{N}_{rec}[#it{p}_{T} sel.]");
+    hOne->GetYaxis()->SetTitle("#it{N}_{rec}^{MC}[#it{p}_{T} sel. + add. sel.]/#it{N}_{rec}^{MC}[#it{p}_{T} sel.]");
     hOne->GetYaxis()->SetTitleSize(0.056);
     hOne->GetYaxis()->SetTitleOffset(1.1);
     hOne->GetYaxis()->SetLabelSize(0.056);

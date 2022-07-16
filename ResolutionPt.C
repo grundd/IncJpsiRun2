@@ -113,7 +113,7 @@ void CalculateFWHMAndFWTM(TH1D *h, Int_t iBin)
     h->GetXaxis()->SetDecimals(1);
     h->Draw();
     // Style
-    h->SetLineWidth(2.);
+    h->SetLineWidth(3.);
     h->SetLineColor(215);
     // Legend
     TLegend *l1 = new TLegend(0.02,0.44,0.5,0.92);
