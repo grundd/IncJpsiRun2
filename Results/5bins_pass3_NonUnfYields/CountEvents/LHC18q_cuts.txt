@@ -1,0 +1,18 @@
+0) event non-empty:  	800979239
+1) two good tracks:  	3206564
+2) CCUP31 trigger:   	2175623 (check: 831693)
+3) vertex # contribs:	828940
+4) vertex Z distance:	796484
+5) good run numbers: 	789210
+6a) ADA offline veto:	786530
+6b) ADC offline veto:	784876
+7a) V0A offline veto:	621898
+7b) V0C offline veto:	520346
+8) SPD match FOhits: 	228863
+9) muon pairs only:  	201449
+10) dilept |y| < 0.8:	197778
+11) trks |eta| < 0.8:	163655
+12) opposite charges:	131713
+13) mass 2.2 to 4.5: 	6607
+14) p_T 0.2 to 1.0:  	1455
+15) mass 3.0 to 3.2: 	311

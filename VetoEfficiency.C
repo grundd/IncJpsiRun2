@@ -57,7 +57,7 @@ void VetoEfficiency(Int_t iAnalysis)
     VetoEff_Calculate(1,kFALSE);
     VetoEff_Calculate(2,kFALSE);
     // calculate systematic uncertainties
-    if(kFALSE) VetoEff_SystUncertainty();
+    if(kTRUE) VetoEff_SystUncertainty();
 
     return;
 }

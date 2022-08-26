@@ -7,7 +7,6 @@
 #include "PhotoCrossSec_Utilities.h"
 
 // function to perform Kilmogorov-Smirnov test
-Double_t IntegrateData(Double_t t_min, Double_t t_max);
 void DoKSTest(TString str, Int_t n_data, Double_t *t_val, Double_t *sigma_val);
 
 void PhotoCrossSec_KSTest(Int_t iAnalysis)
@@ -41,19 +40,6 @@ void PhotoCrossSec_KSTest(Int_t iAnalysis)
     return;
 }
 
-Double_t IntegrateData(Double_t t_max)
-{
-    // t_min always = 0.04 GeV
-    Double_t integral = 0.;
-    Int_t tMaxBin = 1;
-    while(t_max > t_boundaries[tMaxBin]) tMaxBin++;
-    //Printf("t_max = %.3f within bin %i: %.3f to %.3f", t_max, tMaxBin, t_boundaries[tMaxBin-1], t_boundaries[tMaxBin]);
-    for(Int_t i = 0; i < tMaxBin; i++) integral += sig_val[i] * (t_boundaries[i+1] - t_boundaries[i]);
-    integral += sig_val[tMaxBin-1] * (t_max - t_boundaries[tMaxBin]);
-
-    return integral;
-}
-
 void DoKSTest(TString str, Int_t n_data, Double_t *t_val, Double_t *sigma_val)
 {
     gSystem->Exec("mkdir -p Results/" + str_subfolder + "PhotoCrossSec/KSTest/" + str + "/");
@@ -72,6 +58,7 @@ void DoKSTest(TString str, Int_t n_data, Double_t *t_val, Double_t *sigma_val)
     TCanvas *C = new TCanvas("C","C",900,600);
     Double_t integral_modl_tot = GraphIntegral_Calculate(C,str,n_data,t_val,sigma_val,0.04,1.0) * 1e3; // in micro barns
     C->Print("Results/" + str_subfolder + "PhotoCrossSec/KSTest/" + str + "/integral_total.pdf");
+    delete C;
 
     Double_t integral_data, integral_modl;
     for(Int_t i = 0; i <= nPoints; i++)

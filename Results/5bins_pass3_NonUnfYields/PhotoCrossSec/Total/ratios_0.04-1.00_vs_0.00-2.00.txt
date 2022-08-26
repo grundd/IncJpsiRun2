@@ -1,0 +1,11 @@
+interval 1: 0.04 - 1.00 GeV
+interval 1: 0.00 - 2.00 GeV
+ratio STARlight:            0.834
+ratio CCK: GG-hs:           0.752
+ratio CCK: GG-n:            0.709
+ratio MS: flu.:             0.697
+ratio MS: no flu.:          0.838
+ratio GSZ: el. + diss. upp: 0.771
+ratio GSZ: el. + diss. low: 0.771
+ratio GSZ: el. upp:         0.815
+ratio GSZ: el. low:         0.815

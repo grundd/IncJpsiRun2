@@ -24,14 +24,26 @@
 #include "AnalysisManager.h"
 #include "AnalysisConfig.h"
 
-// To read the values from the files:
+TString str_data = "data";
+TString str_models[9] = {"STARlight",
+                         "CCK_GG_hs",
+                         "CCK_GG_n",
+                         "MS_fl",
+                         "MS_nf",
+                         "GSZ_tot_max",
+                         "GSZ_tot_min",
+                         "GSZ_el_max",
+                         "GSZ_el_min"};
+TH1D* hist = NULL;
+
+// data
 Double_t sig_val[5] = { 0 };
 Double_t sig_err_stat[5] = { 0 };
 Double_t sig_err_syst[5] = { 0 };
 Double_t abs_t_val[5] = { 0 };
 Double_t t_boundaries[5+1] = { 0 };
 
-// For TGraphAsymmErrors:
+// for TGraphAsymmErrors:
 Double_t sig_err_stat_upp[5] = { 0 };
 Double_t sig_err_stat_low[5] = { 0 };
 Double_t sig_err_syst_upp[5] = { 0 };
@@ -39,48 +51,48 @@ Double_t sig_err_syst_low[5] = { 0 };
 Double_t abs_t_err_low[5] = { 0 };
 Double_t abs_t_err_upp[5] = { 0 };
 
-// HS predictions
+// CCK (hot-spot model)
 // reserve space for data to be read
-const Int_t nData_HS = 75;
-Double_t abs_t_HS[nData_HS];
-Double_t sig_HS_coh_n[nData_HS];
-Double_t sig_HS_coh_n_err[nData_HS];
-Double_t sig_HS_inc_n[nData_HS];
-Double_t sig_HS_inc_n_err[nData_HS];
-Double_t sig_HS_coh_hs[nData_HS];
-Double_t sig_HS_coh_hs_err[nData_HS];
-Double_t sig_HS_inc_hs[nData_HS];
-Double_t sig_HS_inc_hs_err[nData_HS];
+const Int_t n_CCK = 75;
+Double_t abs_t_CCK[n_CCK];
+Double_t sig_CCK_coh_n[n_CCK];
+Double_t sig_CCK_coh_n_err[n_CCK];
+Double_t sig_CCK_inc_n[n_CCK];
+Double_t sig_CCK_inc_n_err[n_CCK];
+Double_t sig_CCK_coh_hs[n_CCK];
+Double_t sig_CCK_coh_hs_err[n_CCK];
+Double_t sig_CCK_inc_hs[n_CCK];
+Double_t sig_CCK_inc_hs_err[n_CCK];
 
-// Guzey predictions
-const Int_t nData_GZ = 100;
-Double_t abs_t_GZ[nData_GZ];
-Double_t sig_GZ_el_min[nData_GZ];
-Double_t sig_GZ_el_max[nData_GZ];
-Double_t sig_GZ_diss_min[nData_GZ];
-Double_t sig_GZ_diss_max[nData_GZ];
-Double_t sig_GZ_tot_min[nData_GZ];
-Double_t sig_GZ_tot_max[nData_GZ];
+// GSZ
+const Int_t n_GSZ = 100;
+Double_t abs_t_GSZ[n_GSZ];
+Double_t sig_GSZ_el_min[n_GSZ];
+Double_t sig_GSZ_el_max[n_GSZ];
+Double_t sig_GSZ_diss_min[n_GSZ];
+Double_t sig_GSZ_diss_max[n_GSZ];
+Double_t sig_GSZ_tot_min[n_GSZ];
+Double_t sig_GSZ_tot_max[n_GSZ];
 
-// Heikki predictions
-const Int_t nData_HM = 183;
-Double_t abs_t_HM[nData_HM];
-Double_t sig_HM_fluct[nData_HM];
-Double_t sig_HM_noflu[nData_HM];
+// MS (IPsat)
+const Int_t n_MS = 183;
+Double_t abs_t_MS[n_MS];
+Double_t sig_MS_fluct[n_MS];
+Double_t sig_MS_noflu[n_MS];
 
-// STARlight predictions
-const Int_t nData_SL = 125;
-Double_t abs_t_SL[nData_SL];
-Double_t sig_SL[nData_SL];
+// STARlight
+const Int_t n_SL = 125;
+Double_t abs_t_SL[n_SL];
+Double_t sig_SL[n_SL];
 
 Int_t lineWidth = 3;
 
 //#####################################################################################################
 // Functions to read the input
 
-void ReadInput_Measurement()
+// data (measurement)
+void ReadInput_data()
 {
-    // read the input file for measured cross section
     ifstream ifs;
     t_boundaries[0] = 0.04;
     TString str = "Results/" + str_subfolder + "PhotoCrossSec/CrossSec_photo.txt";
@@ -120,90 +132,90 @@ void ReadInput_Measurement()
     return;
 }
 
-void ReadInput_HSModel()
+// CCK (hot-spot model)
+void ReadInput_CCK()
 {
-    // read the input file for hot-spot model predictions
     ifstream ifs;
     ifs.open("Trees/PhotoCrossSec/HSModel/data-dtdy-y_0.6-Run1.txt");
-    for(Int_t i = 0; i < nData_HS; i++){
+    for(Int_t i = 0; i < n_CCK; i++){
         Double_t x;
         ifs >> x;
         Double_t tmp;
         ifs >> tmp;
         ifs >> tmp;
-        ifs >> abs_t_HS[i];
-        ifs >> sig_HS_coh_n[i];
-        ifs >> sig_HS_coh_n_err[i];        
-        ifs >> sig_HS_inc_n[i];
-        ifs >> sig_HS_inc_n_err[i];        
-        ifs >> sig_HS_coh_hs[i];
-        ifs >> sig_HS_coh_hs_err[i];      
-        ifs >> sig_HS_inc_hs[i];
-        ifs >> sig_HS_inc_hs_err[i];
-        //std::cout << i << " " << abs_t[i] << " " <<sig_HS_inc_n[i]<< " " <<sig_HS_inc_hs[i] << endl;
+        ifs >> abs_t_CCK[i];
+        ifs >> sig_CCK_coh_n[i];
+        ifs >> sig_CCK_coh_n_err[i];        
+        ifs >> sig_CCK_inc_n[i];
+        ifs >> sig_CCK_inc_n_err[i];        
+        ifs >> sig_CCK_coh_hs[i];
+        ifs >> sig_CCK_coh_hs_err[i];      
+        ifs >> sig_CCK_inc_hs[i];
+        ifs >> sig_CCK_inc_hs_err[i];
+        //std::cout << i << " " << abs_t[i] << " " <<sig_CCK_inc_n[i]<< " " <<sig_CCK_inc_hs[i] << endl;
     }
     ifs.close();
-    Printf("Predictions of the HS model loaded.");
+    Printf("Predictions of the CCK model loaded.");
 
     return;
 }
 
-void ReadInput_Guzey()
+// GSZ model
+void ReadInput_GSZ()
 {
-    // read the input file for Guzey's model predictions
     ifstream ifs;
     ifs.open("Trees/PhotoCrossSec/Guzey/incoh_tdep_nuc_run2.dat");
-    for(Int_t i = 0; i < nData_GZ; i++){
-        ifs >> abs_t_GZ[i];
-        ifs >> sig_GZ_el_min[i];
-        ifs >> sig_GZ_el_max[i];
-        ifs >> sig_GZ_diss_min[i];
-        ifs >> sig_GZ_diss_max[i];
-        ifs >> sig_GZ_tot_min[i];
-        ifs >> sig_GZ_tot_max[i];
-        //std::cout << i << " " << abs_t_GZ[i] << " " << sig_GZ_diss_min[i]<< " " << sig_GZ_diss_max[i] << endl;
+    for(Int_t i = 0; i < n_GSZ; i++){
+        ifs >> abs_t_GSZ[i];
+        ifs >> sig_GSZ_el_min[i];
+        ifs >> sig_GSZ_el_max[i];
+        ifs >> sig_GSZ_diss_min[i];
+        ifs >> sig_GSZ_diss_max[i];
+        ifs >> sig_GSZ_tot_min[i];
+        ifs >> sig_GSZ_tot_max[i];
+        //std::cout << i << " " << abs_t_GSZ[i] << " " << sig_GSZ_diss_min[i]<< " " << sig_GSZ_diss_max[i] << endl;
     }
     ifs.close();
-    Printf("Predictions of Guzey's model loaded.");
+    Printf("Predictions of the GSZ model loaded.");
 
     return;
 }
 
-void ReadInput_Heikki()
+// MS (IPsat) model
+void ReadInput_MS()
 {
-    // read the input file for Guzey's model predictions
     ifstream ifs;
     ifs.open("Trees/PhotoCrossSec/Heikki/ipsat_hight_alice_112021/no_photon_flux/incoherent_fluct");
-    for(Int_t i = 0; i < nData_HM; i++){
-        ifs >> abs_t_HM[i];
-        ifs >> sig_HM_fluct[i];
-        //std::cout << i << " " << abs_t_HM[i] << " " << sig_HM_fluct[i] << endl;
+    for(Int_t i = 0; i < n_MS; i++){
+        ifs >> abs_t_MS[i];
+        ifs >> sig_MS_fluct[i];
+        //std::cout << i << " " << abs_t_MS[i] << " " << sig_MS_fluct[i] << endl;
     }
     ifs.close();
     ifs.open("Trees/PhotoCrossSec/Heikki/ipsat_hight_alice_112021/no_photon_flux/incoherent_nofluct");
-    for(Int_t i = 0; i < nData_HM; i++){
-        ifs >> abs_t_HM[i];
-        ifs >> sig_HM_noflu[i];
-        //std::cout << i << " " << abs_t_HM[i] << " " << sig_HM_noflu[i] << endl;
+    for(Int_t i = 0; i < n_MS; i++){
+        ifs >> abs_t_MS[i];
+        ifs >> sig_MS_noflu[i];
+        //std::cout << i << " " << abs_t_MS[i] << " " << sig_MS_noflu[i] << endl;
     }
     ifs.close();
-    Printf("Predictions of Heikki's model loaded.");
+    Printf("Predictions of the MS model loaded.");
 
     return;
 }
 
-void ReadInput_STARlight()
+// STARlight
+void ReadInput_SL()
 {
-    // read the input file for Guzey's model predictions
     ifstream ifs;
     ifs.open("Trees/PhotoCrossSec/STARlight/IncJ_tDep_0.00-2.50.txt");
-    for(Int_t i = 0; i < nData_SL; i++){
+    for(Int_t i = 0; i < n_SL; i++){
         ifs >> abs_t_SL[i];
         ifs >> sig_SL[i];
         //std::cout << i << " " << abs_t_SL[i] << " " << sig_SL[i] << endl;
     }
     ifs.close();
-    Printf("STARlight predictions loaded.");
+    Printf("Predictions of STARlight loaded.");
 
     return;
 }
@@ -211,9 +223,10 @@ void ReadInput_STARlight()
 //#####################################################################################################
 // Function to integrate a graph in a given range:
 
-Double_t GraphIntegral_Calculate(TCanvas *c, TString str_name, Int_t n_data, Double_t *abs_t_val, Double_t *sig_val, Double_t t_min, Double_t t_max)
+Double_t GraphIntegral_Calculate(TCanvas *c, TString str_name, Int_t n_data, Double_t *abs_t_val, Double_t *sig_val, Double_t t_min, Double_t t_max, Bool_t saveHistogram = kFALSE)
 {
-    vector<Double_t> t_edges; 
+    if(TMath::Abs(t_min - t_max) < 1e-10) return 0.;
+    vector<Double_t> t_edges;
     vector<Double_t> sigmas;
     t_edges.push_back(t_min);
     Int_t iPoint = 0;
@@ -257,7 +270,8 @@ Double_t GraphIntegral_Calculate(TCanvas *c, TString str_name, Int_t n_data, Dou
     // Histograms
     Double_t *t_edges_ptr;
     t_edges_ptr = &t_edges[0];
-    TH1D *hist = new TH1D("hist","hist",sigmas.size(),t_edges_ptr);
+    delete hist;
+    hist = new TH1D("hist","hist",sigmas.size(),t_edges_ptr);
     for(unsigned i = 1; i <= sigmas.size(); i++) hist->SetBinContent(i, sigmas[i-1]);
     // Graph
     TGraph *graph = new TGraph(n_data, abs_t_val, sig_val);
@@ -315,7 +329,40 @@ Double_t GraphIntegral_Calculate(TCanvas *c, TString str_name, Int_t n_data, Dou
     l->SetFillStyle(0);  // legend is transparent
     l->Draw();
 
+    if(saveHistogram)
+    {
+        TList *l = new TList();
+        l->Add(hist);
+        gSystem->Exec("mkdir -p Results/" + str_subfolder + "PhotoCrossSec/PrepareHistograms/");
+        TString str_out = "Results/" + str_subfolder + "PhotoCrossSec/PrepareHistograms/" + str_name + ".root";
+        TFile *file = new TFile(str_out.Data(),"RECREATE");
+        l->Write("HistList", TObject::kSingleKey);
+        file->ls();
+        file->Close();
+    }
+
     return integral_graph;
+}
+
+Double_t IntegrateData(Double_t t_max)
+{
+    // t_min always = 0.04 GeV
+    Double_t integral = 0.;
+    Int_t tMaxBin = 1;
+    while(t_max > t_boundaries[tMaxBin]) tMaxBin++;
+    //Printf("t_max = %.3f within bin %i: %.3f to %.3f", t_max, tMaxBin, t_boundaries[tMaxBin-1], t_boundaries[tMaxBin]);
+    for(Int_t i = 0; i < tMaxBin; i++) integral += sig_val[i] * (t_boundaries[i+1] - t_boundaries[i]);
+    integral += sig_val[tMaxBin-1] * (t_max - t_boundaries[tMaxBin]);
+
+    return integral;
+}
+
+void SetLineColorStyleWidth(TGraph *gr, Color_t col, Int_t stl)
+{
+    gr->SetLineColor(col);
+    gr->SetLineStyle(stl);
+    gr->SetLineWidth(lineWidth);
+    return;
 }
 
 //#####################################################################################################

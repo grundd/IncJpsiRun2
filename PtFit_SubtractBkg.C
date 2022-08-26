@@ -59,9 +59,15 @@ void PtFit_SetPtBinning()
     Int_t nBinsTypes = 0;
     // Define binning
     // Variable bin widths optimal for subtracting the background through inv mass fits
+    nBinsTypes = 4;
+    BinsWidths = {0.010, 0.020, 0.080, 0.400}; // GeV 
+    BinsUpTo = {0.00, 0.20, 0.40, 1.20, 2.00}; // GeV 
+    /*
+    // Guillermo's suggestion: (email "new binning?" from July 14, 2022)
     nBinsTypes = 6;
     BinsWidths = {0.01,0.02,0.05,0.10,0.20,0.50}; // GeV 
-    BinsUpTo = {0.0, 0.1, 0.2, 0.4, 0.6, 1.0, 2.0}; // GeV 
+    BinsUpTo = {0.0, 0.1, 0.2, 0.4, 0.6, 1.0, 2.0}; // GeV
+    */ 
 
     // Fill the vector containing the calculated boundaries
     BinsBoundaries_PtFit.push_back(0.);
@@ -298,9 +304,17 @@ void PtFit_DoInvMassFit(Double_t fPtCutLow, Double_t fPtCutUpp, Int_t iBin)
 
     // Crystal Ball for J/Psi
     RooRealVar mass_Jpsi("mass_Jpsi","J/psi mass",3.097,3.00,3.20);
+    Double_t sigma;
+    if(fPtCutLow < 0.20) sigma = 0.020;
+    else                 sigma = 0.021;
+    RooRealVar sigma_Jpsi("sigma_Jpsi","J/psi resolution",sigma,0.01,0.1);
+    //sigma_Jpsi.setConstant(kTRUE);
+    /*
+    // Guillermo's suggestion: (email "new binning?" from July 14, 2022)
     Double_t sigma = 0.020;
     RooRealVar sigma_Jpsi("sigma_Jpsi","J/psi resolution",sigma,0.01,0.1);
     sigma_Jpsi.setConstant(kTRUE);
+    */
     RooGenericPdf mean_R("mean_R","J/psi mass","mass_Jpsi",RooArgSet(mass_Jpsi));
     RooGenericPdf sigma_R("sigma_R","J/psi resolution","sigma_Jpsi",RooArgSet(sigma_Jpsi));
     RooRealVar N_Jpsi("N_Jpsi","number of J/psi events",0.4*nEvents,0,nEvents);

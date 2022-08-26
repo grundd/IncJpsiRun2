@@ -21,17 +21,17 @@ void PhotoCrossSec_Plot(Int_t iAnalysis)
 
 void Plot()
 {
-    ReadInput_Measurement();
+    ReadInput_data();
 
-    ReadInput_HSModel();
+    ReadInput_CCK();
 
-    ReadInput_Guzey();
+    ReadInput_GSZ();
 
-    ReadInput_Heikki();
+    ReadInput_MS();
 
-    ReadInput_STARlight();
+    ReadInput_SL();
 
-    // Fill the histogram
+    // fill the histogram
     for(Int_t i = 0; i < nPtBins; i++){
         // from microbarns to milibarns
         sig_val[i] = sig_val[i] / 1000.;
@@ -45,81 +45,98 @@ void Plot()
         abs_t_err_low[i] = abs_t_val[i] - t_boundaries[i];
         abs_t_err_upp[i] = t_boundaries[i+1] - abs_t_val[i];
     }
-    TGraphAsymmErrors *grData_stat = new TGraphAsymmErrors(nPtBins,abs_t_val,sig_val,abs_t_err_low,abs_t_err_upp,sig_err_stat_low,sig_err_stat_upp);
-    TGraphAsymmErrors *grData_syst = new TGraphAsymmErrors(nPtBins,abs_t_val,sig_val,abs_t_err_low,abs_t_err_upp,sig_err_syst_low,sig_err_syst_upp);
+    TGraphAsymmErrors *gr_data_stat = new TGraphAsymmErrors(nPtBins,abs_t_val,sig_val,abs_t_err_low,abs_t_err_upp,sig_err_stat_low,sig_err_stat_upp);
+    TGraphAsymmErrors *gr_data_syst = new TGraphAsymmErrors(nPtBins,abs_t_val,sig_val,abs_t_err_low,abs_t_err_upp,sig_err_syst_low,sig_err_syst_upp);
     // with stat errors
     gStyle->SetEndErrorSize(4);         
-    grData_stat->SetMarkerStyle(kFullCircle);
-    grData_stat->SetMarkerSize(0.7);
-    grData_stat->SetLineColor(kBlack);
-    grData_stat->SetLineWidth(2);
-    grData_stat->SetMarkerColor(kBlack);
+    gr_data_stat->SetMarkerStyle(kFullCircle);
+    gr_data_stat->SetMarkerSize(0.7);
+    gr_data_stat->SetLineColor(kBlack);
+    gr_data_stat->SetLineWidth(2);
+    gr_data_stat->SetMarkerColor(kBlack);
     // with syst errors 
-    grData_syst->SetFillColor(17);
-    grData_syst->SetMarkerSize(0);
-    grData_syst->SetMarkerStyle(1);
-    grData_syst->SetMarkerColor(kBlack);
-    grData_syst->SetLineWidth(0); // to have no line around the box
+    gr_data_syst->SetFillColor(17);
+    gr_data_syst->SetMarkerSize(0);
+    gr_data_syst->SetMarkerStyle(1);
+    gr_data_syst->SetMarkerColor(kBlack);
+    gr_data_syst->SetLineWidth(0); // to have no line around the box
 
     // STARlight
-    TGraph *gr_SL = new TGraph(nData_SL, abs_t_SL, sig_SL);
+    TGraph *gr_SL = new TGraph(n_SL, abs_t_SL, sig_SL);
     gr_SL->SetLineColor(kBlue);
     gr_SL->SetLineStyle(1);
     gr_SL->SetLineWidth(lineWidth); 
 
-    // Hot-spot model
-    // With subnucleonic degrees of freedom (hot spots):
-    TGraphErrors *gr_HS_hs = new TGraphErrors(nData_HS,abs_t_HS,sig_HS_inc_hs,NULL,sig_HS_inc_hs_err);
+    // CCK (hot-spot) model
+    // with subnucleonic degrees of freedom (hot spots):
+    TGraphErrors *gr_CCK_hs = new TGraphErrors(n_CCK,abs_t_CCK,sig_CCK_inc_hs,NULL,sig_CCK_inc_hs_err);
     // https://root.cern.ch/doc/master/classTGraphErrors.html#a0f51786d0f0e210869a53ab58c0a3ffb 
     // number of points; x-values; y-values; x-errors; y-errors
-    gr_HS_hs->SetMarkerStyle(20);
-    gr_HS_hs->SetMarkerColor(kRed+1);  
-    gr_HS_hs->SetLineStyle(9);
-    gr_HS_hs->SetLineColor(kRed+1);
-    gr_HS_hs->SetLineWidth(lineWidth);  
-    // Without subnucleonic degrees of freedom:
-    TGraphErrors *gr_HS_n = new TGraphErrors(nData_HS,abs_t_HS,sig_HS_inc_n,NULL,sig_HS_inc_n_err);
-    gr_HS_n->SetMarkerStyle(20);
-    gr_HS_n->SetMarkerColor(kRed+1);
-    gr_HS_n->SetLineStyle(8);
-    gr_HS_n->SetLineColor(kRed+1);
-    gr_HS_n->SetLineWidth(lineWidth);  
+    gr_CCK_hs->SetMarkerStyle(20);
+    gr_CCK_hs->SetMarkerColor(kRed+1);  
+    gr_CCK_hs->SetLineStyle(9);
+    gr_CCK_hs->SetLineColor(kRed+1);
+    gr_CCK_hs->SetLineWidth(lineWidth);  
+    // without subnucleonic degrees of freedom:
+    TGraphErrors *gr_CCK_n = new TGraphErrors(n_CCK,abs_t_CCK,sig_CCK_inc_n,NULL,sig_CCK_inc_n_err);
+    gr_CCK_n->SetMarkerStyle(20);
+    gr_CCK_n->SetMarkerColor(kRed+1);
+    gr_CCK_n->SetLineStyle(8);
+    gr_CCK_n->SetLineColor(kRed+1);
+    gr_CCK_n->SetLineWidth(lineWidth);  
 
-    // Guzey's model
-    // First scale the values (Guzey uses nb instead of mb)
-    for (Int_t i = 0; i < nData_GZ; i++){
-        sig_GZ_tot_min[i] = sig_GZ_tot_min[i] / 1e6;
-        sig_GZ_tot_max[i] = sig_GZ_tot_max[i] / 1e6;
+    // GSZ model
+    // first scale the values (Guzey uses nb instead of mb)
+    for (Int_t i = 0; i < n_GSZ; i++){
+        sig_GSZ_el_min[i] = sig_GSZ_el_min[i] / 1e6;
+        sig_GSZ_el_max[i] = sig_GSZ_el_max[i] / 1e6;
+        sig_GSZ_tot_min[i] = sig_GSZ_tot_min[i] / 1e6;
+        sig_GSZ_tot_max[i] = sig_GSZ_tot_max[i] / 1e6;
     }
-    // Then fill the graph
+    // then fill the graph
     // https://root.cern/doc/master/graphShade_8C.html
-    TGraph *gr_GZ_min = new TGraph(nData_GZ, abs_t_GZ, sig_GZ_tot_min);
-    TGraph *gr_GZ_max = new TGraph(nData_GZ, abs_t_GZ, sig_GZ_tot_max);
-    TGraph *gr_GZ_area = new TGraph(2*nData_GZ);
-    for (Int_t i = 0; i < nData_GZ; i++){
-        gr_GZ_area->SetPoint(i, abs_t_GZ[i], sig_GZ_tot_max[i]);
-        gr_GZ_area->SetPoint(nData_GZ+i, abs_t_GZ[nData_GZ-i-1], sig_GZ_tot_min[nData_GZ-i-1]);
+    // total cross section
+    TGraph *gr_GSZ_tot_min = new TGraph(n_GSZ, abs_t_GSZ, sig_GSZ_tot_min);
+    TGraph *gr_GSZ_tot_max = new TGraph(n_GSZ, abs_t_GSZ, sig_GSZ_tot_max);
+    TGraph *gr_GSZ_tot_area = new TGraph(2*n_GSZ);
+    for (Int_t i = 0; i < n_GSZ; i++){
+        gr_GSZ_tot_area->SetPoint(i, abs_t_GSZ[i], sig_GSZ_tot_max[i]);
+        gr_GSZ_tot_area->SetPoint(n_GSZ+i, abs_t_GSZ[n_GSZ-i-1], sig_GSZ_tot_min[n_GSZ-i-1]);
     }
-    gr_GZ_min->SetLineStyle(10);
-    gr_GZ_min->SetLineColor(kGreen);
-    gr_GZ_min->SetLineWidth(lineWidth);
-    gr_GZ_max->SetLineStyle(10);
-    gr_GZ_max->SetLineColor(kGreen);
-    gr_GZ_max->SetLineWidth(lineWidth);
-    SetupSysErrorBox(gr_GZ_area,kGreen);
-    gr_GZ_area->SetFillStyle(3013);
+    gr_GSZ_tot_min->SetLineStyle(10);
+    gr_GSZ_tot_min->SetLineColor(kGreen);
+    gr_GSZ_tot_min->SetLineWidth(lineWidth);
+    gr_GSZ_tot_max->SetLineStyle(10);
+    gr_GSZ_tot_max->SetLineColor(kGreen);
+    gr_GSZ_tot_max->SetLineWidth(lineWidth);
+    SetupSysErrorBox(gr_GSZ_tot_area,kGreen);
+    // elastic only
+    TGraph *gr_GSZ_el_min = new TGraph(n_GSZ, abs_t_GSZ, sig_GSZ_el_min);
+    TGraph *gr_GSZ_el_max = new TGraph(n_GSZ, abs_t_GSZ, sig_GSZ_el_max);
+    TGraph *gr_GSZ_el_area = new TGraph(2*n_GSZ);
+    for (Int_t i = 0; i < n_GSZ; i++){
+        gr_GSZ_el_area->SetPoint(i, abs_t_GSZ[i], sig_GSZ_el_max[i]);
+        gr_GSZ_el_area->SetPoint(n_GSZ+i, abs_t_GSZ[n_GSZ-i-1], sig_GSZ_el_min[n_GSZ-i-1]);
+    }
+    gr_GSZ_el_min->SetLineStyle(10);
+    gr_GSZ_el_min->SetLineColor(kCyan);
+    gr_GSZ_el_min->SetLineWidth(lineWidth);
+    gr_GSZ_el_max->SetLineStyle(10);
+    gr_GSZ_el_max->SetLineColor(kCyan);
+    gr_GSZ_el_max->SetLineWidth(lineWidth);
+    SetupSysErrorBox(gr_GSZ_el_area,kCyan);
 
-    // Heikki's model
-    // With fluctuations
-    TGraph *gr_HM_fluct = new TGraph(nData_HM, abs_t_HM, sig_HM_fluct);
-    gr_HM_fluct->SetLineStyle(9);
-    gr_HM_fluct->SetLineColor(kGray+3);
-    gr_HM_fluct->SetLineWidth(lineWidth);
-    // Without fluctuations
-    TGraph *gr_HM_noflu = new TGraph(nData_HM, abs_t_HM, sig_HM_noflu);
-    gr_HM_noflu->SetLineStyle(8);
-    gr_HM_noflu->SetLineColor(kGray+3);
-    gr_HM_noflu->SetLineWidth(lineWidth);
+    // MS (IPsat) model
+    // fluctuations
+    TGraph *gr_MS_fluct = new TGraph(n_MS, abs_t_MS, sig_MS_fluct);
+    gr_MS_fluct->SetLineStyle(9);
+    gr_MS_fluct->SetLineColor(kGray+3);
+    gr_MS_fluct->SetLineWidth(lineWidth);
+    // no fluctuations
+    TGraph *gr_MS_noflu = new TGraph(n_MS, abs_t_MS, sig_MS_noflu);
+    gr_MS_noflu->SetLineStyle(8);
+    gr_MS_noflu->SetLineColor(kGray+3);
+    gr_MS_noflu->SetLineWidth(lineWidth);
 
     // TStyle settings
     gStyle->SetOptStat(0);
@@ -134,10 +151,10 @@ void Plot()
     c->SetRightMargin(0.03);
     c->SetLeftMargin(0.12);
     //Plot the graphs
-    TH1 *h = (TH1*) gr_GZ_area->GetHistogram();
+    TH1 *h = (TH1*) gr_GSZ_tot_area->GetHistogram();
     h->SetTitle(";|#it{t}| (GeV^{2} #it{c}^{-2}); d#sigma_{#gammaPb}/d|#it{t}| (mb #it{c}^{2} GeV^{-2})");
-    h->SetMinimum(1e-6);
-    h->SetMaximum(0.1);
+    h->SetMinimum(0.0008);
+    h->SetMaximum(0.06);
     // Vertical axis
     h->GetYaxis()->SetTitleSize(0.05);
     h->GetYaxis()->SetTitleOffset(1.2);
@@ -149,34 +166,38 @@ void Plot()
     h->GetXaxis()->SetRangeUser(0.04,1.0);
     // Draw everything
     // https://root.cern.ch/doc/master/classTGraphPainter.html
-    // 1) Guzey's model (green shaded area)
-    gr_GZ_area->Draw("AF");
-    // 2) Systematic errors (gray shaded areas)
-    grData_syst->Draw("5 SAME");
-    // 3) Draw Guzey's model (lines)
-    gr_GZ_min->Draw("L SAME");
-    gr_GZ_max->Draw("L SAME"); 
-    // 4) Draw STARlight curve
+    // GSZ model (green shaded area)
+    gr_GSZ_tot_area->Draw("AF");
+    gr_GSZ_el_area->Draw("F SAME");
+    // systematic errors (gray shaded areas)
+    gr_data_syst->Draw("5 SAME");
+    // GSZ model (lines)
+    gr_GSZ_tot_min->Draw("L SAME");
+    gr_GSZ_tot_max->Draw("L SAME"); 
+    gr_GSZ_el_min->Draw("L SAME");
+    gr_GSZ_el_max->Draw("L SAME"); 
+    // STARlight
     gr_SL->Draw("L SAME");
-    // 5) Draw hot-spot curves
-    gr_HS_hs->Draw("CX SAME");
-    gr_HS_n->Draw("CX SAME");
-    // 6) Draw Heikki's curves
-    gr_HM_fluct->Draw("CX SAME");
-    gr_HM_noflu->Draw("CX SAME");    
-    // 7) Draw data with statistic uncertainties
-    grData_stat->Draw("P SAME");
+    // CCK
+    gr_CCK_hs->Draw("CX SAME");
+    gr_CCK_n->Draw("CX SAME");
+    // MS (IPsat)
+    gr_MS_fluct->Draw("CX SAME");
+    gr_MS_noflu->Draw("CX SAME");    
+    // data with statistic uncertainties
+    gr_data_stat->Draw("P SAME");
 
     // Legend
-    TLegend *l = new TLegend(0.15,0.18,0.48,0.56);
+    TLegend *l = new TLegend(0.70,0.65,0.90,0.95);
     l->AddEntry(gr_SL,"STARlight","L");
-    l->AddEntry(gr_HM_fluct,"MS: IPsat flu.","L");
-    l->AddEntry(gr_HM_noflu,"MS: IPsat no flu.","L");
-    l->AddEntry(gr_GZ_area,"GSZ: el. + diss.","F");
-    l->AddEntry(gr_HS_hs,"CCK: GG-hs","L");
-    l->AddEntry(gr_HS_n,"CCK: GG-n","L");
-    l->AddEntry(grData_stat,"ALICE measurement","EP");
-    l->SetTextSize(0.048);
+    l->AddEntry(gr_MS_fluct,"MS: IPsat flu.","L");
+    l->AddEntry(gr_MS_noflu,"MS: IPsat no flu.","L");
+    l->AddEntry(gr_GSZ_tot_area,"GSZ: el. + diss.","F");
+    l->AddEntry(gr_GSZ_el_area,"GSZ: el.","F");
+    l->AddEntry(gr_CCK_hs,"CCK: GG-hs","L");
+    l->AddEntry(gr_CCK_n,"CCK: GG-n","L");
+    l->AddEntry(gr_data_stat,"ALICE measurement","EP");
+    l->SetTextSize(0.038);
     l->SetBorderSize(0); // no border
     l->SetFillStyle(0);  // legend is transparent
     l->Draw();
@@ -192,15 +213,14 @@ void Plot()
     cMeas->SetTopMargin(0.03);
     cMeas->SetBottomMargin(0.14);
     cMeas->SetRightMargin(0.03);
-    cMeas->SetLeftMargin(0.12);
+    cMeas->SetLeftMargin(0.13);
     //Plot the graphs
-    TH1 *h2 = (TH1*) grData_syst->GetHistogram();
+    TH1 *h2 = (TH1*) gr_data_syst->GetHistogram();
     h2->SetTitle(";|#it{t}| (GeV^{2} #it{c}^{-2}); d#sigma_{#gammaPb}/d|#it{t}| (mb #it{c}^{2} GeV^{-2})");
-    //h->SetMinimum(1e-6);
-    h->SetMaximum(0.2);
+    h2->SetMaximum(0.04);
     // Vertical axis
     h2->GetYaxis()->SetTitleSize(0.05);
-    h2->GetYaxis()->SetTitleOffset(1.1);
+    h2->GetYaxis()->SetTitleOffset(1.25);
     h2->GetYaxis()->SetLabelSize(0.05);
     // Horizontal axis
     h2->GetXaxis()->SetTitleSize(0.05);
@@ -208,8 +228,8 @@ void Plot()
     h2->GetXaxis()->SetLabelSize(0.05);
     h2->GetXaxis()->SetRangeUser(0.04,1.0);
     // Draw everything
-    grData_syst->Draw("A5");
-    grData_stat->Draw("P SAME");
+    gr_data_syst->Draw("A5");
+    gr_data_stat->Draw("P SAME");
     // legends
     TLatex* latex = new TLatex();
     latex->SetTextSize(0.05);
@@ -222,8 +242,8 @@ void Plot()
     leg2->SetTextSize(0.05);
     leg2->SetMargin(0.15);
     leg2->AddEntry((TObject*)0,"ALICE incoherent J/#psi, |y|<0.8", "");
-    leg2->AddEntry(grData_stat,"Experimental stat.", "EPL");
-    leg2->AddEntry(grData_syst,"Experimental syst.", "F");
+    leg2->AddEntry(gr_data_stat,"Experimental stat.", "EPL");
+    leg2->AddEntry(gr_data_syst,"Experimental syst.", "F");
     leg2->Draw();
 
     TString pathMeas = "Results/" + str_subfolder + Form("PhotoCrossSec/Plot/measurement_%ibins", nPtBins);

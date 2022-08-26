@@ -17,11 +17,29 @@
 
 Int_t counterData[18] = { 0 };
 
-Bool_t CountEvents_EventPassed();
+void CountEvents_Period(Int_t period);
+// period == 0 => both
+//        == 1 => LHC18q
+//        == 2 => LHC18r
+Bool_t CountEvents_EventPassed(Int_t period);
 
 void CountEvents(Int_t iAnalysis)
 {
     InitAnalysis(iAnalysis);
+
+    CountEvents_Period(0);
+    CountEvents_Period(1);
+    CountEvents_Period(2);
+
+    return;
+}
+
+void CountEvents_Period(Int_t period)
+{
+    TString str_period = "";
+    if(period == 0) str_period = "both";
+    if(period == 1) str_period = "LHC18q";
+    if(period == 2) str_period = "LHC18r";
 
     TFile *f_in = TFile::Open((str_in_DT_fldr + "AnalysisResults.root").Data(), "read");
     if(f_in) Printf("Input data loaded.");
@@ -42,7 +60,7 @@ void CountEvents(Int_t iAnalysis)
 
     for(Int_t iEntry = 0; iEntry < t_in->GetEntries(); iEntry++){
         t_in->GetEntry(iEntry);
-        CountEvents_EventPassed();
+        CountEvents_EventPassed(period);
 
         if((iEntry+1) % 100000 == 0){
             nEntriesAnalysed += 100000;
@@ -52,7 +70,7 @@ void CountEvents(Int_t iAnalysis)
 
     // Print the numbers:
     gSystem->Exec("mkdir -p Results/" + str_subfolder + "CountEvents/");
-    TString name = "Results/" + str_subfolder + "CountEvents/cuts.txt";
+    TString name = "Results/" + str_subfolder + "CountEvents/" + str_period + "_cuts.txt";
     ofstream outfile (name.Data());
     outfile << std::fixed << std::setprecision(0); // Set the precision to 0 dec places
     outfile << "0) event non-empty:  \t" << hCounterCuts->GetBinContent(1) << "\n";
@@ -87,16 +105,34 @@ void CountEvents(Int_t iAnalysis)
     Printf("*** Results printed to %s.***", name.Data());
 
     // Print just the numbers (to be read by _CompareCountsPass1Pass3.C)
-    name = "Results/" + str_subfolder + "CountEvents/cuts_numbersOnly.txt";
+    name = "Results/" + str_subfolder + "CountEvents/" + str_period + "cuts_numbersOnly.txt";
     outfile.open(name.Data());
-    for(Int_t i = 0; i < 18; i++) outfile << counterData[i] << "\n";
+    for(Int_t i = 0; i < 18; i++)
+    {
+        // print:
+        outfile << counterData[i] << "\n";
+        // discard:
+        counterData[i] = 0;
+    } 
     outfile.close();
     Printf("*** Results printed to %s.***", name.Data());
 
     return;
 }
 
-Bool_t CountEvents_EventPassed(){
+Bool_t CountEvents_EventPassed(Int_t period)
+{
+    // separate the two periods
+    // LHC18q only
+    if(period == 1)
+    {
+        if(fRunNumber >= 296690) return kFALSE;
+    }
+    // LHC18r only
+    if(period == 2)
+    {
+        if(fRunNumber < 296690) return kFALSE;
+    }
 
     // if pass1
     if(!isPass3){
