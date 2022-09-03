@@ -207,9 +207,14 @@ void FindAverageAbsTPerBin(TH1D *h, TString str)
         sum_weighted_int += bins_weighted_int[i-1] * 1e3; // in micro barns
         outfile << i << "\t" << bins_weighted_int[i-1] * 1e3 << "\t" << bins_int[i-1] * 1e3 << "\t" << bins_avgT[i-1] << "\n"; 
     }
-    outfile << "sum:\t" << sum_weighted_int << "\t" << sum_int;
+    outfile << "sum:\t" << sum_weighted_int << "\t" << sum_int << "\n";
     outfile.close();
     // print the values of avg |t| only (to be read by PhotoCrossSec_PlotWithRatios.C ...)
+    bins_avgT.push_back(1.);
+    bins_avgT.push_back(1.);
+    bins_avgT.push_back(1.);
+    bins_avgT.push_back(1.);
+    bins_avgT.push_back(1.);
     path = "Results/" + str_subfolder + "PhotoCrossSec/PrepareHistograms/avg_t/" + str + ".txt";
     outfile.open(path.Data());
     outfile << std::fixed << std::setprecision(3);
@@ -219,7 +224,7 @@ void FindAverageAbsTPerBin(TH1D *h, TString str)
     }
     outfile.close();
 
-    delete h_new;
+    //delete h_new;
     return;
 }
 

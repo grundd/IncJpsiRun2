@@ -3,12 +3,15 @@
 
 // root headers
 #include "TSystem.h"
+#include "TF1.h"
 // my headers
 #include "PhotoCrossSec_Utilities.h"
 
 Double_t scale(0.);
 TGraphAsymmErrors *gr_data_stat = NULL;
 TGraphAsymmErrors *gr_data_syst = NULL;
+TH1D *h_models[9] = { NULL };
+Double_t avg_t_models[9][5] = { 0 };
 TGraph *gr_models[9] = { NULL };
 // order: SL, CCK_hs, CCK_n, MS_fl, MS_nf, GSZ_tot_max, GSZ_tot_min, GSZ_el_max, GSZ_el_min
 TGraph *gr_GSZ_tot_area = NULL;
@@ -38,7 +41,7 @@ void PhotoCrossSec_PlotWithRatios(Int_t iAnalysis)
     gSystem->Exec("mkdir -p Results/" + str_subfolder + "PhotoCrossSec/PlotWithRatios/");
 
     // original normalization of the models, original binning ("continuous")
-    PlotWithRatios(0,0);
+    PlotWithRatios(0,1);
 
     return;
 }
@@ -59,17 +62,40 @@ void PlotWithRatios(Int_t iNorm, Int_t iBinn)
         path = "Results/" + str_subfolder + "PhotoCrossSec/PrepareHistograms/binned/all.root";
         binning = "binned/";
     } 
-    else return;  
+    else return;
+    // if binned, load average values of |t| for each model
+    ifstream ifs;
+    if(iBinn == 1)
+    {
+        for(Int_t i = 0; i < 9; i++)
+        {
+            TString str = "Results/" + str_subfolder + "PhotoCrossSec/PrepareHistograms/avg_t/" + str_models[i] + ".txt";
+            ifs.open(str.Data());
+            if(!ifs.fail())
+            {
+                Printf("Loaded avg |t| in pT bins for %s:", str_models[i].Data());
+                for(Int_t iBin = 0; iBin < nPtBins; iBin++)
+                {  
+                    ifs >> avg_t_models[i][iBin];
+                    Printf("bin %i: %.3f", iBin+1, avg_t_models[i][iBin]);
+                } 
+                ifs.close();
+            }
+            else 
+            {
+                Printf("File %s not found. Terminating...", path.Data());
+                return;
+            }
+        }
+    }
     // open the file with histograms
     TFile *f = TFile::Open(path.Data(),"read");
     if(f) Printf("Input file %s loaded.", f->GetName()); 
     TList *l = (TList*) f->Get("HistList");
     if(l) Printf("List %s loaded.", l->GetName()); 
     // load histograms
-    TH1D *h_models[9] = { NULL };
     for(Int_t i = 0; i < 9; i++) h_models[i] = (TH1D*)l->FindObject(binning + str_models[i]);
     // load the measured cross section
-    ifstream ifs;
     path = "Results/" + str_subfolder + "PhotoCrossSec/PrepareHistograms/integrals/data.txt";
     ifs.open(path.Data());
     if(!ifs.fail())
@@ -130,8 +156,7 @@ void PlotWithRatios(Int_t iNorm, Int_t iBinn)
     gStyle->SetOptFit(0);
 
     // draw frame
-    TH1F* fCSont = NULL;
-    fCSont = gPad->DrawFrame(0.04, 0.0002, 1.0, 0.04);
+    TH1F* fCSont = gPad->DrawFrame(0.04, 0.0002, 1.0, 0.04);
     SetFrame(fCSont);
     fCSont->GetYaxis()->SetTickLength(0.025); 
     fCSont->GetXaxis()->SetTickLength(0.025); 
@@ -147,7 +172,7 @@ void PlotWithRatios(Int_t iNorm, Int_t iBinn)
     // create boxes with systematic uncertainties
     SetupSysErrorBox(gr_data_syst,kGray+3);
 
-    // Set data properties 
+    // set data properties 
     gStyle->SetEndErrorSize(4);         
     gr_data_stat->SetMarkerStyle(kFullCircle);
     gr_data_stat->SetMarkerSize(0.7);
@@ -155,38 +180,46 @@ void PlotWithRatios(Int_t iNorm, Int_t iBinn)
     gr_data_stat->SetLineWidth(2);
     gr_data_stat->SetMarkerColor(kBlack);
 
+    // load graphs
+    if(iBinn == 0) 
+    {
+        for(Int_t i = 0; i < 9; i++) gr_models[i] = new TGraph(h_models[i]);
+    }
+    else if(iBinn == 1)
+    {
+        for(Int_t i = 0; i < 9; i++)
+        {
+            gr_models[i] = new TGraph(nPtBins); // a new TGraph with nPtBins points
+            for(Int_t iBin = 0; iBin < nPtBins; iBin++)
+            {
+                gr_models[i]->SetPoint(iBin,avg_t_models[i][iBin],h_models[i]->GetBinContent(iBin+1));
+            }
+        } 
+    }
+    else return;
+
+    // set graphs properties
     // STARlight
-    gr_models[0] = new TGraph(h_models[0]);
     SetLineColorStyleWidth(gr_models[0],kBlue,1);
-
     // CCK model
-    // with hot spots:
-    gr_models[1] = new TGraph(h_models[1]);
+    // with hot spots
     SetLineColorStyleWidth(gr_models[1],kRed+1,9);
-    // without hot spots:
-    gr_models[2] = new TGraph(h_models[2]);
+    // without hot spots
     SetLineColorStyleWidth(gr_models[2],kRed+1,8);
-
     // MS model
     // with subnucleonic fluctuations
-    gr_models[3] = new TGraph(h_models[3]);
     SetLineColorStyleWidth(gr_models[3],kGray+3,9);
     // without subnucleonic fluctuations
-    gr_models[4] = new TGraph(h_models[4]);
     SetLineColorStyleWidth(gr_models[4],kGray+3,8);
-
     // GSZ model
     // total cross section
-    gr_models[5] = new TGraph(h_models[5]);
-    gr_models[6] = new TGraph(h_models[6]);
     SetLineColorStyleWidth(gr_models[6],kGreen,10);
     SetLineColorStyleWidth(gr_models[5],kGreen,10);
     // elastic only
-    gr_models[7] = new TGraph(h_models[7]);
-    gr_models[8] = new TGraph(h_models[8]);
     SetLineColorStyleWidth(gr_models[8],kCyan,10);
     SetLineColorStyleWidth(gr_models[7],kCyan,10);
-    // areas
+    
+    // GSZ model: areas
     ReadInput_GSZ();
     // scale the values (GSZ uses nb instead of mb)
     for (Int_t i = 0; i < n_GSZ; i++){

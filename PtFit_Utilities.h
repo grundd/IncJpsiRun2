@@ -685,9 +685,10 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t ifD = 0)
 
     // Print the TeX table for fC
     outfile.open((name + "_fC_TeX.txt").Data());
-    outfile << std::fixed << std::setprecision(1);
     outfile << "$(0.200,1.000)$\t& $"
+            << std::fixed << std::setprecision(3)
             << N_CohJ_to1_val << R"( \pm )" << N_CohJ_to1_err << "$\t& $"
+            << std::fixed << std::setprecision(1)
             << N_IncJ_to1_val << R"( \pm )" << N_IncJ_to1_err << "$\t& $"
             << N_Diss_to1_val << R"( \pm )" << N_Diss_to1_err << "$\t& $"  
             //<< N_CohP_to1_val << R"( \pm )" << N_CohP_to1_err << "$ \t& $"
@@ -698,8 +699,9 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t ifD = 0)
     for(Int_t i = 0; i < nPtBins; i++){
         outfile << std::fixed << std::setprecision(3)
                 << "$(" << ptBoundaries[i] << "," << ptBoundaries[i+1] << ")$\t& $"
-                << std::fixed << std::setprecision(1)
+                << std::fixed << std::setprecision(3)
                 << N_CohJ_bins_val[i] << R"( \pm )" << N_CohJ_bins_err[i] << "$\t& $"
+                << std::fixed << std::setprecision(1)
                 << N_IncJ_bins_val[i] << R"( \pm )" << N_IncJ_bins_err[i] << "$\t& $"
                 << N_Diss_bins_val[i] << R"( \pm )" << N_Diss_bins_err[i] << "$\t& $"
                 //<< N_CohP_bins_val[i] << R"( \pm )" << N_CohP_bins_err[i] << "$ \t& $"
