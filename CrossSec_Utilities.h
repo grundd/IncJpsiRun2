@@ -30,6 +30,7 @@
 TString str_data = "data";
 TGraphAsymmErrors* gr_data_uncr = NULL;
 TGraphAsymmErrors* gr_data_corr = NULL;
+// order of the models within the analysis: STARlight, CCK-hs, CCK-n, MS-hs, MS-p, GSZ-el+diss, GSZ-el
 TString str_models[7] = {"STARlight",
                          "CCK-hs",
                          "CCK-n",
@@ -51,11 +52,20 @@ void InitObjects()
     gStyle->SetOptStat(0);
     gStyle->SetOptTitle(0);
 
-    gr_data_corr = new TGraphAsymmErrors(nPtBins);
     gr_data_uncr = new TGraphAsymmErrors(nPtBins);
-    for(Int_t i = 0; i < 7; i++) gr_models[i] = new TGraph(n_models[i]);
+    gr_data_corr = new TGraphAsymmErrors(nPtBins);
+    gr_data_uncr->SetName("gr_data_uncr");
+    gr_data_corr->SetName("gr_data_corr");
+    
+    for(Int_t i = 0; i < 7; i++)
+    {
+        gr_models[i] = new TGraph(n_models[i]);
+        gr_models[i]->SetName("gr_" + str_models[i]);
+    } 
     gr_GSZ_err[0] = new TGraph(2*n_models[5]);
+    gr_GSZ_err[0]->SetName("gr_err_GSZ-el+diss");
     gr_GSZ_err[1] = new TGraph(2*n_models[6]);
+    gr_GSZ_err[1]->SetName("gr_err_GSZ-el");
 
     SetPtBinning();
     if(nPtBins == 4) tBoundaries = tBoundaries_4bins;
@@ -73,7 +83,7 @@ void LoadGraphs_data(Bool_t print = kFALSE)
     Double_t sig_err_uncr[5] = { 0 };
     Double_t sig_err_corr[5] = { 0 };
     ifstream ifs;
-    ifs.open("Results/" + str_subfolder + "PhotoCrossSec/CrossSec_photo.txt");
+    ifs.open("Results/" + str_subfolder + "CrossSec/CrossSec_photo.txt");
     for(Int_t i = 0; i < nPtBins; i++)
     {
         // cross section values in mub
@@ -385,6 +395,6 @@ Bool_t IntegrateModel(Int_t iM, Double_t t_min, Double_t t_max, Double_t &integr
     Printf(" integral: %.3f mub", integral * 1e3);
     Printf(" avg |t| : %.3f GeV", avgt);
     Printf(" +++++++++++++++++++++++++++++++++++++++");
-    
+
     return kTRUE;
 }
