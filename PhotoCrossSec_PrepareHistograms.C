@@ -39,7 +39,7 @@ void PhotoCrossSec_PrepareHistograms(Int_t iAnalysis)
 
     // create and store the histograms
     ReadInput_data();
-    Double_t integral_data = IntegrateData(1.0); // in micro barns
+    Double_t integral_data = IntegrateData(); // in micro barns
     integral_data = integral_data / 1e3; // in mili barns
     PrintIntegralValue(integral_data,str_data);
 

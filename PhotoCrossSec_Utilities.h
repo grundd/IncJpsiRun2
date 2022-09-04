@@ -103,10 +103,10 @@ void ReadInput_data()
         while(std::getline(ifs,str)){
             Printf("Reading line %i: %s", i, str.data());
             istringstream istr(str);
-            // skip first line
             Int_t bin;
             Double_t tLow;
-            if(i > 0) istr >> bin >> tLow >> t_boundaries[i] >> sig_val[i-1] >> sig_err_stat[i-1] >> sig_err_syst[i-1];
+            Double_t temp;
+            istr >> bin >> tLow >> t_boundaries[i+1] >> sig_val[i] >> sig_err_stat[i] >> sig_err_syst[i] >> temp;
             i++;   
         }
         ifs.close();
@@ -344,16 +344,14 @@ Double_t GraphIntegral_Calculate(TCanvas *c, TString str_name, Int_t n_data, Dou
     return integral_graph;
 }
 
-Double_t IntegrateData(Double_t t_max)
+Double_t IntegrateData()
 {
-    // t_min always = 0.04 GeV
-    Double_t integral = 0.;
-    Int_t tMaxBin = 1;
-    while(t_max > t_boundaries[tMaxBin]) tMaxBin++;
-    //Printf("t_max = %.3f within bin %i: %.3f to %.3f", t_max, tMaxBin, t_boundaries[tMaxBin-1], t_boundaries[tMaxBin]);
-    for(Int_t i = 0; i < tMaxBin; i++) integral += sig_val[i] * (t_boundaries[i+1] - t_boundaries[i]);
-    integral += sig_val[tMaxBin-1] * (t_max - t_boundaries[tMaxBin]);
-
+    Double_t integral(0.);
+    for(Int_t i = 0; i < nPtBins; i++)
+    {
+        integral += (t_boundaries[i+1] - t_boundaries[i]) * sig_val[i];
+        Printf("bin %i t_low: %.4f t_upp: %.4f sig: %.3f [mub]", i+1, t_boundaries[i], t_boundaries[i+1], sig_val[i]);
+    } 
     return integral;
 }
 

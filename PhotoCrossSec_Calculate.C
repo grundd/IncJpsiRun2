@@ -16,45 +16,47 @@
 // Cross section in pT^2 bins
 Double_t N_yield_val[5] = { 0 };
 Double_t N_yield_err[5] = { 0 };
-Double_t Pt2Widths[5] = { 0 };
+Double_t pT2_widths[5] = { 0 };
 Double_t AxE_val[5] = { 0 };
 Double_t AxE_err[5] = { 0 };
-Double_t CorrFD_val[5] = { 0 };
-Double_t CorrFD_err[5] = { 0 };
-Double_t CorrFC_val[5] = { 0 };
-Double_t CorrFC_err[5] = { 0 };
-Double_t Sigma_UPC_val[5] = { 0 };
-Double_t Sigma_UPC_err_stat[5] = { 0 };
-Double_t Sigma_UPC_err_syst[5] = { 0 };
-Double_t Sigma_photo_val[5] = { 0 };
-Double_t Sigma_photo_err_stat[5] = { 0 };
-Double_t Sigma_photo_err_syst[5] = { 0 };
-Double_t t_avg_val[5] = { 0 };
+Double_t corr_fD_val[5] = { 0 };
+Double_t corr_fD_err[5] = { 0 };
+Double_t corr_fC_val[5] = { 0 };
+Double_t corr_fC_err[5] = { 0 };
+Double_t sig_upc_val[5] = { 0 };
+Double_t sig_upc_err_stat[5] = { 0 };
+Double_t sig_upc_err_syst_uncr[5] = { 0 };
+Double_t sig_upc_err_syst_corr[5] = { 0 };
+Double_t sig_gPb_val[5] = { 0 };
+Double_t sig_gPb_err_stat[5] = { 0 };
+Double_t sig_gPb_err_syst_uncr[5] = { 0 };
+Double_t sig_gPb_err_syst_corr[5] = { 0 };
+Double_t avgt_val[5] = { 0 };
 //*************************************************
 // Systematic uncertainties (in percent)
-Double_t ErrSyst_SigExtr[5] = { 0 };
-Double_t ErrSyst_ZVertex[5] = { 0 };
-Double_t ErrSyst_fD[5] = { 0 };
-Double_t ErrSyst_fC[5] = { 0 };
-Double_t ErrSyst_lumi = 2.7;
-Double_t ErrSyst_veto = 3.0;
-Double_t ErrSyst_EMD = 3.7;
-Double_t ErrSyst_tracks = 2.8;
-Double_t ErrSyst_CCUP31 = 1.3;
-Double_t ErrSyst_flux = 2.0;
+Double_t errsyst_SigExtr[5] = { 0 };
+Double_t errsyst_ZVertex[5] = { 0 };
+Double_t errsyst_fD[5] = { 0 };
+Double_t errsyst_fC[5] = { 0 };
+Double_t errsyst_lumi = 2.7;
+Double_t errsyst_veto = 3.0;
+Double_t errsyst_EMD = 3.7;
+Double_t errsyst_tracks = 2.8;
+Double_t errsyst_CCUP31 = 1.3;
+Double_t errsyst_flux = 2.0;
 //*************************************************
 Double_t Lumi_val = 0; // 1/(mu barn)
 Double_t Lumi_err = 0; // 1/(mu barn)
 Double_t BR_val = 0.05961;
 Double_t BR_err = 0.00033;
-Double_t ErrSyst_BR = BR_err / BR_val * 100.;
+Double_t errsyst_BR = BR_err / BR_val * 100.;
 Double_t RapWidth = 1.6;
 Double_t Eff_veto_val = 94.0;
-Double_t Eff_veto_err = Eff_veto_val * ErrSyst_veto / 100.;
+Double_t Eff_veto_err = Eff_veto_val * errsyst_veto / 100.;
 Double_t Eff_EMD_val = 63.7;
-Double_t Eff_EMD_err = Eff_EMD_val * ErrSyst_EMD / 100.;
+Double_t Eff_EMD_err = Eff_EMD_val * errsyst_EMD / 100.;
 Double_t PhotonFlux_val = 84.9;
-Double_t PhotonFlux_err = PhotonFlux_val * ErrSyst_flux / 100.;
+Double_t PhotonFlux_err = PhotonFlux_val * errsyst_flux / 100.;
 //*************************************************
 
 Int_t i_bin;
@@ -99,7 +101,7 @@ void CalculateCrossSec_PtBins()
         ifs.close(); 
     }
     Lumi_val = Lumi_periods[0] + Lumi_periods[1];
-    Lumi_err = Lumi_val * ErrSyst_lumi / 100.;
+    Lumi_err = Lumi_val * errsyst_lumi / 100.;
 
     Printf("1) Integrated lumi loaded.");
 
@@ -147,7 +149,7 @@ void CalculateCrossSec_PtBins()
     if(!ifs.fail()){
         for(Int_t i = 0; i < nPtBins; i++)
         {
-            ifs >> CorrFD_val[i] >> CorrFD_err[i];
+            ifs >> corr_fD_val[i] >> corr_fD_err[i];
         }
     } else {
         PrintErr(str_FD);
@@ -167,7 +169,7 @@ void CalculateCrossSec_PtBins()
         while(std::getline(ifs,str)){
             istringstream in_stream(str);
             // skip first line
-            if(i > 0) in_stream >> i_bin >> CorrFC_val[i-1] >> CorrFC_err[i-1];
+            if(i > 0) in_stream >> i_bin >> corr_fC_val[i-1] >> corr_fC_err[i-1];
             i++;   
         }
     } else {
@@ -181,7 +183,7 @@ void CalculateCrossSec_PtBins()
     // 6) Widths of intervals in pT^2 [GeV^2]
     for(Int_t iBin = 0; iBin < nPtBins; iBin++)
     {
-        Pt2Widths[iBin] = TMath::Power(ptBoundaries[iBin+1], 2) - TMath::Power(ptBoundaries[iBin], 2);
+        pT2_widths[iBin] = TMath::Power(ptBoundaries[iBin+1], 2) - TMath::Power(ptBoundaries[iBin], 2);
     }
     Printf("6) Widths of pT^2 bins calculated.");
 
@@ -192,34 +194,34 @@ void CalculateCrossSec_PtBins()
     for(Int_t iBin = 0; iBin < nPtBins; iBin++)
     {
         Printf("%.3f\t%.3f\t%.4f\t%.1f\t%.1f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f",
-            ptBoundaries[iBin], ptBoundaries[iBin+1], Pt2Widths[iBin], N_yield_val[iBin], N_yield_err[iBin], 
-            AxE_val[iBin], AxE_err[iBin], CorrFD_val[iBin], CorrFD_err[iBin], CorrFC_val[iBin], CorrFC_err[iBin]);
+            ptBoundaries[iBin], ptBoundaries[iBin+1], pT2_widths[iBin], N_yield_val[iBin], N_yield_err[iBin], 
+            AxE_val[iBin], AxE_err[iBin], corr_fD_val[iBin], corr_fD_err[iBin], corr_fC_val[iBin], corr_fC_err[iBin]);
     }
 
     //#####################################################################################################
     // Calculate the UPC cross section per bin
     for(Int_t iBin = 0; iBin < nPtBins; iBin++)
     {
-        Sigma_UPC_val[iBin] = N_yield_val[iBin] / (
-            (1.0 + CorrFD_val[iBin] / 100. + CorrFC_val[iBin] / 100.) * 
+        sig_upc_val[iBin] = N_yield_val[iBin] / (
+            (1.0 + corr_fD_val[iBin] / 100. + corr_fC_val[iBin] / 100.) * 
             (AxE_val[iBin] / 100.) * 
             (Eff_veto_val / 100.) * 
             (Eff_EMD_val / 100.) * 
             (Lumi_val * 1000) *
             BR_val * 
-            RapWidth * Pt2Widths[iBin] );
-        Sigma_UPC_err_stat[iBin] = Sigma_UPC_val[iBin] * TMath::Sqrt(TMath::Power(N_yield_err[iBin] / N_yield_val[iBin], 2)
+            RapWidth * pT2_widths[iBin] );
+        sig_upc_err_stat[iBin] = sig_upc_val[iBin] * TMath::Sqrt(TMath::Power(N_yield_err[iBin] / N_yield_val[iBin], 2)
             + TMath::Power(AxE_err[iBin] / AxE_val[iBin], 2));
     }
 
     //#####################################################################################################
     // Systematic uncertainties: SIGNAL EXTRACTION
-    TString str_SystUncr = "Results/" + str_subfolder + Form("InvMassFit_SystUncertainties/ErrSystSignalExtraction_%ibins.txt", nPtBins);
+    TString str_SystUncr = "Results/" + str_subfolder + Form("InvMassFit_SystUncertainties/errsystSignalExtraction_%ibins.txt", nPtBins);
     ifs.open(str_SystUncr.Data());
     // Read data from the file
     if(!ifs.fail()){
         for(Int_t iBin = 0; iBin < nPtBins; iBin++){
-            ifs >> i_bin >> ErrSyst_SigExtr[iBin];
+            ifs >> i_bin >> errsyst_SigExtr[iBin];
         }
     } else {
         PrintErr(str_SystUncr);
@@ -234,7 +236,7 @@ void CalculateCrossSec_PtBins()
     // Read data from the file
     if(!ifs.fail()){
         for(Int_t iBin = 0; iBin < nPtBins; iBin++){
-            ifs >> i_bin >> ErrSyst_ZVertex[iBin];
+            ifs >> i_bin >> errsyst_ZVertex[iBin];
         }
     } else {
         PrintErr(str_SystZVtx);
@@ -244,44 +246,46 @@ void CalculateCrossSec_PtBins()
 
     //#####################################################################################################
     // Systematic uncertainties: FC AND FD
-    Double_t CorrFD_upp[5] = { 0 };
-    Double_t CorrFD_low[5] = { 0 };
-    Double_t CorrFC_upp[5] = { 0 };
-    Double_t CorrFC_low[5] = { 0 };
-    Double_t Sigma_FD_upp[5] = { 0 };
-    Double_t Sigma_FD_low[5] = { 0 };
-    Double_t Sigma_FC_upp[5] = { 0 };
-    Double_t Sigma_FC_low[5] = { 0 };
+    Double_t corr_fD_upp[5] = { 0 };
+    Double_t corr_fD_low[5] = { 0 };
+    Double_t corr_fC_upp[5] = { 0 };
+    Double_t corr_fC_low[5] = { 0 };
+    Double_t sig_fD_upp[5] = { 0 };
+    Double_t sig_fD_low[5] = { 0 };
+    Double_t sig_fC_upp[5] = { 0 };
+    Double_t sig_fC_low[5] = { 0 };
     for(Int_t iBin = 0; iBin < nPtBins; iBin++)
     {
-        CorrFD_upp[iBin] = CorrFD_val[iBin] + CorrFD_err[iBin];
-        CorrFD_low[iBin] = CorrFD_val[iBin] - CorrFD_err[iBin];
-        CorrFC_upp[iBin] = CorrFC_val[iBin] + CorrFC_err[iBin];
-        CorrFC_low[iBin] = CorrFC_val[iBin] - CorrFC_err[iBin];
-        Sigma_FD_upp[iBin] = Sigma_UPC_val[iBin] * (1.0 + CorrFD_val[iBin] / 100. + CorrFC_val[iBin] / 100.) / (1.0 + CorrFD_upp[iBin] / 100. + CorrFC_val[iBin] / 100.);
-        Sigma_FD_low[iBin] = Sigma_UPC_val[iBin] * (1.0 + CorrFD_val[iBin] / 100. + CorrFC_val[iBin] / 100.) / (1.0 + CorrFD_low[iBin] / 100. + CorrFC_val[iBin] / 100.);
-        Sigma_FC_upp[iBin] = Sigma_UPC_val[iBin] * (1.0 + CorrFD_val[iBin] / 100. + CorrFC_val[iBin] / 100.) / (1.0 + CorrFD_val[iBin] / 100. + CorrFC_upp[iBin] / 100.);
-        Sigma_FC_low[iBin] = Sigma_UPC_val[iBin] * (1.0 + CorrFD_val[iBin] / 100. + CorrFC_val[iBin] / 100.) / (1.0 + CorrFD_val[iBin] / 100. + CorrFC_low[iBin] / 100.);
-        Double_t Sigma_fD_upp_diff, Sigma_fD_low_diff, Sigma_fC_upp_diff, Sigma_fC_low_diff;
-        Sigma_fD_upp_diff = TMath::Abs(Sigma_FD_upp[iBin] - Sigma_UPC_val[iBin]);
-        Sigma_fD_low_diff = TMath::Abs(Sigma_FD_low[iBin] - Sigma_UPC_val[iBin]);
-        Sigma_fC_upp_diff = TMath::Abs(Sigma_FC_upp[iBin] - Sigma_UPC_val[iBin]);
-        Sigma_fC_low_diff = TMath::Abs(Sigma_FC_low[iBin] - Sigma_UPC_val[iBin]);
-        ErrSyst_fD[iBin] = TMath::Max(Sigma_fD_upp_diff / Sigma_UPC_val[iBin], Sigma_fD_low_diff / Sigma_UPC_val[iBin]) * 100.;
-        ErrSyst_fC[iBin] = TMath::Max(Sigma_fC_upp_diff / Sigma_UPC_val[iBin], Sigma_fC_low_diff / Sigma_UPC_val[iBin]) * 100.;
+        corr_fD_upp[iBin] = corr_fD_val[iBin] + corr_fD_err[iBin];
+        corr_fD_low[iBin] = corr_fD_val[iBin] - corr_fD_err[iBin];
+        corr_fC_upp[iBin] = corr_fC_val[iBin] + corr_fC_err[iBin];
+        corr_fC_low[iBin] = corr_fC_val[iBin] - corr_fC_err[iBin];
+        sig_fD_upp[iBin] = sig_upc_val[iBin] * (1.0 + corr_fD_val[iBin] / 100. + corr_fC_val[iBin] / 100.) / (1.0 + corr_fD_upp[iBin] / 100. + corr_fC_val[iBin] / 100.);
+        sig_fD_low[iBin] = sig_upc_val[iBin] * (1.0 + corr_fD_val[iBin] / 100. + corr_fC_val[iBin] / 100.) / (1.0 + corr_fD_low[iBin] / 100. + corr_fC_val[iBin] / 100.);
+        sig_fC_upp[iBin] = sig_upc_val[iBin] * (1.0 + corr_fD_val[iBin] / 100. + corr_fC_val[iBin] / 100.) / (1.0 + corr_fD_val[iBin] / 100. + corr_fC_upp[iBin] / 100.);
+        sig_fC_low[iBin] = sig_upc_val[iBin] * (1.0 + corr_fD_val[iBin] / 100. + corr_fC_val[iBin] / 100.) / (1.0 + corr_fD_val[iBin] / 100. + corr_fC_low[iBin] / 100.);
+        Double_t sig_fD_upp_diff, sig_fD_low_diff, sig_fC_upp_diff, sig_fC_low_diff;
+        sig_fD_upp_diff = TMath::Abs(sig_fD_upp[iBin] - sig_upc_val[iBin]);
+        sig_fD_low_diff = TMath::Abs(sig_fD_low[iBin] - sig_upc_val[iBin]);
+        sig_fC_upp_diff = TMath::Abs(sig_fC_upp[iBin] - sig_upc_val[iBin]);
+        sig_fC_low_diff = TMath::Abs(sig_fC_low[iBin] - sig_upc_val[iBin]);
+        errsyst_fD[iBin] = TMath::Max(sig_fD_upp_diff / sig_upc_val[iBin], sig_fD_low_diff / sig_upc_val[iBin]) * 100.;
+        errsyst_fC[iBin] = TMath::Max(sig_fC_upp_diff / sig_upc_val[iBin], sig_fC_low_diff / sig_upc_val[iBin]) * 100.;
 
-        // Total systematic uncertainty of sigma UPC
-        Sigma_UPC_err_syst[iBin] = Sigma_UPC_val[iBin] * TMath::Sqrt(
-            TMath::Power(ErrSyst_SigExtr[iBin] / 100., 2) +
-            TMath::Power(ErrSyst_ZVertex[iBin] / 100., 2) +
-            TMath::Power(ErrSyst_fD[iBin] / 100., 2) +
-            TMath::Power(ErrSyst_fC[iBin] / 100., 2) +
-            TMath::Power(ErrSyst_lumi / 100., 2) + 
-            TMath::Power(ErrSyst_veto / 100., 2) + 
-            TMath::Power(ErrSyst_EMD / 100., 2) + 
-            TMath::Power(ErrSyst_tracks / 100., 2) + 
-            TMath::Power(ErrSyst_CCUP31 / 100., 2) + 
-            TMath::Power(ErrSyst_BR / 100., 2)
+        // systematic uncertainties of sigma UPC
+        sig_upc_err_syst_corr[iBin] = sig_upc_val[iBin] * TMath::Sqrt(
+            TMath::Power(errsyst_ZVertex[iBin] / 100., 2) +
+            TMath::Power(errsyst_fD[iBin] / 100., 2) +
+            TMath::Power(errsyst_fC[iBin] / 100., 2) +
+            TMath::Power(errsyst_lumi / 100., 2) + 
+            TMath::Power(errsyst_veto / 100., 2) + 
+            TMath::Power(errsyst_EMD / 100., 2) + 
+            TMath::Power(errsyst_tracks / 100., 2) + 
+            TMath::Power(errsyst_CCUP31 / 100., 2) + 
+            TMath::Power(errsyst_BR / 100., 2)
+        );
+        sig_upc_err_syst_uncr[iBin] = sig_upc_val[iBin] * TMath::Sqrt(
+            TMath::Power(errsyst_SigExtr[iBin] / 100., 2)
         );
     }
 
@@ -289,11 +293,12 @@ void CalculateCrossSec_PtBins()
     // Calculate the photonuclear cross section per bin
     for(Int_t iBin = 0; iBin < nPtBins; iBin++)
     {
-        Sigma_photo_val[iBin] = Sigma_UPC_val[iBin] / 2. / PhotonFlux_val * 1000;
-        Sigma_photo_err_stat[iBin] = Sigma_UPC_err_stat[iBin] / 2. / PhotonFlux_val * 1000;
-        Sigma_photo_err_syst[iBin] = Sigma_photo_val[iBin] * TMath::Sqrt(
-            TMath::Power(Sigma_UPC_err_syst[iBin] / Sigma_UPC_val[iBin], 2) + 
-            TMath::Power(ErrSyst_flux / 100., 2)
+        sig_gPb_val[iBin] = sig_upc_val[iBin] / 2. / PhotonFlux_val * 1000;
+        sig_gPb_err_stat[iBin] = sig_upc_err_stat[iBin] / 2. / PhotonFlux_val * 1000;
+        sig_gPb_err_syst_uncr[iBin] = sig_upc_err_syst_uncr[iBin] / 2. / PhotonFlux_val * 1000;
+        sig_gPb_err_syst_corr[iBin] = sig_gPb_val[iBin] * TMath::Sqrt(
+            TMath::Power(sig_upc_err_syst_corr[iBin] / sig_upc_val[iBin], 2) + 
+            TMath::Power(errsyst_flux / 100., 2)
         );
     }
 
@@ -306,8 +311,8 @@ void CalculateCrossSec_PtBins()
         for(Int_t iBin = 0; iBin < nPtBins; iBin++)
         {
             Int_t bin;
-            ifs >> bin >> t_avg_val[iBin];
-            if(kFALSE) Printf("Reading: bin %i, |t| = %.4f", bin, t_avg_val[iBin]);
+            ifs >> bin >> avgt_val[iBin];
+            if(kFALSE) Printf("Reading: bin %i, |t| = %.4f", bin, avgt_val[iBin]);
         }
     } else {
         PrintErr(str_t_avg);
@@ -329,18 +334,19 @@ void CalculateCrossSec_PtBins()
                             Eff_veto_val, Eff_veto_err, 
                             Eff_EMD_val, Eff_EMD_err,
                             PhotonFlux_val, PhotonFlux_err);
-    outfile << Form("Bin\tPt2Low\tPt2Upp\tPt2_W\tN\terr\tAxE\terr\tFD [%%]\terr\tFC [%%]\terr\tsig\tstat\tsyst\n");
+    outfile << Form("Bin\tPt2Low\tPt2Upp\tPt2_W\tN\terr\tAxE\terr\tFD [%%]\terr\tFC [%%]\terr\tsig\tstat\tsyst u\tsyst c\n");
     for(Int_t i = 0; i < nPtBins; i++){
         outfile << std::fixed << std::setprecision(3)
                 << i+1 << "\t"
                 << ptBoundaries[i] * ptBoundaries[i] << "\t"
                 << ptBoundaries[i+1] * ptBoundaries[i+1] << "\t"
-                << std::fixed << std::setprecision(4) << Pt2Widths[i] << "\t"
+                << std::fixed << std::setprecision(4) << pT2_widths[i] << "\t"
                 << std::fixed << std::setprecision(1) << N_yield_val[i] << "\t" << N_yield_err[i] << "\t"
                 << std::fixed << std::setprecision(2) << AxE_val[i] << "\t" << AxE_err[i] << "\t"
-                << std::fixed << std::setprecision(1) << CorrFD_val[i] << "\t" << CorrFD_err[i] << "\t"
-                << std::fixed << std::setprecision(3) << CorrFC_val[i] << "\t" << CorrFC_err[i] << "\t"
-                << std::fixed << std::setprecision(2) << Sigma_UPC_val[i] << "\t" << Sigma_UPC_err_stat[i] << "\t" << Sigma_UPC_err_syst[i] << "\n";
+                << std::fixed << std::setprecision(1) << corr_fD_val[i] << "\t" << corr_fD_err[i] << "\t"
+                << std::fixed << std::setprecision(3) << corr_fC_val[i] << "\t" << corr_fC_err[i] << "\t"
+                << std::fixed << std::setprecision(2) 
+                << sig_upc_val[i] << "\t" << sig_upc_err_stat[i] << "\t" << sig_upc_err_syst_uncr[i] << "\t" << sig_upc_err_syst_corr[i] << "\n";
     }
     outfile.close();
     Printf("Results printed to %s.", str_out_1a.Data()); 
@@ -358,12 +364,13 @@ void CalculateCrossSec_PtBins()
         outfile << std::fixed << std::setprecision(3) << "$(" 
                 << ptBoundaries[i] * ptBoundaries[i] << "," 
                 << ptBoundaries[i+1] * ptBoundaries[i+1] << ")$ & "
-                << std::fixed << std::setprecision(4) << Pt2Widths[i] << " &\t$"
+                << std::fixed << std::setprecision(4) << pT2_widths[i] << " &\t$"
                 << std::fixed << std::setprecision(0) << N_yield_val[i] << R"( \pm )" << N_yield_err[i] << "$ &\t$"
                 << std::fixed << std::setprecision(2) << AxE_val[i] << R"( \pm )" << AxE_err[i] << "$ &\t$"
-                << std::fixed << std::setprecision(1) << CorrFD_val[i] << R"( \pm )" << CorrFD_err[i] << "$ &\t$"
-                << std::fixed << std::setprecision(3) << CorrFC_val[i] << R"( \pm )" << CorrFC_err[i] << "$ &\t$"
-                << std::fixed << std::setprecision(2) << Sigma_UPC_val[i] << R"( \pm )" << Sigma_UPC_err_stat[i] << R"((\text{stat.}) \pm )" << Sigma_UPC_err_syst[i] << R"((\text{syst.})$ \\)" << "\n";
+                << std::fixed << std::setprecision(1) << corr_fD_val[i] << R"( \pm )" << corr_fD_err[i] << "$ &\t$"
+                << std::fixed << std::setprecision(3) << corr_fC_val[i] << R"( \pm )" << corr_fC_err[i] << "$ &\t$"
+                << std::fixed << std::setprecision(2) 
+                << sig_upc_val[i] << R"( \pm )" << sig_upc_err_stat[i] << R"( \pm )" << sig_upc_err_syst_uncr[i] << R"( \pm )" << sig_upc_err_syst_corr[i] << R"($ \\)" << "\n";
     }                  
     outfile.close();
     Printf("Results printed to %s.", str_out_1b.Data());
@@ -375,15 +382,15 @@ void CalculateCrossSec_PtBins()
             << "CORRELATED:\n"
             << "lumi\tveto\tEMD\ttracks\tCCUP31\tBR\n"
             << Form("%.1f \t%.1f \t%.1f \t%.1f \t%.1f \t%.1f \n\n",
-                ErrSyst_lumi, ErrSyst_veto, ErrSyst_EMD, ErrSyst_tracks, ErrSyst_CCUP31, ErrSyst_BR);
+                errsyst_lumi, errsyst_veto, errsyst_EMD, errsyst_tracks, errsyst_CCUP31, errsyst_BR);
     outfile << "UNCORRELATED:\n"
             << "Bin\tSigExt\tZVtx\tfD\tfC\n";
     for(Int_t i = 0; i < nPtBins; i++){
         outfile << i+1 << std::fixed << std::setprecision(1) << "\t"
-                << ErrSyst_SigExtr[i] << "\t"
-                << ErrSyst_ZVertex[i] << "\t"
-                << ErrSyst_fD[i] << "\t"
-                << ErrSyst_fC[i] << "\n";
+                << errsyst_SigExtr[i] << "\t"
+                << errsyst_ZVertex[i] << "\t"
+                << errsyst_fD[i] << "\t"
+                << errsyst_fC[i] << "\n";
     }    
     outfile.close();
     Printf("Results printed to %s.", str_out_2a.Data());
@@ -395,10 +402,10 @@ void CalculateCrossSec_PtBins()
         outfile << std::fixed << std::setprecision(3)
                 << "$(" << ptBoundaries[i] << "," << ptBoundaries[i+1] << ")$ & "
                 << std::fixed << std::setprecision(1)
-                << ErrSyst_SigExtr[i] << " & "
-                << ErrSyst_ZVertex[i] << " & "
-                << ErrSyst_fD[i] << " & "
-                << ErrSyst_fC[i] << R"( \\)" << "\n";
+                << errsyst_SigExtr[i] << " & "
+                << errsyst_ZVertex[i] << " & "
+                << errsyst_fD[i] << " & "
+                << errsyst_fC[i] << R"( \\)" << "\n";
                             
     }
     outfile.close();
@@ -407,16 +414,16 @@ void CalculateCrossSec_PtBins()
     // 3a) Print the photonuclear cross section
     TString str_out_3a = "Results/" + str_subfolder + "PhotoCrossSec/CrossSec_photo.txt";
     outfile.open(str_out_3a.Data());
-    outfile << std::fixed << std::setprecision(4)
-            << "Bin \tt_low \tt_upp \tsig \tstat\tsyst\n";
+    //outfile << "Bin \tt_low \tt_upp \tsig \tstat\tsyst u\tsyst c\n";
     for(Int_t i = 0; i < nPtBins; i++){
         outfile << i+1 << std::fixed << std::setprecision(4) << "\t" 
                 << ptBoundaries[i] * ptBoundaries[i] << "\t" 
                 << ptBoundaries[i+1] * ptBoundaries[i+1] << "\t" 
-                << std::fixed << std::setprecision(1)
-                << Sigma_photo_val[i] << "\t"
-                << Sigma_photo_err_stat[i] << "\t"
-                << Sigma_photo_err_syst[i] << "\n";
+                << std::fixed << std::setprecision(2)
+                << sig_gPb_val[i] << "\t"
+                << sig_gPb_err_stat[i] << "\t"
+                << sig_gPb_err_syst_uncr[i] << "\t"
+                << sig_gPb_err_syst_corr[i] << "\n";
     }
     outfile.close();
     Printf("Results printed to %s.", str_out_3a.Data()); 
@@ -428,9 +435,9 @@ void CalculateCrossSec_PtBins()
         outfile << std::fixed << std::setprecision(3) << "$(" 
                 << ptBoundaries[i] * ptBoundaries[i] << "," 
                 << ptBoundaries[i+1] * ptBoundaries[i+1] << ")$ & "
-                << t_avg_val[i] << " &\t$"
-                << std::fixed << std::setprecision(1)
-                << Sigma_photo_val[i] << R"( \pm )" << Sigma_photo_err_stat[i] << R"((\text{stat.}) \pm )" << Sigma_photo_err_syst[i] << R"((\text{syst.})$ \\)" << "\n";
+                << avgt_val[i] << " &\t$"
+                << std::fixed << std::setprecision(2)
+                << sig_gPb_val[i] << R"( \pm )" << sig_gPb_err_stat[i] << R"( \pm )" << sig_gPb_err_syst_uncr[i] << R"( \pm )" << sig_gPb_err_syst_corr[i] << R"($ \\)" << "\n";
     }
     outfile.close();
     Printf("Results printed to %s.", str_out_3b.Data()); 
