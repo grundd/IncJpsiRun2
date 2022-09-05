@@ -40,6 +40,8 @@ TString str_models[7] = {"STARlight",
                          "GSZ-el"};
 TGraph* gr_models[7] = { NULL };
 TGraph* gr_GSZ_err[2] = { NULL };
+Double_t GSZ_err_scale_upp[2] = { 0 };
+Double_t GSZ_err_scale_low[2] = { 0 };
 TH1D* h_models[7] = { NULL };
 Int_t n_models[7] = {125, 75, 75, 183, 183, 100, 100};
 Double_t *tBoundaries = NULL;
@@ -222,7 +224,7 @@ void LoadGraphs_MS(Bool_t print = kFALSE)
 }
 
 // the GSZ model
-void LoadGraphs_GSZ(Bool_t print = kFALSE)
+void LoadGraphs_GSZ(Bool_t print = kTRUE)
 {
     Double_t abs_t_val[100] = { 0 };
     Double_t sig_el_min[100] = { 0 };
@@ -255,6 +257,19 @@ void LoadGraphs_GSZ(Bool_t print = kFALSE)
         gr_GSZ_err[1]->SetPoint(i, abs_t_val[i], sig_el_max[i] / 1e6);
         gr_GSZ_err[1]->SetPoint(100+i, abs_t_val[100-i-1], sig_el_min[100-i-1] / 1e6);
     }
+    // determine the scales
+    for(Int_t i = 0; i < 100; i++)
+    {
+        GSZ_err_scale_upp[0] += sig_tot_max[i] / ((sig_tot_max[i] + sig_tot_min[i]) / 2.);
+        GSZ_err_scale_low[0] += sig_tot_min[i] / ((sig_tot_max[i] + sig_tot_min[i]) / 2.);
+        GSZ_err_scale_upp[1] += sig_el_max[i] / ((sig_el_max[i] + sig_el_min[i]) / 2.);
+        GSZ_err_scale_low[1] += sig_el_min[i] / ((sig_el_max[i] + sig_el_min[i]) / 2.);
+    }
+    for(Int_t i = 0; i < 2; i++)
+    {
+        GSZ_err_scale_upp[i] = GSZ_err_scale_upp[i] / 100.;
+        GSZ_err_scale_low[i] = GSZ_err_scale_low[i] / 100.;
+    }
     Printf("TGraphs for GSZ created");
     if(print)
     {
@@ -262,6 +277,14 @@ void LoadGraphs_GSZ(Bool_t print = kFALSE)
         gr_models[6]->Print();
         gr_GSZ_err[0]->Print();
         gr_GSZ_err[1]->Print();
+        Printf(" +++++++++++++++++++++++++++++++");
+        Printf(" Scale of the upper error band:");
+        Printf(" el+diss: %.5f", GSZ_err_scale_upp[0]);
+        Printf(" el     : %.5f", GSZ_err_scale_upp[1]);
+        Printf(" Scale of the lower error band:");
+        Printf(" el+diss: %.5f", GSZ_err_scale_low[0]);
+        Printf(" el     : %.5f", GSZ_err_scale_low[1]);
+        Printf(" +++++++++++++++++++++++++++++++");
     }
 
     return;

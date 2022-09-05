@@ -65,6 +65,25 @@ void CrossSec_PrepareHistosAndGraphs(Int_t iAnalysis)
         lh->Add(h_models_binned[i]);
         lg->Add(gr_models_binned[i]);
     } 
+    // prepare binned histograms with the errors of GSZ models
+    gr_GSZ_err_binned[0] = new TGraph(2*2*nPtBins);
+    gr_GSZ_err_binned[0]->SetName("grBinned_err_GSZ-el+diss");
+    gr_GSZ_err_binned[1] = new TGraph(2*2*nPtBins);
+    gr_GSZ_err_binned[1]->SetName("grBinned_err_GSZ-el");
+    // fill graphs showing the error bands
+    for (Int_t i = 0; i < nPtBins; i++)
+    {
+        gr_GSZ_err_binned[0]->SetPoint(2*i,   tBoundaries[i],   gr_models_binned[5]->GetPointY(i) * GSZ_err_scale_upp[0]);
+        gr_GSZ_err_binned[0]->SetPoint(2*i+1, tBoundaries[i+1], gr_models_binned[5]->GetPointY(i) * GSZ_err_scale_upp[0]);
+        gr_GSZ_err_binned[0]->SetPoint(2*nPtBins+2*i,   tBoundaries[nPtBins-i],   gr_models_binned[5]->GetPointY(nPtBins-i-1) * GSZ_err_scale_low[0]);
+        gr_GSZ_err_binned[0]->SetPoint(2*nPtBins+2*i+1, tBoundaries[nPtBins-i-1], gr_models_binned[5]->GetPointY(nPtBins-i-1) * GSZ_err_scale_low[0]);
+        gr_GSZ_err_binned[1]->SetPoint(2*i,   tBoundaries[i],   gr_models_binned[6]->GetPointY(i) * GSZ_err_scale_upp[1]);
+        gr_GSZ_err_binned[1]->SetPoint(2*i+1, tBoundaries[i+1], gr_models_binned[6]->GetPointY(i) * GSZ_err_scale_upp[1]);
+        gr_GSZ_err_binned[1]->SetPoint(2*nPtBins+2*i,   tBoundaries[nPtBins-i],   gr_models_binned[6]->GetPointY(nPtBins-i-1) * GSZ_err_scale_low[1]);
+        gr_GSZ_err_binned[1]->SetPoint(2*nPtBins+2*i+1, tBoundaries[nPtBins-i-1], gr_models_binned[6]->GetPointY(nPtBins-i-1) * GSZ_err_scale_low[1]);
+    }
+    lg->Add(gr_GSZ_err_binned[0]);
+    lg->Add(gr_GSZ_err_binned[1]);
 
     TFile *f = new TFile("Results/" + str_subfolder + "CrossSec/PrepareHistosAndGraphs/histograms_and_graphs.root","RECREATE");    
     lh->Write("histograms", TObject::kSingleKey);

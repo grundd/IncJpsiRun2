@@ -9,9 +9,12 @@ Int_t lineWidth = 3;
 TGraphErrors *gr_ratios[7] = { NULL };
 TGraph *gr_binned[7] = { NULL };
 
-void PlotWithRatios(Int_t iBinn);
+void PlotWithRatios(Int_t iBinn, Int_t iModels = 0);
 // iBinn == 0 => original binning of the models
 //       == 1 => everything in 5 bins as the data
+// iModels == 0 => all the models plotted in cBoth
+//         == 1 => only the models with fluctuations (CCK-hs, MS-hs, GSZ-el+diss)
+//         == 2 => only those without (SL, CCK-n, MS-p, GSZ-el)
 
 void SetLineColorStyleWidth(TGraph *gr, Color_t col, Int_t stl)
 {
@@ -21,10 +24,11 @@ void SetLineColorStyleWidth(TGraph *gr, Color_t col, Int_t stl)
     return;
 }
 
-void SetMarkerColorStyle(TGraph *gr, Color_t col, Int_t stl)
+void SetMarkerColorStyleSize(TGraph *gr, Color_t col, Int_t stl, Double_t size)
 {
     gr->SetMarkerColor(col);
     gr->SetMarkerStyle(stl);
+    gr->SetMarkerSize(size);
     return;
 }
 
@@ -77,13 +81,20 @@ void SetupSysErrorBox(TGraph* g, Color_t color)
     SetStyle(g,color,1,0);
 }
 
-void DrawLegend1(Double_t x1, Double_t y1, Double_t x2, Double_t y2, Double_t textsize)
+void DrawLegend1(Int_t iModels, Double_t x1, Double_t y1, Double_t x2, Double_t y2, Double_t textsize, TString draw_leg)
 {
     TLegend *l1 = SetLegend(x1,y1,x2,y2);
     l1->SetFillStyle(0);
     l1->SetTextSize(textsize);
     l1->SetMargin(0.30);
-    for(Int_t i = 0; i < 7; i++) l1->AddEntry(gr_models[i],str_models[i],"L");
+    //for(Int_t i = 0; i < 7; i++) l1->AddEntry(gr_models[i],str_models[i],"L");
+    if(iModels != 1) l1->AddEntry(gr_models[0],str_models[0],draw_leg.Data());
+    if(iModels != 2) l1->AddEntry(gr_models[1],str_models[1],draw_leg.Data());
+    if(iModels != 1) l1->AddEntry(gr_models[2],str_models[2],draw_leg.Data());
+    if(iModels != 2) l1->AddEntry(gr_models[3],str_models[3],draw_leg.Data());
+    if(iModels != 1) l1->AddEntry(gr_models[4],str_models[4],draw_leg.Data());
+    if(iModels != 2) l1->AddEntry(gr_models[5],str_models[5],draw_leg.Data());
+    if(iModels != 1) l1->AddEntry(gr_models[6],str_models[6],draw_leg.Data());
     l1->Draw();
     return;
 }
@@ -94,18 +105,25 @@ void DrawLegend2(Double_t x1, Double_t y1, Double_t x2, Double_t y2, Double_t te
     l2->SetTextSize(textsize);
     l2->SetMargin(0.11);
     l2->AddEntry((TObject*)0,"ALICE incoherent J/#psi, |y| < 0.8", "");
-    l2->AddEntry(gr_data_uncr,"Exp. uncorrelated stat. + syst.", "EPL");
-    l2->AddEntry(gr_data_corr,"Exp. correlated syst.", "F");
+    l2->AddEntry(gr_data_uncr,"Uncorrelated stat. + syst.", "EPL");
+    l2->AddEntry(gr_data_corr,"Correlated syst.", "F");
     l2->Draw();
     return;
 }
 
-void DrawLegend3(Double_t x1, Double_t y1, Double_t x2, Double_t y2, Double_t textsize)
+void DrawLegend3(Int_t iModels, Double_t x1, Double_t y1, Double_t x2, Double_t y2, Double_t textsize)
 {
     TLegend *l3 = SetLegend(x1,y1,x2,y2);
     l3->SetTextSize(textsize);
-    l3->SetMargin(0.13);
-    for(Int_t i = 0; i < 7; i++) l3->AddEntry(gr_ratios[i],str_models[i] + " / Data","P");
+    l3->SetMargin(0.16);
+    //for(Int_t i = 0; i < 7; i++) l3->AddEntry(gr_ratios[i],str_models[i] + " / Data","P");
+    if(iModels != 1) l3->AddEntry(gr_models[0],str_models[0] + " / Data","L");
+    if(iModels != 2) l3->AddEntry(gr_models[1],str_models[1] + " / Data","L");
+    if(iModels != 1) l3->AddEntry(gr_models[2],str_models[2] + " / Data","L");
+    if(iModels != 2) l3->AddEntry(gr_models[3],str_models[3] + " / Data","L");
+    if(iModels != 1) l3->AddEntry(gr_models[4],str_models[4] + " / Data","L");
+    if(iModels != 2) l3->AddEntry(gr_models[5],str_models[5] + " / Data","L");
+    if(iModels != 1) l3->AddEntry(gr_models[6],str_models[6] + " / Data","L");
     l3->Draw();
     return;
 }
@@ -116,13 +134,19 @@ void CrossSec_PlotWithRatios(Int_t iAnalysis)
 
     gSystem->Exec("mkdir -p Results/" + str_subfolder + "CrossSec/PlotWithRatios/");
 
-    // original normalization of the models, original binning ("continuous")
-    PlotWithRatios(0);
+    // original binning of the models ("continuous")
+    PlotWithRatios(0,0);
+    PlotWithRatios(0,1);
+    PlotWithRatios(0,2);
+    // binning from the measurement (5 bins)
+    PlotWithRatios(1,0);
+    PlotWithRatios(1,1);
+    PlotWithRatios(1,2);
 
     return;
 }
 
-void PlotWithRatios(Int_t iBinn)
+void PlotWithRatios(Int_t iBinn, Int_t iModels)
 {
     // open the file with histograms and graphs
     TFile *f = TFile::Open("Results/" + str_subfolder + "CrossSec/PrepareHistosAndGraphs/histograms_and_graphs.root","read");
@@ -134,12 +158,28 @@ void PlotWithRatios(Int_t iBinn)
     // load the graphs
     gr_data_uncr = (TGraphAsymmErrors*)lg->FindObject("gr_data_uncr");
     gr_data_corr = (TGraphAsymmErrors*)lg->FindObject("gr_data_corr");
+    TString bin_load = "";
+    TString bin_save = "";
+    TString draw_opt = "";
+    TString draw_leg = "";
     if(iBinn == 0)
     {
-        for(Int_t i = 0; i < 9; i++) gr_models[i] = (TGraph*)lg->FindObject("gr_" + str_models[i]);
-        gr_GSZ_err[0] = (TGraph*)lg->FindObject("gr_err_GSZ-el+diss");
-        gr_GSZ_err[1] = (TGraph*)lg->FindObject("gr_err_GSZ-el");
-    }
+        bin_load = "gr_";
+        bin_save = "";
+        draw_opt = "L SAME";
+        draw_leg = "L";
+    }    
+    else if(iBinn == 1)
+    {
+        bin_load = "grBinned_";
+        bin_save = "binned_";
+        draw_opt = "P SAME";
+        draw_leg = "P";
+    } 
+    else return;
+    for(Int_t i = 0; i < 9; i++) gr_models[i] = (TGraph*)lg->FindObject(bin_load + str_models[i]);
+    gr_GSZ_err[0] = (TGraph*)lg->FindObject(bin_load + "err_GSZ-el+diss");
+    gr_GSZ_err[1] = (TGraph*)lg->FindObject(bin_load + "err_GSZ-el");
 
     // using Roman's settings:
     gStyle->SetErrorX(0.02);
@@ -187,18 +227,25 @@ void PlotWithRatios(Int_t iBinn)
     // set up properties of the graphs
     // STARlight
     SetLineColorStyleWidth(gr_models[0],kBlue,1);
+    SetMarkerColorStyleSize(gr_models[0],kBlue,kFullTriangleDown,1);
     // CCK-hs
     SetLineColorStyleWidth(gr_models[1],kRed+1,9);
+    SetMarkerColorStyleSize(gr_models[1],kRed+1,kFullCircle,1);
     // CCK-n
     SetLineColorStyleWidth(gr_models[2],kRed+1,5);
+    SetMarkerColorStyleSize(gr_models[2],kRed+1,kFullTriangleDown,1);
     // MS-hs
     SetLineColorStyleWidth(gr_models[3],kGray+3,9);
+    SetMarkerColorStyleSize(gr_models[3],kGray+3,kFullCircle,1);
     // MS-p
     SetLineColorStyleWidth(gr_models[4],kGray+3,5);
+    SetMarkerColorStyleSize(gr_models[4],kGray+3,kFullTriangleDown,1);
     // GSZ-el+diss
     SetLineColorStyleWidth(gr_models[5],kGreen+2,9);
+    SetMarkerColorStyleSize(gr_models[5],kGreen+2,kFullCircle,1);
     // GSZ-el
     SetLineColorStyleWidth(gr_models[6],kCyan+2,5);
+    SetMarkerColorStyleSize(gr_models[6],kCyan+2,kFullTriangleDown,1);
     // GSZ error bands:
     SetupSysErrorBox(gr_GSZ_err[0],kGreen);
     SetupSysErrorBox(gr_GSZ_err[1],kCyan);
@@ -208,9 +255,9 @@ void PlotWithRatios(Int_t iBinn)
     gr_GSZ_err[0]->Draw("F SAME");
     gr_GSZ_err[1]->Draw("F SAME");
     gr_data_corr->Draw("5 SAME");
-    gr_models[5]->Draw("L SAME");
-    gr_models[6]->Draw("L SAME");
-    for(Int_t i = 0; i < 5; i++) gr_models[i]->Draw("L SAME");
+    gr_models[5]->Draw(draw_opt.Data());
+    gr_models[6]->Draw(draw_opt.Data());
+    for(Int_t i = 0; i < 5; i++) gr_models[i]->Draw(draw_opt.Data());
     gr_data_uncr->Draw("P SAME");
     cPlot->Modified();
     cPlot->Update(); 
@@ -223,19 +270,19 @@ void PlotWithRatios(Int_t iBinn)
     latex->DrawLatex(0.55,0.93,"ALICE Pb+Pb #rightarrow Pb+Pb+J/#psi   #sqrt{#it{s}_{NN}} = 5.02 TeV");
 
     // draw the legend with the models
-    DrawLegend1(0.17,0.15,0.40,0.40,0.032);
+    DrawLegend1(0,0.17,0.15,0.40,0.40,0.032,draw_leg);
     cPlot->Modified();
     cPlot->Update();
 
     // draw the legend with the data + uncertainties
-    DrawLegend2(0.56,0.76,0.90,0.90,0.032);
+    DrawLegend2(0.58,0.76,0.90,0.90,0.032);
     cPlot->Modified();
     cPlot->Update();
 
-    cPlot->Print("Results/" + str_subfolder + "CrossSec/PlotWithRatios/plot.pdf");
+    cPlot->Print("Results/" + str_subfolder + "CrossSec/PlotWithRatios/" + bin_save + "plot.pdf");
 
     // *****************************************************************************
-    // calculate and plot ratios
+    // calculate and plot the ratios
     for(Int_t i = 0; i < 7; i++)
     {
         gr_ratios[i] = new TGraphErrors(nPtBins);
@@ -283,19 +330,19 @@ void PlotWithRatios(Int_t iBinn)
     fCSratio->GetYaxis()->SetTitleOffset(0.5);
 
     // STARlight
-    SetMarkerColorStyle(gr_ratios[0],kBlue,kFullSquare);
+    SetMarkerColorStyleSize(gr_ratios[0],kBlue,kFullSquare,1.);
     // CCK-hs
-    SetMarkerColorStyle(gr_ratios[1],kRed+1,kOpenCircle);
+    SetMarkerColorStyleSize(gr_ratios[1],kRed+1,kOpenCircle,1.);
     // CCK-n
-    SetMarkerColorStyle(gr_ratios[2],kRed+1,kFullCircle);
+    SetMarkerColorStyleSize(gr_ratios[2],kRed+1,kFullCircle,1.);
     // MS-hs
-    SetMarkerColorStyle(gr_ratios[3],kGray+3,kOpenTriangleDown);
+    SetMarkerColorStyleSize(gr_ratios[3],kGray+3,kOpenTriangleDown,1.);
     // MS-p
-    SetMarkerColorStyle(gr_ratios[4],kGray+3,kFullTriangleDown);
+    SetMarkerColorStyleSize(gr_ratios[4],kGray+3,kFullTriangleDown,1.);
     // GSZ-el+diss
-    SetMarkerColorStyle(gr_ratios[5],kGreen+2,kOpenCross);
+    SetMarkerColorStyleSize(gr_ratios[5],kGreen+2,kOpenCross,1.);
     // GSZ-el
-    SetMarkerColorStyle(gr_ratios[6],kCyan+2,kFullCross);
+    SetMarkerColorStyleSize(gr_ratios[6],kCyan+2,kFullCross,1.);
 
     // draw everything
     cRat->cd();
@@ -316,21 +363,21 @@ void PlotWithRatios(Int_t iBinn)
     line->SetLineStyle(2);
     line->Draw("SAME");
     // draw a legend
-    DrawLegend3(0.69,0.28,0.95,0.88,0.08);
+    DrawLegend3(0,0.69,0.28,0.95,0.88,0.08);
     cRat->Modified();
     cRat->Update();
     
     cRat->Print("Results/" + str_subfolder + "CrossSec/PlotWithRatios/ratios.pdf");
 
     // *****************************************************************************
-    // Draw both
+    // draw both
     TCanvas *cBoth = new TCanvas("cBoth","Cross section dependence on p_{t}^{2}",900,1000);
     TPad *pMain = new TPad("pMain","pMain",0.,0.25,1.,1.);
     SetPadMargins(pMain,0.13,0.03,0.03,0.0);
     pMain->SetLogy();
     pMain->Draw();
     pMain->cd();
-    // Draw everything needed
+    // draw everything needed
     fCSont->GetYaxis()->SetTitleOffset(1.02);
     fCSont->GetXaxis()->SetTitleSize(0.06);
     fCSont->GetYaxis()->SetTitleSize(0.06);
@@ -339,28 +386,22 @@ void PlotWithRatios(Int_t iBinn)
     fCSont->GetXaxis()->SetLabelSize(0);
     fCSont->GetXaxis()->SetTitle("");
     fCSont->Draw("AXIS");
-    /*
-    gr_GSZ_err[0]->Draw("F SAME");
-    gr_GSZ_err[1]->Draw("F SAME");
+    if(iModels != 2) gr_GSZ_err[0]->Draw("F SAME");
+    if(iModels != 1) gr_GSZ_err[1]->Draw("F SAME");
     gr_data_corr->Draw("5 SAME");
-    gr_models[5]->Draw("L SAME");
-    gr_models[6]->Draw("L SAME");
-    for(Int_t i = 0; i < 5; i++) gr_models[i]->Draw("L SAME");
-    gr_data_uncr->Draw("P SAME");
-    */
-    gr_GSZ_err[0]->Draw("F SAME");
-    //gr_GSZ_err[1]->Draw("F SAME");
-    gr_data_corr->Draw("5 SAME");
-    gr_models[5]->Draw("L SAME");
-    //gr_models[6]->Draw("L SAME");
+    if(iModels != 2) gr_models[5]->Draw(draw_opt.Data());
+    if(iModels != 1) gr_models[6]->Draw(draw_opt.Data());
+    if(iModels != 1) gr_models[0]->Draw(draw_opt.Data());
+    if(iModels != 2) gr_models[1]->Draw(draw_opt.Data());
+    if(iModels != 1) gr_models[2]->Draw(draw_opt.Data());
+    if(iModels != 2) gr_models[3]->Draw(draw_opt.Data());
+    if(iModels != 1) gr_models[4]->Draw(draw_opt.Data());
     //for(Int_t i = 0; i < 5; i++) gr_models[i]->Draw("L SAME");
-    gr_models[1]->Draw("L SAME");
-    gr_models[3]->Draw("L SAME");
     gr_data_uncr->Draw("P SAME");
     latex->SetTextSize(0.044);
     latex->DrawLatex(0.55,0.93,"ALICE Pb+Pb #rightarrow Pb+Pb+J/#psi   #sqrt{#it{s}_{NN}} = 5.02 TeV");
     // draw legends
-    DrawLegend1(0.17,0.04,0.42,0.34,0.038);
+    DrawLegend1(iModels,0.17,0.04,0.42,0.34,0.038,draw_leg);
     DrawLegend2(0.58,0.76,0.84,0.90,0.038);
     // draw pad with ratios
     cBoth->cd();
@@ -379,12 +420,24 @@ void PlotWithRatios(Int_t iBinn)
     fCSratio->GetYaxis()->SetLabelSize(0.15);
     fCSratio->Draw("AXIS");
     gr_err_corr->Draw("5 SAME");
-    for(Int_t i = 0; i < 7; i++) gr_ratios[i]->Draw("SAME P");
+    //for(Int_t i = 0; i < 7; i++) gr_ratios[i]->Draw("SAME P");
+    if(iModels != 1) gr_ratios[0]->Draw("P SAME");
+    if(iModels != 2) gr_ratios[1]->Draw("P SAME");
+    if(iModels != 1) gr_ratios[2]->Draw("P SAME");
+    if(iModels != 2) gr_ratios[3]->Draw("P SAME");
+    if(iModels != 1) gr_ratios[4]->Draw("P SAME");
+    if(iModels != 2) gr_ratios[5]->Draw("P SAME");
+    if(iModels != 1) gr_ratios[6]->Draw("P SAME");
     gr_err_uncr->Draw("SAME P");
     line->Draw("SAME");
-    DrawLegend3(0.72,0.38,0.945,0.94,0.09);
+    DrawLegend3(iModels,0.72,0.38,0.945,0.94,0.09);
 
-    cBoth->Print("Results/" + str_subfolder + "CrossSec/PlotWithRatios/plotRatios.pdf");
+    TString append = "";
+    if(iModels == 0) append += "_allModels";
+    if(iModels == 1) append += "_fluctOnly";
+    if(iModels == 2) append += "_nofluOnly";
+
+    cBoth->Print("Results/" + str_subfolder + "CrossSec/PlotWithRatios/" + bin_save + "plotWithRatios" + append + ".pdf");
 
     return;
 }
