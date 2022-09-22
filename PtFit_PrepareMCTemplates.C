@@ -22,7 +22,7 @@ Double_t fPtGenerated_PtFit;
 void PtFit_FillHistogramsMC(Int_t iMC, TH1D *hist);
 void PtFit_PreparePDFs();
 void PtFit_PreparePDFs_modRA_CohJ(Bool_t bStopWeigh);
-void PtFit_PreparePDFs_modRA_all(Bool_t bStopWeigh);
+void PtFit_PreparePDFs_modRA_all();
 TTree* PtFit_GetTreeMCRecPsi2s(Int_t iMC);
 
 void PtFit_PrepareMCTemplates(Int_t iAnalysis)
@@ -45,10 +45,7 @@ void PtFit_PrepareMCTemplates(Int_t iAnalysis)
 
     gSystem->Exec("mkdir -p Results/" + str_subfolder + "PtFit_NoBkg/modRA_all_ratios/");
     // prepare PDFs for CohJ, IncJ, CohP and IncP from STARlight data generated with R_A = 7.330 fm (optimal value)
-    // weigh hRec over the whole pT range:
-    PtFit_PreparePDFs_modRA_all(kFALSE);
-    // stop weighing at fPtStopWeigh[iMC]
-    PtFit_PreparePDFs_modRA_all(kTRUE);
+    PtFit_PreparePDFs_modRA_all();
 
     return;
 }
@@ -285,12 +282,10 @@ void PtFit_PreparePDFs_modRA_CohJ(Bool_t bStopWeigh)
 
 // #############################################################################################
 
-void PtFit_PreparePDFs_modRA_all(Bool_t bStopWeigh)
+void PtFit_PreparePDFs_modRA_all()
 {
     // Here the PDFs with R_A = 7.330 fm (optimal value) are created
-    TString name;
-    if(!bStopWeigh) name = "Trees/" + str_subfolder + "PtFit/MCTemplates_modRA_all.root";
-    else            name = "Trees/" + str_subfolder + "PtFit/MCTemplates_modRA_all_stopWeigh.root";
+    TString name = "Trees/" + str_subfolder + "PtFit/MCTemplates_modRA_all.root";
     TFile *file = TFile::Open(name.Data(),"read");
     if(file){
         Printf("PDFs with R_A = 7.330 already created.");
@@ -302,7 +297,6 @@ void PtFit_PreparePDFs_modRA_all(Bool_t bStopWeigh)
                                 "hIncJ_modRA_7.330",
                                 "hCohP_modRA_7.330",
                                 "hIncP_modRA_7.330"};
-        if(bStopWeigh) for(Int_t iMC = 0; iMC < 4; iMC++) str_modRA[iMC] += "_stopWeigh";
 
         TList *l = new TList();
         TH1D *hRec[2] = { NULL };
@@ -368,14 +362,7 @@ void PtFit_PreparePDFs_modRA_all(Bool_t bStopWeigh)
                 PtFit_FillHistogramsMC(iMC, hRec[iMC]);
 
                 h_modRA[iMC] = (TH1D*)hRec[iMC]->Clone(str_modRA[iMC].Data());
-                h_modRA[iMC]->SetTitle(str_modRA[iMC].Data());   
-
-                // If we want to stop weighing at fPtStopWeigh[iMC], set all ratios above this value to 1.0
-                if(bStopWeigh){
-                    for(Int_t iBin = 1; iBin <= nPtBins_PtFit; iBin++){
-                        if(hRatios[iMC]->GetBinCenter(iBin) > fPtStopWeigh[iMC]) hRatios[iMC]->SetBinContent(iBin, 1.0);
-                    }  
-                }
+                h_modRA[iMC]->SetTitle(str_modRA[iMC].Data());
 
                 // Correct the shape of reconstructed events by the ratios
                 h_modRA[iMC]->Multiply(hRatios[iMC]);
@@ -443,8 +430,6 @@ void PtFit_PreparePDFs_modRA_all(Bool_t bStopWeigh)
 
             // Print the results to the text file
             TString name_out = "Results/" + str_subfolder + Form("PtFit_NoBkg/modRA_all_ratios/%s_RA_7.330", NamesPDFs[iMC].Data());
-            if(!bStopWeigh) name_out += ".txt";
-            else            name_out += "_stopWeigh.txt"; 
             ofstream outfile(name_out.Data());
             outfile << "pT_low\tpT_upp\tnEvOld\tnEvNew\tratio\n";
             for(Int_t iBin = 1; iBin <= nPtBins_PtFit; iBin++){
@@ -454,8 +439,32 @@ void PtFit_PreparePDFs_modRA_all(Bool_t bStopWeigh)
             }
             outfile.close();
         }
-        // Save results to the output file
-        // Create the output file
+        // to plot the results vs pT^2 (or |t|) on the x-axis
+        TH1D *h_modRA_vsT[4] = { NULL };
+        for(Int_t iMC = 0; iMC < 4; iMC++)
+        {
+            h_modRA_vsT[iMC] = new TH1D((str_modRA[iMC] + "_vsT").Data(),(str_modRA[iMC] + "_vsT").Data(),nPtBins_PtFit,tBoundaries_PtFit);
+            l->Add(h_modRA_vsT[iMC]);
+            for(Int_t iBin = 1; iBin <= h_modRA[iMC]->GetNbinsX(); iBin++)
+            {
+                h_modRA_vsT[iMC]->SetBinContent(iBin, h_modRA[iMC]->GetBinContent(iBin));
+            }
+            for(Int_t iBin = 1; iBin <= h_modRA[iMC]->GetNbinsX(); iBin++)
+            {
+                Printf("bin %i: pT low: %.3f, pT upp: %.3f, t low: %.4f, t upp: %.4f, h vs pT: %.2f, h vs pT2: %.2f",
+                    iBin, 
+                    h_modRA[iMC]->GetBinLowEdge(iBin), 
+                    h_modRA[iMC]->GetBinLowEdge(iBin+1),
+                    h_modRA_vsT[iMC]->GetBinLowEdge(iBin), 
+                    h_modRA_vsT[iMC]->GetBinLowEdge(iBin+1),
+                    h_modRA[iMC]->GetBinContent(iBin),
+                    h_modRA_vsT[iMC]->GetBinContent(iBin)
+                );                
+            }
+        }
+
+        // save results to the output file
+        // create the output file
         TFile *f = new TFile(name.Data(),"RECREATE");
         l->Write("HistList", TObject::kSingleKey);
         l->ls();

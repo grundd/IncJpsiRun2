@@ -30,31 +30,55 @@ void CrossSec_Fiducial(Int_t iAnalysis)
 
 void PlotFiducialCrossSection()
 {
-    Double_t MarkerSize = 2.;
+    Double_t MarkerSize = 1.5;
     // integrate data in 0.04 < |t| < 1.0 GeV^2
     Double_t int_data(0.);
     Double_t int_uncr_low(0), int_uncr_upp(0);
     Double_t int_corr_low(0), int_corr_upp(0);
+    Double_t int_stat_low(0), int_stat_upp(0);
+    Double_t int_syst_uncr_low(0), int_syst_uncr_upp(0);
+    Double_t int_syst_corr_low(0), int_syst_corr_upp(0);
     for(Int_t i = 0; i < nPtBins; i++)
     {
         Double_t t_low = gr_data_uncr->GetPointX(i) - gr_data_uncr->GetErrorXlow(i);
         Double_t t_upp = gr_data_uncr->GetPointX(i) + gr_data_uncr->GetErrorXhigh(i);
-        int_data     += gr_data_uncr->GetPointY(i) * (t_upp - t_low);
+        int_data     +=  gr_data_uncr->GetPointY(i) * (t_upp - t_low);
         int_uncr_low += (gr_data_uncr->GetPointY(i) - gr_data_uncr->GetErrorYlow(i)) * (t_upp - t_low);
         int_uncr_upp += (gr_data_uncr->GetPointY(i) + gr_data_uncr->GetErrorYhigh(i)) * (t_upp - t_low);
         int_corr_low += (gr_data_corr->GetPointY(i) - gr_data_corr->GetErrorYlow(i)) * (t_upp - t_low);
         int_corr_upp += (gr_data_corr->GetPointY(i) + gr_data_corr->GetErrorYhigh(i)) * (t_upp - t_low);
+        int_stat_low += (gr_data_stat->GetPointY(i) - gr_data_stat->GetErrorYlow(i)) * (t_upp - t_low);
+        int_stat_upp += (gr_data_stat->GetPointY(i) + gr_data_stat->GetErrorYhigh(i)) * (t_upp - t_low);
+        int_syst_uncr_low += (gr_data_syst_uncr->GetPointY(i) - gr_data_syst_uncr->GetErrorYlow(i)) * (t_upp - t_low);
+        int_syst_uncr_upp += (gr_data_syst_uncr->GetPointY(i) + gr_data_syst_uncr->GetErrorYhigh(i)) * (t_upp - t_low);
+        int_syst_corr_low += (gr_data_syst_corr->GetPointY(i) - gr_data_syst_corr->GetErrorYlow(i)) * (t_upp - t_low);
+        int_syst_corr_upp += (gr_data_syst_corr->GetPointY(i) + gr_data_syst_corr->GetErrorYhigh(i)) * (t_upp - t_low);
     }
     Double_t err_uncr_low = int_data - int_uncr_low;
-    Double_t err_corr_low = int_data - int_corr_low;
     Double_t err_uncr_upp = int_uncr_upp - int_data;
+    Double_t err_corr_low = int_data - int_corr_low;
     Double_t err_corr_upp = int_corr_upp - int_data;
+    Double_t err_stat_low = int_data - int_stat_low;
+    Double_t err_stat_upp = int_stat_upp - int_data;
+    Double_t err_syst_uncr_low = int_data - int_syst_uncr_low;
+    Double_t err_syst_uncr_upp = int_syst_uncr_upp - int_data;
+    Double_t err_syst_corr_low = int_data - int_syst_corr_low;
+    Double_t err_syst_corr_upp = int_syst_corr_upp - int_data;
     Double_t err_tot = TMath::Sqrt(TMath::Power(err_uncr_low, 2) + TMath::Power(err_corr_low, 2));
     Printf(" +++++++++++++++++++++++++++++++++++++++");
-    Printf(" err uncr low: %.3f", err_uncr_low * 1e3);
-    Printf(" err uncr upp: %.3f", err_uncr_upp * 1e3);
-    Printf(" err corr low: %.3f", err_corr_low * 1e3);
-    Printf(" err corr upp: %.3f", err_corr_upp * 1e3);
+    Printf(" errors: [mub]");
+    Printf(" uncr low: %.3f", err_uncr_low * 1e3);
+    Printf(" uncr upp: %.3f", err_uncr_upp * 1e3);
+    Printf(" corr low: %.3f", err_corr_low * 1e3);
+    Printf(" corr upp: %.3f", err_corr_upp * 1e3);
+    Printf(" stat low: %.3f", err_stat_low * 1e3);
+    Printf(" stat upp: %.3f", err_stat_upp * 1e3);
+    Printf(" syst uncr low: %.3f", err_syst_uncr_low * 1e3);
+    Printf(" syst uncr upp: %.3f", err_syst_uncr_upp * 1e3);    
+    Printf(" syst corr low: %.3f", err_syst_corr_low * 1e3);
+    Printf(" syst corr upp: %.3f", err_syst_corr_upp * 1e3);    
+    Printf(" data: (%.3f pm %.3f (stat.) pm %.3f (uncr. syst.) pm %.3f (corr. syst.)) mub", 
+        int_data * 1e3, err_stat_low * 1e3, err_syst_uncr_low * 1e3, err_syst_corr_low * 1e3);
     Printf(" data: (%.3f pm %.3f (uncr.) pm %.3f (corr.)) mub", int_data * 1e3, err_uncr_low * 1e3, err_corr_low * 1e3);
     Printf(" data: (%.3f pm %.3f) mub (uncertainties added in quadrature)", int_data * 1e3, err_tot * 1e3);
     Printf(" +++++++++++++++++++++++++++++++++++++++");
@@ -89,14 +113,18 @@ void PlotFiducialCrossSection()
         IntegrateModel(i,0.04,1.00,integral,avgt);
         integrals[i] = integral * 1e3;
     }
-    TGraph *gr_models = new TGraph();
+    gStyle->SetEndErrorSize(4); 
+    TGraphErrors *gr_models = new TGraphErrors();
     Double_t y = 7.;
     for(Int_t i = 0; i < 7; i++)
     {
         gr_models->SetPoint(i,integrals[i],y);
-        gr_models->SetMarkerStyle(kFullCross);
+        if(i == 5 || i == 6) gr_models->SetPointError(i,integrals[i]*(1 - GSZ_err_scale_low[i-5]),0.);
+        else                 gr_models->SetPointError(i,0.,0.);
+        gr_models->SetMarkerStyle(kFullCircle);
         gr_models->SetMarkerColor(kBlack);
         gr_models->SetMarkerSize(MarkerSize);
+        gr_models->SetLineWidth(3.);
         y = y - 1.;
     }  
     gr_err_tot->GetYaxis()->SetTickLength(0.0);

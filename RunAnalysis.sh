@@ -1,6 +1,6 @@
 # shell script must be first allowed: chmod +x RunAnalysis.sh
 #!/bin/bash
-# to run it do (inside Ali shell):
+# to run it do (inside ali shell):
 # ./RunAnalysis.sh
 
 # define the type of the analysis (see AnalysisConfig.h)
@@ -8,7 +8,7 @@ declare -i iAnalysis=3
 # define if compile each macro
 declare -i compile=0
 # define which macros to run
-declare -a arr=("0" "1" "2" "3" "4" "5" "6" "7y" "8y" "9y" "10y")
+declare -a arr=("0" "1" "2" "3" "4" "5" "6" "7" "8" "9y" "10")
 #declare -a arr=("0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "10")
 #declare -a arr=("0" "1y" "2y" "3y" "4y" "5y" "6y" "7y" "8y" "9y" "10y")
 
@@ -81,12 +81,16 @@ then
     fi
 fi
 
-# 6) AxE in pT bins:
+# 6) AxE in pT bins and veto efficiency:
 if [ "${arr[6]}" = "6y" ] 
 then
     if [[ "$compile" -eq 0 ]]
-    then root -q AxE_PtBins.C\($iAnalysis\)
-    else root -q AxE_PtBins.C+\($iAnalysis\)
+    then 
+        root -q AxE_PtBins.C\($iAnalysis\)
+        root -q VetoEfficiency.C\($iAnalysis\)
+    else 
+        root -q AxE_PtBins.C+\($iAnalysis\)
+        root -q VetoEfficiency.C+\($iAnalysis\)
     fi
 fi
 
@@ -135,24 +139,30 @@ fi
 # 9) Photonuclear cross section:
 #    - calculate the average |t| per bin based on STARlight predictions
 #    - calculate the photonuclear cross section
-#    - plot the photonuclear cross section
-#    - plot the photonuclear cross section with ratios
-#    - plot the total cross section (integrated over |t|)
+#    - prepare the histograms and graphs for the data and all the models
+#    - plot the photonuclear cross section: measurement and my plot
+#    - plot the photonuclear cross section: paper plot with ratios
+#    - plot the fiducial cross section (integrated over |t| within 0.04 and 1.00)
+#    - do exponential fits of the data and all the models
 if [ "${arr[9]}" = "9y" ] 
 then
     if [[ "$compile" -eq 0 ]]
     then 
         root -q STARlight_tVsPt.C\($iAnalysis\)
-        root -q PhotoCrossSec_Calculate.C\($iAnalysis\)
-        root -q PhotoCrossSec_Plot.C\($iAnalysis\)
-        root -q PhotoCrossSec_PlotWithRatios.C\($iAnalysis\)
-        root -q PhotoCrossSec_Total.C\($iAnalysis\)
+        root -q CrossSec_Calculate.C\($iAnalysis\)
+        root -q CrossSec_PrepareHistosAndGraphs.C\($iAnalysis\)
+        root -q CrossSec_Plot.C\($iAnalysis\)
+        root -q CrossSec_PlotWithRatios.C\($iAnalysis\)
+        root -q CrossSec_Fiducial.C\($iAnalysis\)
+        root -q CrossSec_ExpFits.C\($iAnalysis\)
     else 
         root -q STARlight_tVsPt.C+\($iAnalysis\)
-        root -q PhotoCrossSec_Calculate.C+\($iAnalysis\)
-        root -q PhotoCrossSec_Plot.C+\($iAnalysis\)
-        root -q PhotoCrossSec_PlotWithRatios.C+\($iAnalysis\)
-        root -q PhotoCrossSec_Total.C+\($iAnalysis\)
+        root -q CrossSec_Calculate.C+\($iAnalysis\)
+        root -q CrossSec_PrepareHistosAndGraphs.C+\($iAnalysis\)
+        root -q CrossSec_Plot.C+\($iAnalysis\)
+        root -q CrossSec_PlotWithRatios.C+\($iAnalysis\)
+        root -q CrossSec_Fiducial.C+\($iAnalysis\)
+        root -q CrossSec_ExpFits.C+\($iAnalysis\)
     fi
 fi
 

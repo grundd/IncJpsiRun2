@@ -34,6 +34,10 @@
 using namespace RooFit;
 
 TString NamesPDFs[6] = {"CohJ","IncJ","CohP","IncP","Bkgr","Diss"};
+TString hNames_modRA[4] = {"hCohJ_modRA_7.330",
+                           "hIncJ_modRA_7.330",
+                           "hCohP_modRA_7.330",
+                           "hIncP_modRA_7.330"};
 
 // #############################################################################################
 // Options of pT fit without background:
@@ -224,6 +228,8 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t ifD = 0)
     TH1D *hCohP = NULL;
     TH1D *hIncP = NULL;
 
+    //TH1D *h_vsT[5] = { NULL };
+
     // if hIncJ, hCohP and hIncP taken from SL with R_A = 6.624 fm
     if(iRecShape == 0 || iRecShape == 1 || iRecShape == 2 || iRecShape == 3 || iRecShape > 1000)
     {
@@ -280,11 +286,6 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t ifD = 0)
 
         l_modRA->ls();
 
-        TString hNames_modRA[4] = {"hCohJ_modRA_7.330",
-                                   "hIncJ_modRA_7.330",
-                                   "hCohP_modRA_7.330",
-                                   "hIncP_modRA_7.330"};
-
         // 1) kCohJpsiToMu
         hCohJ = (TH1D*)l_modRA->FindObject(hNames_modRA[0].Data());
         if(hCohJ) Printf("Histogram %s loaded.", hCohJ->GetName());
@@ -308,7 +309,9 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t ifD = 0)
     // Create PDFs
     // Definition of roofit variables
     RooRealVar fPt("fPt", "fPt", fPtCutLow_PtFit, fPtCutUpp_PtFit);
+    RooRealVar fPt2("fPt2", "fPt2", fPtCutLow_PtFit*fPtCutLow_PtFit, fPtCutUpp_PtFit*fPtCutUpp_PtFit);
     RooArgSet fSetOfVariables(fPt);
+    RooArgSet fSetOfVariables2(fPt2);
 
     // 1) kCohJpsiToMu
     // iRecShape == 0, 1, 4, >1000
@@ -359,8 +362,38 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t ifD = 0)
     RooDataHist DHisDiss("DHisDiss","DHisDiss",fPt,hDiss);
     RooHistPdf  hPDFDiss("hPDFDiss","hPDFDiss",fSetOfVariables,DHisDiss,0);
 
+    /*
+    // vs pT^2
+    TString name_file = "Trees/" + str_subfolder + "PtFit/MCTemplates_modRA_all.root";
+    TFile *f_modRA = TFile::Open(name_file.Data(),"read");
+    if(f_modRA) Printf("Input file %s loaded.", f_modRA->GetName()); 
+    TList *l_modRA = (TList*) f_modRA->Get("HistList");
+    if(l_modRA) Printf("List %s loaded.", l_modRA->GetName()); 
+    l_modRA->ls();
+    // load histograms with pT^2 on the x-axis
+    for(Int_t i = 0; i < 4; i++)
+    {
+        h_vsT[i] = (TH1D*)l_modRA->FindObject((hNames_modRA[i] + "_vsT").Data());
+        if(h_vsT[i]) Printf("Histogram %s loaded.", h_vsT[i]->GetName());
+    }
+    f_modRA->Close();
+    RooDataHist DHisCohJ_vsT("DHisCohJ_vsT","DHisCohJ_vsT",fPt2,h_vsT[0]);
+    RooHistPdf  hPDFCohJ_vsT("hPDFCohJ_vsT","hPDFCohJ_vsT",fSetOfVariables2,DHisCohJ_vsT,0);
+    RooDataHist DHisIncJ_vsT("DHisIncJ_vsT","DHisIncJ_vsT",fPt2,h_vsT[1]);
+    RooHistPdf  hPDFIncJ_vsT("hPDFIncJ_vsT","hPDFIncJ_vsT",fSetOfVariables2,DHisIncJ_vsT,0);
+    RooDataHist DHisCohP_vsT("DHisCohP_vsT","DHisCohP_vsT",fPt2,h_vsT[2]);
+    RooHistPdf  hPDFCohP_vsT("hPDFCohP_vsT","hPDFCohP_vsT",fSetOfVariables2,DHisCohP_vsT,0);
+    RooDataHist DHisIncP_vsT("DHisIncP_vsT","DHisIncP_vsT",fPt2,h_vsT[3]);
+    RooHistPdf  hPDFIncP_vsT("hPDFIncP_vsT","hPDFIncP_vsT",fSetOfVariables2,DHisIncP_vsT,0);
+    h_vsT[4] = new TH1D("hDiss_vsT","hDiss_vsT",hDiss->GetNbinsX(),tBoundaries_PtFit);
+    for(Int_t iBin = 1; iBin <= hDiss->GetNbinsX(); iBin++) h_vsT[4]->SetBinContent(iBin,hDiss->GetBinContent(iBin));
+    RooDataHist DHisDiss_vsT("DHisDiss_vsT","DHisDiss_vsT",fPt2,h_vsT[4]);
+    RooHistPdf  hPDFDiss_vsT("hPDFDiss_vsT","hPDFDiss_vsT",fSetOfVariables2,DHisDiss_vsT,0);
+
     // Close the file with MC templates (PDFs)
     file->Close();
+    */
+
     //###################################################################################
 
     // Get the binned dataset
@@ -370,11 +403,19 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t ifD = 0)
     list = (TList*) file->Get("HistList");
     if(list) Printf("List %s loaded.", list->GetName()); 
 
-    TH1D *hData = (TH1D*)list->FindObject("hNSigPerBin");
+    TH1D *hData = (TH1D*)list->FindObject("hSig_vsPt");
     if(hData) Printf("Histogram %s loaded.", hData->GetName());
+    /*
+    TH1D *hData_vsT = (TH1D*)list->FindObject("hSig_vsT");
+    if(hData_vsT) Printf("Histogram %s loaded.", hData_vsT->GetName());
+    */
 
     RooDataHist DHisData("DHisData","DHisData",fPt,hData);
     Printf("Binned data with subtracted background loaded.");
+    /*
+    RooDataHist DHisData_vsT("DHisData_vsT","DHisData_vsT",fPt2,hData_vsT);
+    Printf("Binned data (vs pt^2) with subtracted background loaded.");
+    */
 
     // Calculate the number of entries
     Double_t N_all = 0;
@@ -414,6 +455,12 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t ifD = 0)
             RooArgList(NCohJ, NIncJ, NCohP, NIncP, NDiss)
         );        
     }
+    /*
+    RooAddPdf *Mod2 = new RooAddPdf("Mod2","Sum of all PDFs",
+            RooArgList(hPDFCohJ_vsT, hPDFIncJ_vsT, hPDFCohP_vsT, hPDFIncP_vsT, hPDFDiss_vsT),
+            RooArgList(NCohJ, NIncJ, NCohP, NIncP, NDiss)
+    );
+    */
 
     // Perform fitting
     RooFitResult *ResFit = Mod->fitTo(DHisData,Extended(kTRUE),Range(""),SumW2Error(kTRUE),Save()); // Range("") => full range
@@ -836,6 +883,7 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t ifD = 0)
     PtFrameLog->GetXaxis()->SetTitle("#it{p}_{T} (GeV/#it{c})");
     PtFrameLog->GetXaxis()->SetTitleSize(0.05);
     PtFrameLog->GetXaxis()->SetLabelSize(0.05);
+    PtFrameLog->GetXaxis()->SetDecimals(1);
     // Set Y axis
     //PtFrame->GetYaxis()->SetTitle(Form("Counts per bin"));
     PtFrameLog->GetYaxis()->SetTitle(Form("d#it{N}/d#it{p}_{T}"));
@@ -849,6 +897,40 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t ifD = 0)
     TCanvas *cPtLog = new TCanvas("cPtLog","cPtLog",900,600);
     PtFit_SetCanvas(cPtLog, kTRUE);
     PtFrameLog->Draw("][");
+
+    /*
+    // draw the plot with pT squared on the x-axis
+    // log scale on the vertical axis 
+    // log scale on the x-axis as well
+    RooPlot* Pt2FrameLog = fPt2.frame(Title("pT2 fit log scale"));
+    DHisData_vsT.plotOn(Pt2FrameLog,Name("DHisData_vsT"),MarkerStyle(20), MarkerSize(1.),Binning(fTBins_PtFit));
+    Mod2->plotOn(Pt2FrameLog,Name("hPDFCohJ_vsT"),Components(hPDFCohJ_vsT),LineColor(222) ,LineStyle(1),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
+    Mod2->plotOn(Pt2FrameLog,Name("hPDFIncJ_vsT"),Components(hPDFIncJ_vsT),LineColor(kRed),LineStyle(1),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
+    Mod2->plotOn(Pt2FrameLog,Name("hPDFCohP_vsT"),Components(hPDFCohP_vsT),LineColor(222), LineStyle(7),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
+    Mod2->plotOn(Pt2FrameLog,Name("hPDFIncP_vsT"),Components(hPDFIncP_vsT),LineColor(kRed),LineStyle(7),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
+    Mod2->plotOn(Pt2FrameLog,Name("hPDFDiss_vsT"),Components(hPDFDiss_vsT),LineColor(15),  LineStyle(1),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
+    Mod2->plotOn(Pt2FrameLog,Name("Mod2"),                                 LineColor(215), LineStyle(1),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
+    Pt2FrameLog->SetAxisRange(0.0001,4.,"X");
+    // Set X axis
+    Pt2FrameLog->GetXaxis()->SetTitle("#it{p}_{T}^{2} (GeV^{2}/#it{c}^{2})");
+    Pt2FrameLog->GetXaxis()->SetTitleSize(0.05);
+    Pt2FrameLog->GetXaxis()->SetLabelSize(0.05);
+    // Set Y axis
+    //PtFrame->GetYaxis()->SetTitle(Form("Counts per bin"));
+    Pt2FrameLog->GetYaxis()->SetTitle(Form("d#it{N}/d#it{p}_{T}^{2}"));
+    Pt2FrameLog->GetYaxis()->SetTitleSize(0.05);
+    Pt2FrameLog->GetYaxis()->SetTitleOffset(0.95);
+    Pt2FrameLog->GetYaxis()->SetLabelSize(0.05);
+    Pt2FrameLog->GetYaxis()->SetLabelOffset(0.01);
+    Pt2FrameLog->GetYaxis()->SetMaxDigits(2);
+    Pt2FrameLog->GetYaxis()->SetDecimals(1);
+    Pt2FrameLog->GetYaxis()->SetRangeUser(1e-1,1e5);
+    // Draw
+    TCanvas *cPt2Log = new TCanvas("cPt2Log","cPt2Log",900,600);
+    PtFit_SetCanvas(cPt2Log, kTRUE);
+    cPt2Log->SetLogx();
+    Pt2FrameLog->Draw("][");
+    */
 
     // Get chi2 
     Double_t chi2 = PtFrameLog->chiSquare("Mod","DHisData",ResFit->floatParsFinal().getSize()); // last argument = number of parameters
@@ -897,11 +979,9 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t ifD = 0)
 
     // Print the results to pdf and png
     cCM->Print((name + "_CM.pdf").Data());
-    cCM->Print((name + "_CM.png").Data());
     cPt->Print((name + ".pdf").Data());
-    cPt->Print((name + ".png").Data());
     cPtLog->Print((name + "_log.pdf").Data());
-    cPtLog->Print((name + "_log.png").Data());
+    //if(iRecShape == 4) cPt2Log->Print((name + "_log_vsPt2.pdf").Data());
     // If we study the optimal value of R_A, print chi2 vs. R_A to a text file
     if(iRecShape > 1000){
         outfile.open((name + "_chi2.txt").Data());
@@ -913,6 +993,60 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t ifD = 0)
     delete cCM;
     delete cPt;
     delete cPtLog;
+    //delete cPt2Log;
+
+    // ****************************************************************
+    // Draw the result: paper figure
+    if(iRecShape == 4 && ifD == 0)
+    {
+        TCanvas *cPaper = new TCanvas("cPaper","cPaper",900,800);
+        cPaper->SetTopMargin(0.03);
+        cPaper->SetBottomMargin(0.12);
+        cPaper->SetRightMargin(0.03);
+        cPaper->SetLeftMargin(0.14);
+        cPaper->SetLogy();
+        cPaper->cd();
+        PtFrameLog->GetYaxis()->SetTitleOffset(1.3);
+        //fFrameM->GetYaxis()->SetNdivisions(505);
+        PtFrameLog->Draw();
+
+        TLegend *lx = new TLegend(0.26,0.90,0.90,0.96);
+        lx->AddEntry((TObject*)0,"ALICE, Pb#minusPb #sqrt{#it{s}_{NN}} = 5.02 TeV","");
+        lx->SetMargin(0.);
+        lx->SetTextSize(0.05);
+        lx->SetBorderSize(0);
+        lx->SetFillStyle(0);
+        lx->Draw();
+
+        TLegend *ly = new TLegend(0.24,0.780,0.64,0.876);
+        ly->AddEntry((TObject*)0,"(3.0 < #it{m}_{#mu#mu} < 3.2) GeV/#it{c}^{2}","");
+        ly->AddEntry((TObject*)0,"|#it{y}| < 0.8","");
+        ly->SetMargin(0.);
+        ly->SetTextSize(0.038);
+        ly->SetBorderSize(0);
+        ly->SetFillStyle(0);
+        ly->Draw();
+
+        TLegend *lz = new TLegend(0.53,0.444,0.93,0.876);
+        lz->AddEntry((TObject*)0,"J/#psi #rightarrow #mu^{+} #mu^{-}","");
+        lz->AddEntry((TObject*)0,"UPC, L_{int} = (232 #pm 6) #mub^{-1}","");
+        lz->AddEntry("DHisData","ALICE measurement", "EP");
+        lz->AddEntry("hPDFCohJ","coherent J/#psi", "L");
+        lz->AddEntry("hPDFIncJ","incoherent J/#psi", "L");
+        lz->AddEntry("hPDFDiss","inc. J/#psi with nucleon diss.", "L");
+        lz->AddEntry("hPDFCohP","J/#psi from coh. #psi' decay", "L");
+        lz->AddEntry("hPDFIncP","J/#psi from inc. #psi' decay", "L");
+        lz->AddEntry("Mod","model", "L");
+        lz->SetMargin(0.20);
+        lz->SetTextSize(0.038);
+        lz->SetBorderSize(0);
+        lz->SetFillStyle(0);
+        lz->Draw();
+
+        cPaper->Print("Results/" + str_subfolder + "_PaperFigures/ptFit.pdf");
+        delete cPaper;
+    }
+    // ****************************************************************
 
     return;
 }

@@ -80,13 +80,13 @@ void PlotResults(Double_t pT2_min, Double_t pT2_max)
     c->SetLeftMargin(0.1);
 
     // a vertical axis
-    Hist->GetYaxis()->SetTitle("|#it{t}| or #it{p}_{T, pom}^{2} (GeV^{2}/#it{c}^{2})");
+    Hist->GetYaxis()->SetTitle("|#it{t}| or #it{p}_{T, pom}^{2}#it{c}^{2} (GeV^{2})");
     Hist->GetYaxis()->SetTitleSize(0.05);
     Hist->GetYaxis()->SetLabelSize(0.05);
     Hist->GetYaxis()->SetTitleOffset(0.915);
     Hist->GetYaxis()->SetDecimals(1);
     // a horizontal axis
-    Hist->GetXaxis()->SetTitle("#it{p}_{T, J/#psi}^{2} (GeV^{2}/#it{c}^{2})");
+    Hist->GetXaxis()->SetTitle("#it{p}_{T, J/#psi}^{2}#it{c}^{2} (GeV^{2})");
     Hist->GetXaxis()->SetTitleSize(0.05);
     Hist->GetXaxis()->SetTitleOffset(1.3);
     Hist->GetXaxis()->SetLabelSize(0.05);
@@ -225,7 +225,7 @@ void CorrectionPt2ToT(Int_t opt_err_bars)
     hCorrection->GetYaxis()->SetTitleOffset(1.4);
     hCorrection->GetYaxis()->SetDecimals(3);
     // a horizontal axis
-    hCorrection->GetXaxis()->SetTitle("|#it{t}| or #it{p}_{T, pom}^{2} (GeV^{2}/#it{c}^{2})");
+    hCorrection->GetXaxis()->SetTitle("|#it{t}| or #it{p}_{T, pom}^{2}#it{c}^{2} (GeV^{2})");
     hCorrection->GetXaxis()->SetTitleSize(0.05);
     hCorrection->GetXaxis()->SetTitleOffset(1.3);
     hCorrection->GetXaxis()->SetLabelSize(0.05);

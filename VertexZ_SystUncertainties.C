@@ -24,7 +24,7 @@ void NewCutZ_AxE_PtBins(Double_t fCutZ);
 void ConnectTreeVariables_tData(TTree *t);
 Double_t CalculateErrorBinomial(Double_t k, Double_t n);
 
-Bool_t debug = kFALSE;
+Bool_t debug = kTRUE;
 
 void VertexZ_SystUncertainties(Int_t iAnalysis)
 {
@@ -232,7 +232,7 @@ void NewCutZ_CompareCounts()
     for(Int_t i = 0; i < nPtBins; i++)
     {
         c->cd(i+1);
-        gr[i] = new TGraphErrors(1,&nNRecRat_val[i],&nEvRat_val[i],&nNRecRat_err2[i],&nEvRat_err2[i]);
+        gr[i] = new TGraphErrors(1,&nNRecRat_val[i],&nEvRat_val[i],&nNRecRat_err3[i],&nEvRat_err3[i]);
         gr[i]->SetMarkerColor(kBlue);
         gr[i]->SetMarkerStyle(5);
         gr[i]->SetMarkerSize(2);
@@ -265,8 +265,8 @@ void NewCutZ_CompareCounts()
         if(i == 0){ x_low = 0.19; x_upp = 0.29;}
         else      { x_low = 0.04; x_upp = 0.16;}
         lg[i] = new TLegend(x_low,0.72,x_upp,0.95);
-        lg[i]->AddEntry((TObject*)0,Form("R_{N}^{10/15} = (%.1f pm %.1f)%%", nEvRat_val[i]*100, nEvRat_err2[i]*100),"");
-        lg[i]->AddEntry((TObject*)0,Form("R_{A#times#varepsilon}^{10/15} = (%.1f pm %.1f)%%", nNRecRat_val[i]*100, nNRecRat_err2[i]*100),"");
+        lg[i]->AddEntry((TObject*)0,Form("R_{N}^{10/15} = (%.1f pm %.1f)%%", nEvRat_val[i]*100, nEvRat_err3[i]*100),"");
+        lg[i]->AddEntry((TObject*)0,Form("R_{A#times#varepsilon}^{10/15} = (%.1f pm %.1f)%%", nNRecRat_val[i]*100, nNRecRat_err3[i]*100),"");
         lg[i]->AddEntry((TObject*)0,Form("change = %.1f%%", syst_uncr[i]),"");
         lg[i]->AddEntry((TObject*)0,Form("syst. uncr. = %.1f%%", TMath::Abs(syst_uncr[i])),"");
         lg[i]->SetTextSize(0.05);

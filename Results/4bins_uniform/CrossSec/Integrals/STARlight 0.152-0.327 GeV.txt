@@ -1,0 +1,4 @@
+model STARlight
+range (0.152,0.327) GeV
+integral: 4.250
+avg |t| : 0.229

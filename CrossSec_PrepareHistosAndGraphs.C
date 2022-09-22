@@ -12,21 +12,16 @@ void CrossSec_PrepareHistosAndGraphs(Int_t iAnalysis)
     InitAnalysis(iAnalysis);
     InitObjects();
 
-    // load graphs
-    LoadGraphs_data();
+    // load graphs of models
     LoadGraphs_SL();
     LoadGraphs_CCK();
     LoadGraphs_MS();
     LoadGraphs_GSZ();
 
-    // integrate the data
-    Printf("Data integral is: %.3f", IntegrateData()*1e3);
-
     // create histograms from the graphs and save them to a file
     TList *lh = new TList(); // list of histograms
     TList *lg = new TList(); // list of graphs
-    lg->Add(gr_data_uncr);
-    lg->Add(gr_data_corr);
+
     for(Int_t i = 0; i < 7; i++)
     {
         CreateHistogramFromGraph(i);
@@ -84,6 +79,13 @@ void CrossSec_PrepareHistosAndGraphs(Int_t iAnalysis)
     }
     lg->Add(gr_GSZ_err_binned[0]);
     lg->Add(gr_GSZ_err_binned[1]);
+
+    // load graphs of data
+    LoadGraphs_data();
+    lg->Add(gr_data_uncr);
+    lg->Add(gr_data_corr);
+    // integrate the data
+    Printf("Data integral is: %.3f", IntegrateData()*1e3);
 
     TFile *f = new TFile("Results/" + str_subfolder + "CrossSec/PrepareHistosAndGraphs/histograms_and_graphs.root","RECREATE");    
     lh->Write("histograms", TObject::kSingleKey);

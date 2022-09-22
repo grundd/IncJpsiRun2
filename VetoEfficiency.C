@@ -335,6 +335,16 @@ void VetoEff_SystUncertainty()
     hSampledEffTotal->GetXaxis()->SetDecimals(2);
     hSampledEffTotal->Draw();
     fGauss->Draw("SAME");
+
+    TLegend *l = new TLegend(0.49,0.78,0.95,0.96);
+    l->AddEntry((TObject*)0,"gaussian fit:","");
+    l->AddEntry((TObject*)0,Form("mean = (%.2f #pm %.2f)%%", fGauss->GetParameter(1) * 1e2, fGauss->GetParError(1) * 1e2),"");
+    l->AddEntry((TObject*)0,Form("std. dev. = (%.2f #pm %.2f)%%", fGauss->GetParameter(2) * 1e2, fGauss->GetParError(2) * 1e2),"");
+    l->SetTextSize(0.05);
+    l->SetBorderSize(0);
+    l->SetFillStyle(0);
+    l->Draw();
+
     cTotal->Print("Results/" + str_subfolder + "VetoEfficiency/SystUncertainty/hSampledEffTotal.pdf");
 
     return;

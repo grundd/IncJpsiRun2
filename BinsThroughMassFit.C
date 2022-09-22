@@ -44,8 +44,6 @@ Double_t PtBinsNew_5bins[6] = {0.2, 0., 0., 0., 0., 1.0};
 Double_t YieldPerBin_val[5] = { 0 };
 Double_t YieldPerBin_err[5] = { 0 };
 
-Bool_t UniformBinYields = kFALSE;
-
 void BinsThroughMassFit(Int_t iAnalysis)
 {
     InitAnalysis(iAnalysis);
@@ -73,7 +71,7 @@ void BinsThroughMassFit(Int_t iAnalysis)
     Double_t correction(0.);
     if(!isPass3) correction = -1.0;
     else         correction = -0.8;
-    if(UniformBinYields) // if uniform bin yields
+    if(areBinYieldsUniform) // if uniform bin yields
     {
         Double_t EvPerBin = (EvTotal / (Double_t)nPtBins) + correction;
         for(Int_t i = 0; i < nPtBins; i++) EvPerBin_arr[i] = EvPerBin;

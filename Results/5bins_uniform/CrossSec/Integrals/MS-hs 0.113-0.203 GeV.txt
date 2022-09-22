@@ -1,0 +1,4 @@
+model MS-hs
+range (0.113,0.203) GeV
+integral: 1.948
+avg |t| : 0.157

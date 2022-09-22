@@ -30,6 +30,9 @@
 TString str_data = "data";
 TGraphAsymmErrors* gr_data_uncr = NULL;
 TGraphAsymmErrors* gr_data_corr = NULL;
+TGraphAsymmErrors* gr_data_stat = NULL;
+TGraphAsymmErrors* gr_data_syst_uncr = NULL;
+TGraphAsymmErrors* gr_data_syst_corr = NULL;
 // order of the models within the analysis: STARlight, CCK-hs, CCK-n, MS-hs, MS-p, GSZ-el+diss, GSZ-el
 TString str_models[7] = {"STARlight",
                          "CCK-hs",
@@ -47,6 +50,16 @@ Int_t n_models[7] = {125, 75, 75, 183, 183, 100, 100};
 Double_t *tBoundaries = NULL;
 Double_t tBoundaries_4bins[5] = { 0 };
 Double_t tBoundaries_5bins[6] = { 0 };
+Int_t lineWidth = 2;
+Color_t colors[7] = {
+    kBlue, // STARlight
+    kRed+1, // CCK-hs
+    kCyan+2, // CCK-n
+    kViolet-1, // MS-hs
+    kGray+2, // MS-p
+    kGreen+2, // GSZ-el+diss
+    kOrange+2 // GSZ-el
+};
 
 void InitObjects()
 {
@@ -56,8 +69,14 @@ void InitObjects()
 
     gr_data_uncr = new TGraphAsymmErrors(nPtBins);
     gr_data_corr = new TGraphAsymmErrors(nPtBins);
+    gr_data_stat = new TGraphAsymmErrors(nPtBins);
+    gr_data_syst_uncr = new TGraphAsymmErrors(nPtBins);
+    gr_data_syst_corr = new TGraphAsymmErrors(nPtBins);
     gr_data_uncr->SetName("gr_data_uncr");
     gr_data_corr->SetName("gr_data_corr");
+    gr_data_stat->SetName("gr_data_stat");
+    gr_data_syst_uncr->SetName("gr_data_syst_uncr");
+    gr_data_syst_corr->SetName("gr_data_syst_corr");
     
     for(Int_t i = 0; i < 7; i++)
     {
@@ -75,7 +94,10 @@ void InitObjects()
     for(Int_t i = 0; i <= nPtBins; i++) tBoundaries[i] = ptBoundaries[i] * ptBoundaries[i];
 }
 
-void LoadGraphs_data(Bool_t print = kFALSE)
+void LoadGraphs_data(Bool_t print = kFALSE, Int_t iModelForAvgT = 1)
+// iModelForAvgT == 0 => SL ... original approach
+// iModelForAvgT == 1 => GSZ-el+diss
+// iModelForAvgT == 2 => MS-hs
 {
     Double_t abs_t_val[5] = { 0 };
     Double_t sig_val[5] = { 0 };
@@ -93,11 +115,17 @@ void LoadGraphs_data(Bool_t print = kFALSE)
         ifs >> bin >> t_low >> t_upp >> sig_val[i] >> sig_err_stat[i] >> sig_err_syst_uncr[i] >> sig_err_syst_corr[i];
     }
     ifs.close();
-    ifs.open("Results/" + str_subfolder + "STARlight_tVsPt/AvgTPerBin.txt");
+    TString str_avgt;
+    if(iModelForAvgT == 0)      str_avgt = "Results/" + str_subfolder + "STARlight_tVsPt/AvgTPerBin.txt";
+    else if(iModelForAvgT == 1) str_avgt = "Results/" + str_subfolder + "CrossSec/PrepareHistosAndGraphs/AverageT/" + str_models[5] + ".txt";
+    else if(iModelForAvgT == 2) str_avgt = "Results/" + str_subfolder + "CrossSec/PrepareHistosAndGraphs/AverageT/" + str_models[3] + ".txt";
+    else return;
+    ifs.open(str_avgt.Data());
     for(Int_t i = 0; i < nPtBins; i++)
     {
-        Int_t bin;
-        ifs >> bin >> abs_t_val[i];
+        Int_t bin; Double_t tlow, tupp;
+        if(iModelForAvgT == 0) ifs >> bin >> abs_t_val[i];
+        else                   ifs >> tlow >> tupp >> abs_t_val[i];
     }
     ifs.close();
     for(Int_t i = 0; i < nPtBins; i++)
@@ -115,6 +143,13 @@ void LoadGraphs_data(Bool_t print = kFALSE)
         gr_data_uncr->SetPointError(i,abs_t_err_low,abs_t_err_upp,sig_err_uncr[i],sig_err_uncr[i]);
         gr_data_corr->SetPoint(i,abs_t_val[i],sig_val[i]);
         gr_data_corr->SetPointError(i,abs_t_err_low,abs_t_err_upp,sig_err_corr[i],sig_err_corr[i]);
+        gr_data_stat->SetPoint(i,abs_t_val[i],sig_val[i]);
+        gr_data_stat->SetPointError(i,abs_t_err_low,abs_t_err_upp,sig_err_stat[i],sig_err_stat[i]);
+        gr_data_syst_uncr->SetPoint(i,abs_t_val[i],sig_val[i]);
+        gr_data_syst_uncr->SetPointError(i,abs_t_err_low,abs_t_err_upp,sig_err_syst_uncr[i],sig_err_syst_uncr[i]);
+        gr_data_syst_corr->SetPoint(i,abs_t_val[i],sig_val[i]);
+        gr_data_syst_corr->SetPointError(i,abs_t_err_low,abs_t_err_upp,sig_err_syst_corr[i],sig_err_syst_corr[i]);
+
         if(print) Printf("bin %i t_low: %.4f t_upp: %.4f sig: %.3f [mub]", i+1, 
             abs_t_val[i] - abs_t_err_low, abs_t_val[i] + abs_t_err_upp, sig_val[i] * 1e3);
     }
@@ -123,6 +158,9 @@ void LoadGraphs_data(Bool_t print = kFALSE)
     {
         gr_data_uncr->Print();
         gr_data_corr->Print();
+        gr_data_stat->Print();
+        gr_data_syst_uncr->Print();
+        gr_data_syst_corr->Print();
     } 
 
     return;
@@ -420,4 +458,44 @@ Bool_t IntegrateModel(Int_t iM, Double_t t_min, Double_t t_max, Double_t &integr
     Printf(" +++++++++++++++++++++++++++++++++++++++");
 
     return kTRUE;
+}
+
+TLegend *SetLegend(Double_t x_leftdown, Double_t y_leftdown, Double_t x_rightup, Double_t y_rightup)
+{
+    TLegend *l = new TLegend(x_leftdown, y_leftdown, x_rightup, y_rightup);
+    l->SetFillColor(0);
+    //l->SetFillStyle(0);
+    l->SetBorderSize(0);
+    return l;
+}
+
+void SetStyle(TGraph* g, Color_t color, Style_t style, Width_t width = 3)
+{
+    g->SetLineColor(color);
+    g->SetLineStyle(style);
+    g->SetLineWidth(width);
+}
+
+void SetLineColorStyleWidth(TGraph *gr, Color_t col, Int_t stl)
+{
+    gr->SetLineColor(col);
+    gr->SetLineStyle(stl);
+    gr->SetLineWidth(lineWidth);
+    return;
+}
+
+void SetMarkerColorStyleSize(TGraph *gr, Color_t col, Int_t stl, Double_t size)
+{
+    gr->SetMarkerColor(col);
+    gr->SetMarkerStyle(stl);
+    gr->SetMarkerSize(size);
+    return;
+}
+
+void SetupSysErrorBox(TGraph* g, Color_t color)
+{
+    g->SetMarkerSize(0);
+    g->SetFillStyle(1001);
+    g->SetFillColorAlpha(color,0.35);
+    SetStyle(g,color,1,0);
 }

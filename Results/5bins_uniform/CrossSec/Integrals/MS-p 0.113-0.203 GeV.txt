@@ -1,0 +1,4 @@
+model MS-p
+range (0.113,0.203) GeV
+integral: 1.825
+avg |t| : 0.156

@@ -21,6 +21,7 @@
 #include "RooBinning.h"
 #include "RooCBShape.h"
 #include "RooAddPdf.h"
+#include "RooWorkspace.h"
 
 using namespace RooFit;
 
@@ -307,8 +308,8 @@ void InvMassFit_DoFit(Int_t opt, Double_t fMCutLow, Double_t fMCutUpp, Double_t 
     InvMassFit_DrawCorrMatrix(cCorrMat,fResFit);
 
     // Draw histogram with fit results
-    TCanvas *cHist = new TCanvas("cHist","cHist",800,600);
-    InvMassFit_SetCanvas(cHist,kFALSE);
+    TCanvas *c1 = new TCanvas("c1","c1",800,600);
+    InvMassFit_SetCanvas(c1,kFALSE);
 
     RooPlot* fFrameM = fM.frame(Title("Mass fit")); 
     fDataSet->plotOn(fFrameM,Name("fDataSet"),Binning(binM),MarkerStyle(20),MarkerSize(1.));
@@ -423,13 +424,54 @@ void InvMassFit_DoFit(Int_t opt, Double_t fMCutLow, Double_t fMCutUpp, Double_t 
     Printf("*** Results printed to %s.***", (str_out + "_bkg.txt").Data());
 
     // Print the plots
-    cHist->Print((str_out + ".pdf").Data());
-    cHist->Print((str_out + ".png").Data());
+    c1->Print((str_out + ".pdf").Data());
+    c1->Print((str_out + ".png").Data());
     cCorrMat->Print((str_out + "_cm.pdf").Data());
     cCorrMat->Print((str_out + "_cm.png").Data());    
 
-    delete cHist;
+    delete c1;
     delete cCorrMat;
+
+    // ****************************************************************
+    // Draw the result: paper figure
+    if(opt == 3)
+    {
+        TCanvas *c2 = new TCanvas("c2","c2",900,800);
+        c2->SetTopMargin(0.03);
+        c2->SetBottomMargin(0.12);
+        c2->SetRightMargin(0.03);
+        c2->SetLeftMargin(0.14);
+        c2->cd();
+        fFrameM->GetYaxis()->SetTitleOffset(1.35);
+        fFrameM->GetYaxis()->SetRangeUser(0.,235.);
+        //fFrameM->GetYaxis()->SetNdivisions(505);
+        fFrameM->Draw();
+
+        TLegend *lx = new TLegend(0.26,0.90,0.90,0.96);
+        lx->AddEntry((TObject*)0,"ALICE, Pb#minusPb #sqrt{#it{s}_{NN}} = 5.02 TeV","");
+        lx->SetMargin(0.);
+        lx->SetTextSize(0.05);
+        lx->SetBorderSize(0);
+        lx->SetFillStyle(0);
+        lx->Draw();
+
+        TLegend *ly = new TLegend(0.56,0.57,0.92,0.85);
+        ly->AddEntry((TObject*)0,"J/#psi #rightarrow #mu^{+} #mu^{-}","");
+        ly->AddEntry((TObject*)0,"UPC, L_{int} = (232 #pm 6) #mub^{-1}","");
+        ly->AddEntry((TObject*)0,"(0.2 < #it{p}_{T} < 1.0) GeV/#it{c}","");
+        ly->AddEntry((TObject*)0,"|#it{y}| < 0.8","");
+        ly->AddEntry((TObject*)0,"#it{N}_{J/#psi} = 512 #pm 26","");
+        //ly->AddEntry((TObject*)0,Form("#chi^{2}/dof = %.2f", chi2),"");
+        ly->SetMargin(0.);
+        ly->SetTextSize(0.042);
+        ly->SetBorderSize(0);
+        ly->SetFillStyle(0);
+        ly->Draw();
+
+        c2->Print("Results/" + str_subfolder + "_PaperFigures/massFit.pdf");
+        delete c2;
+    }
+    // ****************************************************************
 
     return;
 }

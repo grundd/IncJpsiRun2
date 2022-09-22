@@ -23,11 +23,13 @@ Int_t nRuns_18r;
 Bool_t isPass3;
 Bool_t isPIDCalibrated; // if NSigmas in MC data were shifted to zeros
 Bool_t isNParInDSCBFixed; // if the values of the tail parameters "N" in DSCB are fixed to N_DSCB
+Bool_t areBinYieldsUniform; // see the macro BinsThroughMassFit.C
 // Array containing pT bin boundaries (will be created in SetPtBinning.h):
 Double_t *ptBoundaries = NULL;
 Int_t nPtBins;
 // Array containing pT bin boundaries for pT fit (will be created in PtFit_SubtractBackground.h):
 Double_t *ptBoundaries_PtFit = NULL;
+Double_t *tBoundaries_PtFit = NULL;
 Int_t nPtBins_PtFit;
 
 // variables for both pass1 and pass3:

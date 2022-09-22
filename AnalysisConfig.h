@@ -17,38 +17,42 @@ void InitAnalysis(Int_t iAnalysis){
     // pass3, 4bins, calibrated MC PID, N params in DSCB fixed to 10.
     if(iAnalysis == 0)
     {
-        str_subfolder = "4bins_pass3/";
+        str_subfolder = "4bins_uniform/";
         nPtBins = 4;
         isPass3 = kTRUE;
         isPIDCalibrated = kTRUE;
         isNParInDSCBFixed = kTRUE;
+        areBinYieldsUniform = kTRUE;
     }
     // pass3, 5bins, calibrated MC PID, N params in DSCB fixed to 10.
     if(iAnalysis == 1)
     {
-        str_subfolder = "5bins_pass3/";
+        str_subfolder = "5bins_uniform/";
         nPtBins = 5;
         isPass3 = kTRUE;
         isPIDCalibrated = kTRUE;
         isNParInDSCBFixed = kTRUE;
+        areBinYieldsUniform = kTRUE;
     }
     // pass3, 5bins, calibrated MC PID, N params in DSCB left free
     if(iAnalysis == 2)
     {
-        str_subfolder = "5bins_pass3_Nfree/";
+        str_subfolder = "5bins_uniform_Nfree/";
         nPtBins = 5;
         isPass3 = kTRUE;
         isPIDCalibrated = kTRUE;
         isNParInDSCBFixed = kFALSE;
+        areBinYieldsUniform = kTRUE;
     }
     // pass3, 5bins, calibrated MC PID, N params in DSCB left free, NON-UNIFORM BIN YIELDS
     if(iAnalysis == 3)
     {
-        str_subfolder = "5bins_pass3_NonUnfYields/";
+        str_subfolder = "5bins_nonUniform/";
         nPtBins = 5;
         isPass3 = kTRUE;
         isPIDCalibrated = kTRUE;
         isNParInDSCBFixed = kTRUE;
+        areBinYieldsUniform = kFALSE;
     }
     // set reduced run lists for the given pass
     SetReducedRunList(isPass3);

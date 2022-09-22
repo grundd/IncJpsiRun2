@@ -26,7 +26,8 @@
 
 using namespace RooFit;
 
-vector<Double_t> BinsBoundaries_PtFit;
+vector<Double_t> ptBoundaries_PtFit_vec;
+vector<Double_t> tBoundaries_PtFit_vec;
 Double_t N_Jpsi_val, N_Jpsi_err;
 Double_t N_Bkgr_val, N_Bkgr_err;
 
@@ -34,6 +35,7 @@ void PtFit_SetPtBinning();
 void PtFit_PrepareData();
 void PtFit_SubtractBkg();
 void PtFit_DoInvMassFit(Double_t fPtCutLow, Double_t fPtCutUpp, Int_t iBin);
+void PtFit_SetHistogram(TH1D *h);
 
 void PtFit_SubtractBkg(Int_t iAnalysis)
 {
@@ -70,7 +72,8 @@ void PtFit_SetPtBinning()
     */ 
 
     // Fill the vector containing the calculated boundaries
-    BinsBoundaries_PtFit.push_back(0.);
+    ptBoundaries_PtFit_vec.push_back(0.);
+    tBoundaries_PtFit_vec.push_back(0.);
     Double_t fPtNow = 0.0;
     for(Int_t iBinType = 0; iBinType < nBinsTypes; iBinType++){
         Double_t nBinsThisType = (BinsUpTo[iBinType+1] - BinsUpTo[iBinType]) / BinsWidths[iBinType];
@@ -79,14 +82,16 @@ void PtFit_SetPtBinning()
         Int_t iBin = 0;
         while(iBin < nBinsThisType){
             fPtNow += BinsWidths[iBinType];
-            BinsBoundaries_PtFit.push_back(fPtNow);
+            ptBoundaries_PtFit_vec.push_back(fPtNow);
+            tBoundaries_PtFit_vec.push_back(fPtNow*fPtNow);
             iBin++;
         }
     }
     // set the number of bins
-    nPtBins_PtFit = BinsBoundaries_PtFit.size() - 1;
+    nPtBins_PtFit = ptBoundaries_PtFit_vec.size() - 1;
     // set the values of boundaries
-    ptBoundaries_PtFit = &BinsBoundaries_PtFit[0];
+    ptBoundaries_PtFit = &ptBoundaries_PtFit_vec[0];
+    tBoundaries_PtFit = &tBoundaries_PtFit_vec[0];
 
     // Print the bin boundaries separately to a file from which they will be read
     TString name = "Results/" + str_subfolder + "PtFit_SubtractBkg/bins_defined.txt";
@@ -163,55 +168,74 @@ void PtFit_SubtractBkg()
         Printf("Background will be subtracted.");
 
         TList *l = new TList();
-        TH1D *hNSigPerBin = new TH1D("hNSigPerBin", "hNSigPerBin", nPtBins_PtFit, ptBoundaries_PtFit);
-        TH1D *hNBkgPerBin = new TH1D("hNBkgPerBin", "hNBkgPerBin", nPtBins_PtFit, ptBoundaries_PtFit);
-        l->Add(hNSigPerBin);
-        l->Add(hNBkgPerBin);
+        TH1D *hSig_vsPt = new TH1D("hSig_vsPt", "hSig_vsPt", nPtBins_PtFit, ptBoundaries_PtFit);
+        TH1D *hBkg_vsPt = new TH1D("hBkg_vsPt", "hBkg_vsPt", nPtBins_PtFit, ptBoundaries_PtFit);
+        TH1D *hSig_vsT = new TH1D("hSig_vsT", "hSig_vsT", nPtBins_PtFit, tBoundaries_PtFit);
+        TH1D *hBkg_vsT = new TH1D("hBkg_vsT", "hBkg_vsT", nPtBins_PtFit, tBoundaries_PtFit);
+        l->Add(hSig_vsPt);
+        l->Add(hBkg_vsPt);
+        l->Add(hSig_vsT);
+        l->Add(hBkg_vsT);
 
         Double_t fPt = 0.;
         Int_t iBin = 1;
         while(iBin <= nPtBins_PtFit){
             PtFit_DoInvMassFit(ptBoundaries_PtFit[iBin-1], ptBoundaries_PtFit[iBin], iBin);
-            hNSigPerBin->SetBinContent(iBin, N_Jpsi_val);
-            hNSigPerBin->SetBinError  (iBin, N_Jpsi_err);
-            hNBkgPerBin->SetBinContent(iBin, N_Bkgr_val);
-            hNBkgPerBin->SetBinError  (iBin, N_Bkgr_err);
+            // vs pT
+            hSig_vsPt->SetBinContent(iBin, N_Jpsi_val);
+            hSig_vsPt->SetBinError  (iBin, N_Jpsi_err);
+            hBkg_vsPt->SetBinContent(iBin, N_Bkgr_val);
+            hBkg_vsPt->SetBinError  (iBin, N_Bkgr_err);
+            // vs |t|
+            hSig_vsT->SetBinContent(iBin, N_Jpsi_val);
+            hSig_vsT->SetBinError  (iBin, N_Jpsi_err);
+            hBkg_vsT->SetBinContent(iBin, N_Bkgr_val);
+            hBkg_vsT->SetBinError  (iBin, N_Bkgr_err);
             iBin++;
         }
 
-        TCanvas *cHist_sig = new TCanvas("cHist_sig", "cHist_sig", 900, 600);
-        cHist_sig->SetLogy();    
-        hNSigPerBin->GetYaxis()->SetTitle("Counts per bin");
-        hNSigPerBin->GetXaxis()->SetTitle("#it{m}_{#mu#mu} (GeV/#it{c}^{2})");
-        hNSigPerBin->GetXaxis()->SetDecimals(1);
-        // Draw the histogram
-        //hNSigPerBin->Scale(1., "width");
-        hNSigPerBin->Draw("E0");
+        TCanvas *cSig_vsPt = new TCanvas("cSig_vsPt", "cSig_vsPt", 900, 600);
+        cSig_vsPt->SetLogy();
+        PtFit_SetHistogram(hSig_vsPt);
+        hSig_vsPt->Draw("E0");
 
-        TCanvas *cHist_bkg = new TCanvas("cHist_bkg", "cHist_bkg", 900, 600);
-        cHist_bkg->SetLogy();    
-        hNBkgPerBin->GetYaxis()->SetTitle("Counts per bin");
-        hNBkgPerBin->GetXaxis()->SetTitle("#it{m}_{#mu#mu} (GeV/#it{c}^{2})");
-        hNBkgPerBin->GetXaxis()->SetDecimals(1);
-        // Draw the histogram
-        //hNSigPerBin->Scale(1., "width");
-        hNBkgPerBin->Draw("E0");
+        TCanvas *cBkg_vsPt = new TCanvas("cBkg_vsPt", "cBkg_vsPt", 900, 600);
+        cBkg_vsPt->SetLogy();
+        PtFit_SetHistogram(hBkg_vsPt);
+        hBkg_vsPt->Draw("E0");
+    
+        TCanvas *cSig_vsT = new TCanvas("cSig_vsT", "cSig_vsT", 900, 600);
+        cSig_vsT->SetLogy();
+        cSig_vsT->SetLogx();
+        PtFit_SetHistogram(hSig_vsT);
+        Double_t t_min = 0.0001;
+        Double_t t_max = 4.0;
+        hSig_vsT->GetXaxis()->SetRangeUser(t_min, t_max);
+        hSig_vsT->Draw("E0");
 
-        // Save results to the output file
-        // Create the output file
+        TCanvas *cBkg_vsT = new TCanvas("cBkg_vsT", "cBkg_vsT", 900, 600);
+        cBkg_vsT->SetLogy();
+        cBkg_vsT->SetLogx();
+        PtFit_SetHistogram(hBkg_vsT);
+        hBkg_vsT->GetXaxis()->SetRangeUser(t_min, t_max);
+        hBkg_vsT->Draw("E0");
+
+        // save results to the output file
         file = new TFile(name.Data(),"RECREATE");
         l->Write("HistList", TObject::kSingleKey);
         file->ls();
         file->Close();
 
         TString str = "Results/" + str_subfolder + "PtFit_SubtractBkg/";
-        cHist_sig->Print((str + "hNSigPerBins.pdf").Data());
-        cHist_sig->Print((str + "hNSigPerBins.png").Data());
-        cHist_bkg->Print((str + "hNBkgPerBins.pdf").Data());
-        cHist_bkg->Print((str + "hNBkgPerBins.png").Data());
+        cSig_vsPt->Print((str + "hSig_vsPt.pdf").Data());
+        cBkg_vsPt->Print((str + "hBkg_vsPt.pdf").Data());
+        cSig_vsT->Print((str + "hSig_vsT.pdf").Data());
+        cBkg_vsT->Print((str + "hBkg_vsT.pdf").Data());
 
-        delete cHist_sig;
-        delete cHist_bkg;
+        delete cSig_vsPt;
+        delete cBkg_vsPt;
+        delete cSig_vsT;
+        delete cBkg_vsT;
 
         return;
     }
@@ -360,11 +384,11 @@ void PtFit_DoInvMassFit(Double_t fPtCutLow, Double_t fPtCutUpp, Int_t iBin)
                             // 0 = no information
 
     // Draw histogram with fit results
-    TCanvas *cHist = new TCanvas("cHist","cHist",800,600);
-    cHist->SetTopMargin(0.055);
-    cHist->SetBottomMargin(0.12);
-    cHist->SetRightMargin(0.03);
-    cHist->SetLeftMargin(0.11);
+    TCanvas *c = new TCanvas("c","c",800,600);
+    c->SetTopMargin(0.055);
+    c->SetBottomMargin(0.12);
+    c->SetRightMargin(0.03);
+    c->SetLeftMargin(0.11);
 
     RooPlot* fFrameM = fM.frame(Title("Mass fit")); 
     fDataSet->plotOn(fFrameM,Name("fDataSet"),Binning(binM),MarkerStyle(20),MarkerSize(1.));
@@ -448,10 +472,19 @@ void PtFit_DoInvMassFit(Double_t fPtCutLow, Double_t fPtCutUpp, Int_t iBin)
     // Prepare path
     TString path = Form("Results/%s/PtFit_SubtractBkg/InvMassFitsInBins/bin%i", str_subfolder.Data(), iBin);
     // Print the plots
-    cHist->Print((path + ".pdf").Data()); 
-    //cHist->Print((path + ".png").Data()); 
+    c->Print((path + ".pdf").Data());
 
-    delete cHist;
+    delete c;
+
+    return;
+}
+
+void PtFit_SetHistogram(TH1D *h)
+{
+    h->GetYaxis()->SetTitle("Counts per bin");
+    h->GetXaxis()->SetTitle("#it{m}_{#mu#mu} (GeV/#it{c}^{2})");
+    h->GetXaxis()->SetDecimals(1);
+    //h->Scale(1., "width");
 
     return;
 }
