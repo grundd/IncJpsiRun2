@@ -1,4 +1,4 @@
-// AnalysisManager.h
+// AnalysisManager.h 
 // David Grund, Feb 26, 2022
 // Functions to set branch addresses and to check if events pass selection criteria
 

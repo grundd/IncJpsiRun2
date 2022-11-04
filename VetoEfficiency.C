@@ -26,6 +26,7 @@ Double_t VetoEff_Calculate(Int_t iEff, Bool_t SystUncr = kFALSE);
 //      == 2 => weight as Xn0n and (whatever)YnXn (combined2)
 void VetoEff_SystUncertainty();
 TCanvas* PlotNeutronDistribution(const char* name, TH1 *hZNA, TH1 *hZNC, Double_t fPtMin, Double_t fPtMax, Double_t fMMin, Double_t fMMax);
+TCanvas* Plot2DNeutronDistribution(const char* name, TH2 *hZN, Double_t fPtMin, Double_t fPtMax, Double_t fMMin, Double_t fMMax);
 
 void VetoEfficiency(Int_t iAnalysis)
 {
@@ -57,7 +58,7 @@ void VetoEfficiency(Int_t iAnalysis)
     VetoEff_Calculate(1,kFALSE);
     VetoEff_Calculate(2,kFALSE);
     // calculate systematic uncertainties
-    if(kTRUE) VetoEff_SystUncertainty();
+    if(kFALSE) VetoEff_SystUncertainty();
 
     return;
 }
@@ -94,11 +95,18 @@ void VetoEff_ClassifyEvents(Int_t mass_range, Bool_t normalized)
     Int_t nEntriesAnalysed = 0;
 
     gROOT->cd();
-    TH1D *hZNA[6] = { NULL }; // 0 = pT from 0.2 to 1.0 GeV/c, then pT bins
+    // 0 = pT from 0.2 to 1.0 GeV/c, then pT bins
+    TH2D *hZN[6] = { NULL };
+    TH2D *hZN_hits[6] = { NULL };
+    TH1D *hZNA[6] = { NULL }; 
     TH1D *hZNC[6] = { NULL };
+    TCanvas *c2d[6] = { NULL };
+    TCanvas *c2d_hits[6] = { NULL };
     TCanvas *c[6] = { NULL };
 
     for(Int_t i = 0; i < 6; i++){
+        hZN[i] = new TH2D(Form("hZN%i",i),Form("hZN%i",i),48,-4.,8.,48,-4.,8.);
+        hZN_hits[i] = new TH2D(Form("hZNhits%i",i),Form("hZN%i",i),48,-4.,8.,48,-4.,8.);
         hZNA[i] = new TH1D(Form("hZNA%i",i),Form("hZNA%i",i),nBins,n_low,n_upp);
         hZNC[i] = new TH1D(Form("hZNC%i",i),Form("hZNC%i",i),nBins,n_low,n_upp);
     }
@@ -129,8 +137,12 @@ void VetoEff_ClassifyEvents(Int_t mass_range, Bool_t normalized)
         nEv_PtBins[iBinPt]->AddEvent(iBinN_A,iBinN_C);
 
         // fill the histograms
+        if(fZNA_hit || fZNC_hit) hZN_hits[0]->Fill(fZNA_n*2.510,fZNC_n*2.510);
+        hZN[0]->Fill(fZNA_n*2.510,fZNC_n*2.510);
         if(fZNA_hit) hZNA[0]->Fill(fZNA_n); 
         if(fZNC_hit) hZNC[0]->Fill(fZNC_n); 
+        if(fZNA_hit || fZNC_hit) hZN_hits[iBinPt+1]->Fill(fZNA_n*2.510,fZNC_n*2.510);
+        hZN[iBinPt+1]->Fill(fZNA_n*2.510,fZNC_n*2.510);
         if(fZNA_hit) hZNA[iBinPt+1]->Fill(fZNA_n); 
         if(fZNC_hit) hZNC[iBinPt+1]->Fill(fZNC_n); 
     }
@@ -139,16 +151,40 @@ void VetoEff_ClassifyEvents(Int_t mass_range, Bool_t normalized)
 
     // ##########################################################################################################
     // plot neutron distribution in allbins
+    // 1d
     c[0] = PlotNeutronDistribution("c0",hZNA[0],hZNC[0],0.2,1.0,m_low,m_upp);
     c[0]->Draw();
     TString str_out = "Results/" + str_subfolder + "VetoEfficiency/" + str_mass_subfolder + "ZN_n_all";
     c[0]->Print((str_out + ".pdf").Data());
+    // 2d
+    // at least one ZN hit
+    c2d_hits[0] = Plot2DNeutronDistribution("c2d0",hZN_hits[0],0.2,1.0,m_low,m_upp);
+    c2d_hits[0]->Draw();
+    str_out = "Results/" + str_subfolder + "VetoEfficiency/" + str_mass_subfolder + "ZN_2dHits_n_all";
+    c2d_hits[0]->Print((str_out + ".pdf").Data());
+    // everything
+    c2d[0] = Plot2DNeutronDistribution("c2d0",hZN[0],0.2,1.0,m_low,m_upp);
+    c2d[0]->Draw();
+    str_out = "Results/" + str_subfolder + "VetoEfficiency/" + str_mass_subfolder + "ZN_2d_n_all";
+    c2d[0]->Print((str_out + ".pdf").Data());
     // plots neutron distribution in bins
     for(Int_t i = 1; i < nPtBins+1; i++){
+        // 1d
         c[i] = PlotNeutronDistribution(Form("c%i",i),hZNA[i],hZNC[i],ptBoundaries[i-1],ptBoundaries[i],m_low,m_upp);
         c[i]->Draw();
         str_out = Form("Results/%sVetoEfficiency/%sZN_n_bin%i", str_subfolder.Data(), str_mass_subfolder.Data(), i);
         c[i]->Print((str_out + ".pdf").Data());
+        // 2d
+        // at least one ZN hit
+        c2d_hits[i] = Plot2DNeutronDistribution(Form("c2d%i",i),hZN_hits[i],ptBoundaries[i-1],ptBoundaries[i],m_low,m_upp);
+        c2d_hits[i]->Draw();
+        str_out = Form("Results/%sVetoEfficiency/%sZN_2dHits_n_bin%i", str_subfolder.Data(), str_mass_subfolder.Data(), i);
+        c2d_hits[i]->Print((str_out + ".pdf").Data()); 
+        // everything
+        c2d[i] = Plot2DNeutronDistribution(Form("c2d%i",i),hZN[i],ptBoundaries[i-1],ptBoundaries[i],m_low,m_upp);
+        c2d[i]->Draw();
+        str_out = Form("Results/%sVetoEfficiency/%sZN_2d_n_bin%i", str_subfolder.Data(), str_mass_subfolder.Data(), i);
+        c2d[i]->Print((str_out + ".pdf").Data());
     }
     // ##########################################################################################################
     // print the numbers
@@ -406,5 +442,49 @@ TCanvas* PlotNeutronDistribution(const char* name, TH1 *hZNA, TH1 *hZNC, Double_
     l2->SetFillStyle(0);
     l2->Draw();
 
+    return c;
+}
+
+TCanvas* Plot2DNeutronDistribution(const char* name, TH2 *hZN, Double_t fPtMin, Double_t fPtMax, Double_t fMMin, Double_t fMMax)
+{
+    gStyle->SetOptTitle(0);
+    gStyle->SetOptStat(0);
+
+    TCanvas *c = new TCanvas(name,name,700,700);
+    c->SetTopMargin(0.08);
+    c->SetBottomMargin(0.11);
+    c->SetLeftMargin(0.09);
+    c->SetRightMargin(0.11);
+    //c->SetLogy();
+    // X-axis
+    hZN->GetXaxis()->SetTitle("ZNA energy (TeV)");
+    hZN->GetXaxis()->SetTitleSize(0.05);
+    hZN->GetXaxis()->SetLabelSize(0.05);
+    // Y-axis
+    hZN->GetYaxis()->SetTitle("ZNC energy (TeV)");
+    hZN->GetYaxis()->SetTitleSize(0.05);
+    hZN->GetYaxis()->SetLabelSize(0.05);
+    hZN->GetYaxis()->SetTitleOffset(0.7);
+    // Z-axis
+    hZN->GetZaxis()->SetLabelSize(0.042);
+    hZN->GetZaxis()->SetDecimals(1);
+    // Draw
+    hZN->Draw("COLZ");
+    // Legend 1
+    TLegend *l1 = new TLegend(0.12,0.93,0.6,1.0);
+    l1->AddEntry((TObject*)0,"ALICE, Pb#minusPb #sqrt{#it{s}_{NN}} = 5.02 TeV","");
+    l1->SetTextSize(0.05);
+    l1->SetBorderSize(0);
+    l1->SetFillStyle(0);
+    l1->Draw();
+    // Legend 2
+    TLegend *l2 = new TLegend(0.40,0.15,0.90,0.25);
+    l2->AddEntry((TObject*)0,Form("#it{m}_{#mu#mu} #in (%.2f,%.2f) GeV/#it{c}^{2}",fMMin,fMMax),"");
+    l2->AddEntry((TObject*)0,Form("#it{p}_{T} #in (%.2f,%.2f) GeV/#it{c}",fPtMin,fPtMax),"");
+    l2->SetTextSize(0.042);
+    l2->SetBorderSize(0);
+    l2->SetFillStyle(0);
+    l2->SetMargin(0.);
+    l2->Draw();
     return c;
 }
