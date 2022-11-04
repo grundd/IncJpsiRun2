@@ -455,7 +455,7 @@ TCanvas* Plot2DNeutronDistribution(const char* name, TH2 *hZN, Double_t fPtMin, 
     c->SetBottomMargin(0.11);
     c->SetLeftMargin(0.09);
     c->SetRightMargin(0.11);
-    //c->SetLogy();
+    c->SetGrid();
     // X-axis
     hZN->GetXaxis()->SetTitle("ZNA energy (TeV)");
     hZN->GetXaxis()->SetTitleSize(0.05);
