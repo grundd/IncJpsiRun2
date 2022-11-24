@@ -1,0 +1,4 @@
+model CCK-n
+range (0.080,0.152) GeV
+integral: 0.669
+avg |t| : 0.112

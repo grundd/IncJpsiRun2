@@ -14,7 +14,8 @@
 #include "AnalysisConfig.h"
 #include "SetPtBinning_PtFit.h"
 
-TString NamesPDFs[6] = {"CohJ","IncJ","CohP","IncP","Bkgr","Diss"};
+TString NamesPDFs[10] = {"CohJ","IncJ","CohP","IncP","Bkgr","Diss",
+                         "DissLowLow","DissUppLow","DissLowUpp","DissUppUpp"};
 Double_t fPtStopWeigh[4] = {0.17, 1.2, 0.5, 1.2}; // GeV/c
 
 Double_t fPtGenerated_PtFit;
@@ -52,6 +53,20 @@ void PtFit_PrepareMCTemplates(Int_t iAnalysis)
 
 // #############################################################################################
 
+void PtFit_FillDissociativeHisto(TH1D* h, Double_t b_pd, Double_t n_pd)
+{
+    TF1 *fDissH1 = new TF1("fDissH1","x*pow((1 + x*x*[0]/[1]),-[1])",fPtCutLow_PtFit,fPtCutUpp_PtFit);
+    fDissH1->SetParameter(0,b_pd);
+    fDissH1->SetParameter(1,n_pd);
+    Int_t i = 0;
+    while(i < 1e6){
+        h->Fill(fDissH1->GetRandom());
+        i++;
+    }
+    delete fDissH1;
+    return;
+}
+
 void PtFit_PreparePDFs()
 {
     TString name = "Trees/" + str_subfolder + "PtFit/MCTemplates.root";
@@ -66,32 +81,31 @@ void PtFit_PreparePDFs()
         // Go over MC data
         // Define output histograms with predefined binning to create PDFs
         TList *l = new TList();
-        TH1D *HistPDFs[6] = { NULL };
-        HistPDFs[0] = new TH1D(("h" + NamesPDFs[0]).Data(), ("h" + NamesPDFs[0]).Data(), nPtBins_PtFit, ptBoundaries_PtFit);
-        HistPDFs[1] = new TH1D(("h" + NamesPDFs[1]).Data(), ("h" + NamesPDFs[1]).Data(), nPtBins_PtFit, ptBoundaries_PtFit);
-        HistPDFs[2] = new TH1D(("h" + NamesPDFs[2]).Data(), ("h" + NamesPDFs[2]).Data(), nPtBins_PtFit, ptBoundaries_PtFit);
-        HistPDFs[3] = new TH1D(("h" + NamesPDFs[3]).Data(), ("h" + NamesPDFs[3]).Data(), nPtBins_PtFit, ptBoundaries_PtFit);
-        HistPDFs[4] = new TH1D(("h" + NamesPDFs[4]).Data(), ("h" + NamesPDFs[4]).Data(), nPtBins_PtFit, ptBoundaries_PtFit);
-
-        for(Int_t i = 0; i < 5; i++){
+        TH1D *HistPDFs[10] = { NULL };
+        for(Int_t i = 0; i < 10; i++) {
+            HistPDFs[i] = new TH1D(("h" + NamesPDFs[i]).Data(), ("h" + NamesPDFs[i]).Data(), nPtBins_PtFit, ptBoundaries_PtFit);
+        }
+        for(Int_t i = 0; i < 5; i++) {
             PtFit_FillHistogramsMC(i, HistPDFs[i]);
             l->Add(HistPDFs[i]);
         }
         // ***************************************************************
         // Create the dissociative PDF
-        HistPDFs[5] = new TH1D(("h" + NamesPDFs[5]).Data(), ("h" + NamesPDFs[5]).Data(), nPtBins_PtFit, ptBoundaries_PtFit);
+        
         TF1 *fDissH1 = new TF1("fDissH1","x*pow((1 + x*x*[0]/[1]),-[1])",fPtCutLow_PtFit,fPtCutUpp_PtFit);
-        Double_t b_pd = 1.79;
-        Double_t n_pd = 3.58;
-        fDissH1->SetParameter(0,b_pd);
-        fDissH1->SetParameter(1,n_pd);
-        Int_t i = 0;
-        while(i < 1e6){
-            HistPDFs[5]->Fill(fDissH1->GetRandom());
-            i++;
-        }
+        Double_t b_pd_val = 1.79;
+        Double_t b_pd_err = 0.12;
+        Double_t n_pd_val = 3.58;
+        Double_t n_pd_err = 0.15;
+
+        PtFit_FillDissociativeHisto(HistPDFs[5],b_pd_val,n_pd_val);
+        PtFit_FillDissociativeHisto(HistPDFs[6],b_pd_val-b_pd_err,n_pd_val-n_pd_err); // DissLowLow
+        PtFit_FillDissociativeHisto(HistPDFs[7],b_pd_val+b_pd_err,n_pd_val-n_pd_err); // DissUppLow
+        PtFit_FillDissociativeHisto(HistPDFs[8],b_pd_val-b_pd_err,n_pd_val+n_pd_err); // DissLowUpp
+        PtFit_FillDissociativeHisto(HistPDFs[9],b_pd_val+b_pd_err,n_pd_val+n_pd_err); // DissUppUpp
+
         //HistPDFs[5]->Draw();
-        l->Add(HistPDFs[5]);
+        for(Int_t i = 5; i < 10; i++) l->Add(HistPDFs[i]);
 
         // ***************************************************************
         // Save results to the output file

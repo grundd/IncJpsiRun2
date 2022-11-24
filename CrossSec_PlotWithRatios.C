@@ -306,7 +306,7 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
     SetMarkerColorStyleSize(gr_ratios[6],colors[6],kFullCross,1.);
 
     // ********************************************************************************
-    // Draw the canvas with "ratios"
+    // draw the canvas with "ratios"
 
     TCanvas *c2 = new TCanvas ("c2","Ratios models / data",1050,400);
     SetPadMarginsLTRB(gPad,0.10,0.03,0.03,0.23);
@@ -411,8 +411,9 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
     if(iModels != 1) gr_ratios[6]->Draw("P SAME");
     gr_err_uncr->Draw("SAME P");
     line->Draw("SAME");
-    if(iModels == 0) DrawLegend3(iModels,0.74,0.38,0.945,0.94,textSize4*0.60);
-    else             DrawLegend3(iModels,0.74,0.38,0.945,0.94,textSize4*0.65);
+    if(iModels == 0)      DrawLegend3(iModels,0.72,0.385,0.93,0.945,textSize4*0.60);
+    else if(iModels == 3) DrawLegend3(iModels,0.71,0.385,0.96,0.945,textSize4*0.80);
+    else                  DrawLegend3(iModels,0.72,0.385,0.93,0.945,textSize4*0.65);
     
 
     TString append = "";

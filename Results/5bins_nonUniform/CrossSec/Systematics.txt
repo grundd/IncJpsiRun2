@@ -1,7 +1,7 @@
 [all in percent]
 CORRELATED:
 lumi	veto	EMD	tracks	CCUP31	BR
-2.7 	3.0 	3.8 	4.0 	1.3 	0.6 
+2.7 	3.0 	3.8 	2.8 	1.3 	0.6 
 
 UNCORRELATED:
 Bin	SigExt	ZVtx	fD	fC

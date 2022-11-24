@@ -41,7 +41,7 @@ Double_t errsyst_fC[5] = { 0 };
 Double_t errsyst_lumi = 2.7;
 Double_t errsyst_veto = 3.0;
 Double_t errsyst_EMD = 3.8;
-Double_t errsyst_tracks = 4.0; // previously was added in quadrature => 2.8 %
+Double_t errsyst_tracks = 2.8; // added quadratically (suggested by the PF committee: add linearly)
 Double_t errsyst_CCUP31 = 1.3;
 Double_t errsyst_flux = 2.0;
 //*************************************************

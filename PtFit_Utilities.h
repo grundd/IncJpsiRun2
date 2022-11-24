@@ -33,7 +33,8 @@
 
 using namespace RooFit;
 
-TString NamesPDFs[6] = {"CohJ","IncJ","CohP","IncP","Bkgr","Diss"};
+TString NamesPDFs[10] = {"CohJ","IncJ","CohP","IncP","Bkgr","Diss",
+                         "DissLowLow","DissUppLow","DissLowUpp","DissUppUpp"};
 TString hNames_modRA[4] = {"hCohJ_modRA_7.330",
                            "hIncJ_modRA_7.330",
                            "hCohP_modRA_7.330",
@@ -163,7 +164,7 @@ void PtFit_SetCanvas(TCanvas *c, Bool_t isLogScale)
 
 // #############################################################################################
 
-void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t ifD = 0)
+void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
 // ifD = 0 => R_coh = R_inc = R = 0.18 (Michal's measured value)
 // systematic uncertainties:
 //     = -2 => R = 0.16
@@ -302,7 +303,7 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t ifD = 0)
         f_modRA->Close();
     } 
     // 5) Dissociative
-    TH1D *hDiss = (TH1D*)list->FindObject(("h" + NamesPDFs[5]).Data());
+    TH1D *hDiss = (TH1D*)list->FindObject(("h" + NamesPDFs[iDiss]).Data());
     if(hDiss) Printf("Histogram %s loaded.", hDiss->GetName());
 
     //###################################################################################
@@ -475,14 +476,19 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t ifD = 0)
        iRecShape == 2 || 
        iRecShape == 3) name += Form("PtFit_NoBkg/CohJ%i", iRecShape);
     // if RecShape == 4
-    // if ifD == 0 => optimal pT fit
-    else if(iRecShape == 4 && ifD == 0){
+    // if iDiss == 5 and ifD == 0 => optimal pT fit
+    else if(iRecShape == 4 && iDiss == 5 && ifD == 0){
         name += Form("PtFit_NoBkg/RecSh%i_fD%i", iRecShape, ifD);
     } 
     // if ifD != 0 => systematic uncertainties
     else if(iRecShape == 4 && ifD != 0){
         gSystem->Exec("mkdir -p Results/" + str_subfolder + "PtFit_SystUncertainties/");
         name += Form("PtFit_SystUncertainties/RecSh%i_fD%i", iRecShape, ifD);
+    }
+    // if iDiss > 5 => systematic uncertainties
+    else if(iRecShape == 4 && iDiss > 5){
+        gSystem->Exec("mkdir -p Results/" + str_subfolder + "PtFit_SystUncertainties/");
+        name += Form("PtFit_SystUncertainties/RecSh%i_Diss%i", iRecShape, iDiss);
     }
     // if study of the optimal value of R_A
     else {
