@@ -124,21 +124,18 @@ void CalculateCrossSec_PtBins()
 
     //#####################################################################################################
     // 3) Load AxE per pT bin
-    for(Int_t iBin = 0; iBin < nPtBins; iBin++)
-    {
-        TString str_AxE = Form("Results/" + str_subfolder + "AxE_PtBins/AxE_%ibins.txt", nPtBins);
-        ifs.open(str_AxE.Data());
-        // Read data from the file
-        if(!ifs.fail()){
-            for(Int_t iBin = 0; iBin < nPtBins; iBin++){
-                ifs >> i_bin >> AxE_val[iBin] >> AxE_err[iBin];
-            }
-        } else {
-            PrintErr(str_AxE);
-            return;            
+    TString str_AxE = Form("Results/" + str_subfolder + "AxE_PtBins/AxE_%ibins.txt", nPtBins);
+    ifs.open(str_AxE.Data());
+    // Read data from the file
+    if(!ifs.fail()){
+        for(Int_t iBin = 0; iBin < nPtBins; iBin++){
+            ifs >> i_bin >> AxE_val[iBin] >> AxE_err[iBin];
         }
-        ifs.close();
+    } else {
+        PrintErr(str_AxE);
+        return;            
     }
+    ifs.close();
     Printf("3) AxE loaded.");
 
     //#####################################################################################################
