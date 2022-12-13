@@ -25,6 +25,7 @@ const Int_t nIter = 6;
 Bool_t scale = kFALSE;
 Float_t fTrain = 0.8; // fraction of MC events used to train the response matrix
 // the rest will be used to test the matrix
+Float_t tBoundaries[6] = { 0 };
 
 void SetCanvas(TCanvas* c, Bool_t is2Dhist = kFALSE)
 {
@@ -38,7 +39,7 @@ void SetCanvas(TCanvas* c, Bool_t is2Dhist = kFALSE)
 void SetHistoStyle(TH1F* h, Color_t c)
 {
     // style
-    gStyle->SetEndErrorSize(1); 
+    gStyle->SetEndErrorSize(1);
     h->SetMarkerStyle(kFullCircle);
     h->SetMarkerSize(0.7);
     h->SetMarkerColor(c);
@@ -46,7 +47,7 @@ void SetHistoStyle(TH1F* h, Color_t c)
     h->SetLineWidth(2);
     h->SetLineStyle(1);
     // x-axis
-    h->GetXaxis()->SetTitle("#it{p}_{T} (GeV/#it{c})");
+    h->GetXaxis()->SetTitle("|#it{t}| (GeV^{2})");
     h->GetXaxis()->SetTitleOffset(1.2);
     h->GetXaxis()->SetDecimals(1);
     // y-axis
@@ -55,86 +56,98 @@ void SetHistoStyle(TH1F* h, Color_t c)
     return;
 }
 
-void UnfoldAndPlotResults(TString subfolder, RooUnfoldResponse* response, TH1F* hToUnfold, TH1F* hGen = NULL)
+void UnfoldAndPlotResults(TString subf, TString unf, RooUnfoldResponse* resp, TH1F* hRec, TH1F* hGen = NULL)
 {
-    if(hGen && scale) hGen->Scale(1.,"width");
     // prepare the output path
+    TString subfolder = subf + unf;
     gSystem->Exec("mkdir -p Results/" + str_subfolder + "Unfolding/" + subfolder + "/");
-    // perform bayes unfolding per each iteration
-    for(Int_t iIt = 1; iIt <= nIter; iIt++)
+    // how many times to perform unfolding: depends on the selected algorithm
+    Int_t N;
+    if(unf=="Bayes") N = 6; // number of iterations
+    else if(unf=="Svd") N = 5; // regularisation parameter
+    else if(unf=="BinByBin") N = 1; // only once
+    // perform unfolding:
+    for(Int_t i = 1; i <= N; i++)
     {
-        RooUnfoldBayes unfold(response,hToUnfold,iIt);
+        RooUnfold* unfold = NULL;
+        if(unf=="Bayes") unfold = new RooUnfoldBayes(resp,hRec,i);
+        else if(unf=="Svd") unfold = new RooUnfoldSvd(resp,hRec,i);
+        else if(unf=="BinByBin") unfold = new RooUnfoldBinByBin(resp,hRec);
         // get the histograms from the result
-        TH1F* hUnfo = (TH1F*)(unfold.Hreco()->Clone("hUnfo"));
-        TH1F* hMeas = (TH1F*)(unfold.Hmeasured()->Clone("hMeas"));
+        TH1F* hUnfo = (TH1F*)(unfold->Hreco()->Clone("hUnfo"));
+        TH1F* hMeas = (TH1F*)(unfold->Hmeasured()->Clone("hMeas"));
+        TH1F* hTrue = NULL;
         // prepare the latex title
         TLatex* ltx = new TLatex();
         ltx->SetTextSize(0.033);
         ltx->SetTextAlign(21);
         ltx->SetNDC();
-        // ***********************
-        // * plot pT distributions
-        // ***********************
-        TCanvas* cRes = new TCanvas("cRes","cRes",700,600);
-        SetCanvas(cRes);
-        cRes->cd();
+        TString label;
+        if(unf=="Bayes") label = Form("Bayes (%i iters)", i);
+        else if(unf=="Svd") label = Form("SVD (reg par %i)", i);
+        else if(unf=="BinByBin") label = "Bin by bin";
+        // **********************
+        // plot |t| distributions
+        // **********************
+        TCanvas* cDist = new TCanvas("cDist","cDist",700,600);
+        SetCanvas(cDist);
+        cDist->cd();
         SetHistoStyle(hMeas,kBlue+1);
         SetHistoStyle(hUnfo,kGreen+1); 
-        if(scale) {
-            hMeas->Scale(1., "width");
-            hUnfo->Scale(1., "width");
-        }
         Float_t maxVal = hMeas->GetBinContent(hMeas->GetMaximumBin());
         Float_t minVal = hMeas->GetBinContent(hMeas->GetMinimumBin());
         hMeas->GetYaxis()->SetRangeUser(0.6*minVal, 1.15*maxVal);
         hMeas->Draw("E1");
         if(hGen) {
-            SetHistoStyle(hGen,kRed+1); 
-            hGen->Draw("HIST SAME");
+            hTrue = (TH1F*)hGen->Clone("hTrue");
+            SetHistoStyle(hTrue,kRed+1); 
+            hTrue->Draw("HIST SAME");
         }
         hUnfo->Draw("E1 SAME");
-        ltx->DrawLatex(0.55,0.96,Form("Unfolded #it{p}_{T} distribution: %i iterations",iIt));
+        ltx->DrawLatex(0.55,0.96,Form("Unfolded |#it{t}| distribution: %s",label.Data()));
         // plot legend
         Int_t nRows = 2;
         if(hGen) nRows++;
-        TLegend* l = new TLegend(0.35,0.92-0.045*nRows,0.55,0.92);
+        TLegend* l = new TLegend(0.77,0.93-0.045*nRows,0.97,0.93);
         l->AddEntry(hUnfo, "unfolded", "EPL");
         l->AddEntry(hMeas, "measured", "EPL");
-        if(hGen) l->AddEntry(hGen, "MC truth", "L");
+        if(hGen) l->AddEntry(hTrue, "MC truth", "L");
         l->SetTextSize(0.032);
         l->SetBorderSize(0);
         l->SetFillStyle(0);
         l->SetMargin(0.30);
         l->Draw();
         // print the result
-        cRes->Print("Results/" + str_subfolder + Form("Unfolding/%s/ptDistributions_it%02i.pdf",subfolder.Data(),iIt));
-        delete cRes;
-        // *****************
-        // * plot unf matrix
-        // *****************
+        cDist->Print("Results/" + str_subfolder + Form("Unfolding/%s/tDists_%02i.pdf",subfolder.Data(),i));
+        delete cDist;
+        // ***************
+        // plot unf matrix
+        // ***************
+        /*
         TCanvas* cUnfMtx = new TCanvas("cUnfMtx","cUnfMtx",700,600);
         SetCanvas(cUnfMtx,kTRUE);
         cUnfMtx->cd();
-        TMatrixD UnfMtx = unfold.UnfoldingMatrix();
+        TMatrixD UnfMtx = unfold->UnfoldingMatrix();
         UnfMtx.Draw("colzTEXT");
-        ltx->DrawLatex(0.55,0.96,Form("Unfolding matrix: %i iterations", iIt));
-        cUnfMtx->Print("Results/" + str_subfolder + Form("Unfolding/%s/unfMtx_it%02i.pdf",subfolder.Data(),iIt));
+        ltx->DrawLatex(0.55,0.96,Form("Unfolding matrix: %i iterations", i));
+        cUnfMtx->Print("Results/" + str_subfolder + Form("Unfolding/%s/unfMtx_02i.pdf",subfolder.Data(),i));
         delete cUnfMtx;
-        // *****************
-        // * plot cov matrix
-        // *****************
+        */
+        // ***************
+        // plot cov matrix
+        // ***************
         TCanvas* cCov = new TCanvas("cCov","cCov",700,600);
         SetCanvas(cCov,kTRUE);
         cCov->cd();
-        TMatrixD CovMtx = unfold.Ereco();
+        TMatrixD CovMtx = unfold->Ereco();
         CovMtx.Draw("colzTEXT");
-        ltx->DrawLatex(0.55,0.96,Form("Covariance matrix: %i iterations", iIt));
-        cCov->Print("Results/" + str_subfolder + Form("Unfolding/%s/covMtx_it%02i.pdf",subfolder.Data(),iIt));
+        ltx->DrawLatex(0.55,0.96,Form("Covariance matrix: %s",label.Data()));
+        cCov->Print("Results/" + str_subfolder + Form("Unfolding/%s/covMtx_%02i.pdf",subfolder.Data(),i));
         delete cCov;
-        // ******************
-        // * errs of unf dist
-        // ******************
-        ofstream of("Results/" + str_subfolder + Form("Unfolding/%s/hUnfoErrs_it%02i.txt",subfolder.Data(),iIt));
+        // ****************
+        // errs of unf dist
+        // ****************
+        ofstream of("Results/" + str_subfolder + Form("Unfolding/%s/hUnfoErrs_%02i.txt",subfolder.Data(),i));
         of << std::fixed << std::setprecision(1);
         for(Int_t iBin = 1; iBin <= nPtBins; iBin++)
         {
@@ -144,9 +157,28 @@ void UnfoldAndPlotResults(TString subfolder, RooUnfoldResponse* response, TH1F* 
                << TMath::Sqrt(CovMtx[iBin-1][iBin-1]) << "\n";
         }
         of.close();
+        // **********************
+        // plot norm to bin width
+        // **********************
+        hMeas->Scale(1., "width");
+        hUnfo->Scale(1., "width");
+        if(hGen) hTrue->Scale(1., "width");
+        TCanvas* cNorm = new TCanvas("cNorm","cNorm",700,600);
+        SetCanvas(cNorm);
+        cNorm->cd();
+        hMeas->GetYaxis()->SetTitle("d#it{N}/|#it{t}|");
+        hMeas->Draw("E1");
+        if(hGen) hTrue->Draw("HIST SAME");
+        hUnfo->Draw("E1 SAME");
+        ltx->DrawLatex(0.55,0.96,Form("Unfolded |#it{t}| distribution (normalized to bin width): %s",label.Data()));
+        l->Draw();
+        cNorm->Print("Results/" + str_subfolder + Form("Unfolding/%s/normDists_%02i.pdf",subfolder.Data(),i));
+        delete cNorm;
         // delete the histograms
+        delete unfold;
         delete hMeas;
         delete hUnfo;
+        delete hTrue;
     }
     return;
 }
@@ -156,14 +188,15 @@ void Unfolding(Int_t iAnalysis)
     gSystem->Load("RooUnfold/libRooUnfold");
     InitAnalysis(iAnalysis);
     SetPtBinning();
+    for(Int_t i = 0; i < nPtBins+1; i++) tBoundaries[i] = TMath::Power(ptBoundaries[i], 2);
 
     // create the output folder
     gSystem->Exec("mkdir -p Results/" + str_subfolder + "Unfolding/");
 
     // histograms with binning at the gen and rec level
     // can be empty, needed only to specify the dimensions of the distributions in RooUnfoldResponse
-    TH1F* hTrainGen = new TH1F("hTrainGen","binning at the gen level",nPtBins,ptBoundaries);
-    TH1F* hTrainRec = new TH1F("hTrainRec","binning at the rec level",nPtBins,ptBoundaries);
+    TH1F* hTrainGen = new TH1F("hTrainGen","binning at the gen level",nPtBins,tBoundaries);
+    TH1F* hTrainRec = new TH1F("hTrainRec","binning at the rec level",nPtBins,tBoundaries);
 
     // create the response matrix
     RooUnfoldResponse response(hTrainRec, hTrainGen);
@@ -195,11 +228,13 @@ void Unfolding(Int_t iAnalysis)
         }
         // event passes all the selection criteria
         if(EventPassedMCRec(0,-1)) {
-            response.Fill(fPt,fPtGen);
+            response.Fill(fPt*fPt,fPtGen*fPtGen);
         } 
-        //else {
-        //    response.Miss(fPtGen);
-        //}
+        /*
+        else {
+            response.Miss(fPtGen*fPtGen);
+        }
+        */
     }
 
     gStyle->SetOptTitle(0);
@@ -222,8 +257,8 @@ void Unfolding(Int_t iAnalysis)
     // ***************************
     // testing the response matrix
     // ***************************
-    TH1F* hTestGen = new TH1F("hTestGen","p_{T} spectrum at the gen level",nPtBins,ptBoundaries);
-    TH1F* hTestRec = new TH1F("hTestRec","p_{T} spectrum at the rec level",nPtBins,ptBoundaries);
+    TH1F* hTestGen = new TH1F("hTestGen","|#it{t}| spectrum at the gen level",nPtBins,tBoundaries);
+    TH1F* hTestRec = new TH1F("hTestRec","|#it{t}| spectrum at the rec level",nPtBins,tBoundaries);
     // fill the testing histograms
     progress = 0.; // perc
     for(Int_t iEn = nTrain; iEn < nEn; iEn++)
@@ -235,13 +270,15 @@ void Unfolding(Int_t iAnalysis)
             cout << "[" << progress << "%] done." << endl;
         }
         if(EventPassedMCRec(0,-1)) { 
-            hTestGen->Fill(fPtGen);
-            hTestRec->Fill(fPt);
+            hTestGen->Fill(fPtGen*fPtGen);
+            hTestRec->Fill(fPt*fPt);
         }
     }
     // unfold hTestRec:
     TString subf = "testMC";
-    UnfoldAndPlotResults(subf,&response,hTestRec,hTestGen);
+    UnfoldAndPlotResults(subf,"Bayes",&response,hTestRec,hTestGen);
+    UnfoldAndPlotResults(subf,"Svd",&response,hTestRec,hTestGen);
+    UnfoldAndPlotResults(subf,"BinByBin",&response,hTestRec,hTestGen);
 
     // *************************
     // unfolding the measurement
@@ -292,8 +329,10 @@ void Unfolding(Int_t iAnalysis)
     }
     ifs.close();
     // create histogram to unfold
-    TH1F* hToUnfold = new TH1F("hToUnfold","",nPtBins,ptBoundaries);
-    for(Int_t iBin = 0; iBin < nPtBins; iBin++) {
+    TH1F* hToUnfold = new TH1F("hToUnfold","",nPtBins,tBoundaries);
+    for(Int_t iBin = 0; iBin < nPtBins; iBin++) 
+    {
+        Float_t binWidth = tBoundaries[iBin+1] - tBoundaries[iBin];
         corr_err[iBin] = TMath::Sqrt(
               TMath::Power(fC_err[iBin],2)
             + TMath::Power(fD_err[iBin],2)) / 100.;
@@ -308,7 +347,7 @@ void Unfolding(Int_t iAnalysis)
     }
     // print the values
     subf = "unfData";
-    ofstream of("Results/" + str_subfolder + "Unfolding/" + subf + "/hToUnfold.txt");
+    ofstream of("Results/" + str_subfolder + "Unfolding/hToUnfold.txt");
     of << "bin \tN \terr \tAxE \terr \tfC \terr \tfD \terr \tcorr \terr \thisto \terr \n";
     for(Int_t iBin = 0; iBin < nPtBins; iBin++) {
         of << iBin+1 << "\t" 
@@ -326,47 +365,54 @@ void Unfolding(Int_t iAnalysis)
     }
     of.close();
     // unfold hToUnfold:
-    UnfoldAndPlotResults(subf,&response,hToUnfold);
+    UnfoldAndPlotResults(subf,"Bayes",&response,hToUnfold);
+    UnfoldAndPlotResults(subf,"Svd",&response,hToUnfold);
+    UnfoldAndPlotResults(subf,"BinByBin",&response,hToUnfold);
     // how many iterations to use?
-    // let's take a look at the absolute and relative errors of hUnfo after each iteration
-    Float_t errsAbs[nIter][5] = { 0 };
-    Float_t errsRel[nIter][5] = { 0 };
+    // let's take a look at the absolute errors of hUnfo after each iteration
+    // and the relative differences in hUnfo values between subsequent iterations
+    Float_t unfoVal[nIter][5] = { 0 };
+    Float_t unfoErr[nIter][5] = { 0 };
+    Float_t diffRel[nIter-1][5] = { 0 }; // in percent
     // loop over iterations
     for(Int_t iIt = 1; iIt <= nIter; iIt++)
     {
-        ifs.open("Results/" + str_subfolder + Form("Unfolding/%s/hUnfoErrs_it%02i.txt",subf.Data(),iIt));
+        ifs.open("Results/" + str_subfolder + Form("Unfolding/unfDataBayes/hUnfoErrs_%02i.txt",iIt));
         for(Int_t iBin = 0; iBin < nPtBins; iBin++) {
             Int_t i; Float_t val, err1, err2;
             ifs >> i >> val >> err1 >> err2;
-            errsAbs[iIt-1][iBin] = err1;
-            errsRel[iIt-1][iBin] = err1 / val * 100.;
+            unfoErr[iIt-1][iBin] = err1;
+            unfoVal[iIt-1][iBin] = val;
         }
         ifs.close();
     }
+    // calculate the relative differences
+    for(Int_t iIt = 1; iIt <= nIter-1; iIt++) 
+        for(Int_t iBin = 0; iBin < nPtBins; iBin++) diffRel[iIt-1][iBin] = TMath::Abs(1. - unfoVal[iIt][iBin] / unfoVal[iIt-1][iBin]) * 100.;
     // print the values
-    of.open("Results/" + str_subfolder + Form("Unfolding/%s/errsAbsRel.txt",subf.Data()));
+    of.open("Results/" + str_subfolder + "Unfolding/unfDataBayes/iterationsErrsDiffs.txt");
     // absolute errors
-    of << "absolute errors vs iterations and pT bins:\n"
+    of << "absolute errors vs iterations and |t| bins:\n"
        << "it/bin\t1 \t2 \t3 \t4 \t5 \n"
        << std::fixed << std::setprecision(0);
     for(Int_t iIt = 0; iIt < nIter; iIt++) {
         of << iIt+1 << "\t";
         for(Int_t iBin = 0; iBin < nPtBins-1; iBin++) {
-            of << errsAbs[iIt][iBin] << "\t";
+            of << unfoErr[iIt][iBin] << "\t";
         }
-        of << errsAbs[iIt][nPtBins-1] << "\n";
+        of << unfoErr[iIt][nPtBins-1] << "\n";
     }
     of << "\n";
     // relative errors
-    of << "relative errors vs iterations and pT bins:\n"
+    of << "relative diff in consequent iterations:\n"
        << "it/bin\t1 \t2 \t3 \t4 \t5 \n"
        << std::fixed << std::setprecision(2);
-    for(Int_t iIt = 0; iIt < nIter; iIt++) {
-        of << iIt+1 << "\t";
+    for(Int_t iIt = 1; iIt < nIter; iIt++) {
+        of << iIt << "-" << iIt+1 << "\t";
         for(Int_t iBin = 0; iBin < nPtBins-1; iBin++) {
-            of << errsRel[iIt][iBin] << "\t";
+            of << diffRel[iIt-1][iBin] << "\t";
         }
-        of << errsRel[iIt][nPtBins-1] << "\n";
+        of << diffRel[iIt-1][nPtBins-1] << "\n";
     }
     of.close();
 
