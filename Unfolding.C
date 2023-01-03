@@ -30,29 +30,35 @@ TLatex* ltx = new TLatex();
 
 void SetCanvas(TCanvas* c, Bool_t is2Dhist = kFALSE)
 {
-    c->SetTopMargin(0.065);
-    c->SetLeftMargin(0.10);
+    c->SetTopMargin(0.08);
+    c->SetLeftMargin(0.11);
     if(!is2Dhist) c->SetRightMargin(0.03);
     else          c->SetRightMargin(0.12);
+    c->SetBottomMargin(0.12);
     return;
 }
 
 void SetHistoStyle(TH1F* h, Color_t c)
 {
     // style
-    gStyle->SetEndErrorSize(2);
+    gStyle->SetEndErrorSize(3);
     h->SetMarkerStyle(kFullCircle);
     h->SetMarkerSize(0.7);
     h->SetMarkerColor(c);
     h->SetLineColor(c);
-    h->SetLineWidth(2);
+    h->SetLineWidth(3);
     h->SetLineStyle(1);
     // x-axis
     h->GetXaxis()->SetTitle("|#it{t}| (GeV^{2})");
-    h->GetXaxis()->SetTitleOffset(1.2);
+    h->GetXaxis()->SetTitleOffset(1.15);
+    h->GetXaxis()->SetTitleSize(0.048);
+    h->GetXaxis()->SetLabelSize(0.048);
     h->GetXaxis()->SetDecimals(1);
     // y-axis
     h->GetYaxis()->SetTitle("counts");
+    h->GetYaxis()->SetTitleOffset(1.1);
+    h->GetYaxis()->SetTitleSize(0.048);
+    h->GetYaxis()->SetLabelSize(0.048);
     h->GetYaxis()->SetMaxDigits(3);
     return;
 }
@@ -86,7 +92,7 @@ void UnfoldAndPlotResults(TString subf, TString unf, RooUnfoldResponse* resp, TH
         // **********************
         // plot |t| distributions
         // **********************
-        TCanvas* cDist = new TCanvas("cDist","cDist",700,600);
+        TCanvas* cDist = new TCanvas("cDist","cDist",800,600);
         SetCanvas(cDist); 
         cDist->cd();
         SetHistoStyle(hMeas,kBlue+1);
@@ -101,24 +107,24 @@ void UnfoldAndPlotResults(TString subf, TString unf, RooUnfoldResponse* resp, TH
             hTrue->Draw("HIST SAME");
         }
         hUnfo->Draw("E1 SAME");
-        ltx->DrawLatex(0.55,0.96,Form("Unfolded |#it{t}| distribution: %s",label.Data()));
+        ltx->DrawLatex(0.55,0.95,Form("Unfolded |#it{t}| distribution: %s",label.Data()));
         // plot legend
         Int_t nRows = 8;
         TString labelMeas = "measured";
         if(hGen) { nRows++; labelMeas = "pseudo-data"; }
-        TLegend* l = new TLegend(0.52,0.93-0.045*nRows,0.96,0.93);
+        TLegend* l = new TLegend(0.62,0.91-0.055*nRows,0.95,0.91);
         l->AddEntry(hUnfo, "unfolded", "EPL");
         l->AddEntry(hMeas, Form("%s",labelMeas.Data()), "EPL");
         if(hGen) l->AddEntry(hTrue, "MC truth", "L");
-        l->AddEntry((TObject*)0,Form("diff between unfo and %s:",labelMeas.Data()),"");
+        l->AddEntry((TObject*)0,Form("diff unfo./%s:",labelMeas.Data()),"");
         for(Int_t i = 0; i < nPtBins; i++) {
             Float_t diff = (1. - hUnfo->GetBinContent(i+1) / hMeas->GetBinContent(i+1)) * 100.;
             l->AddEntry((TObject*)0,Form("bin %i: %.1f%%",i+1,diff),"");
         }
-        l->SetTextSize(0.032);
+        l->SetTextSize(0.042);
         l->SetBorderSize(0);
         l->SetFillStyle(0);
-        l->SetMargin(0.12);
+        l->SetMargin(0.17);
         l->Draw();
         // print the result
         cDist->Print("Results/" + str_subfolder + Form("Unfolding/%s/tDists_%02i.pdf",subfolder.Data(),i));
@@ -127,24 +133,24 @@ void UnfoldAndPlotResults(TString subf, TString unf, RooUnfoldResponse* resp, TH
         // plot unf matrix
         // ***************
         /*
-        TCanvas* cUnfMtx = new TCanvas("cUnfMtx","cUnfMtx",700,600);
+        TCanvas* cUnfMtx = new TCanvas("cUnfMtx","cUnfMtx",800,600);
         SetCanvas(cUnfMtx,kTRUE);
         cUnfMtx->cd();
         TMatrixD UnfMtx = unfold->UnfoldingMatrix();
         UnfMtx.Draw("colzTEXT");
-        ltx->DrawLatex(0.55,0.96,Form("Unfolding matrix: %i iterations", i));
+        ltx->DrawLatex(0.55,0.95,Form("Unfolding matrix: %i iterations", i));
         cUnfMtx->Print("Results/" + str_subfolder + Form("Unfolding/%s/unfMtx_02i.pdf",subfolder.Data(),i));
         delete cUnfMtx;
         */
         // ***************
         // plot cov matrix
         // ***************
-        TCanvas* cCov = new TCanvas("cCov","cCov",700,600);
+        TCanvas* cCov = new TCanvas("cCov","cCov",800,600);
         SetCanvas(cCov,kTRUE);
         cCov->cd();
         TMatrixD CovMtx = unfold->Ereco();
         CovMtx.Draw("colzTEXT");
-        ltx->DrawLatex(0.55,0.96,Form("Covariance matrix: %s",label.Data()));
+        ltx->DrawLatex(0.55,0.95,Form("Covariance matrix: %s",label.Data()));
         cCov->Print("Results/" + str_subfolder + Form("Unfolding/%s/covMtx_%02i.pdf",subfolder.Data(),i));
         delete cCov;
         // ****************
@@ -166,14 +172,14 @@ void UnfoldAndPlotResults(TString subf, TString unf, RooUnfoldResponse* resp, TH
         hMeas->Scale(1., "width");
         hUnfo->Scale(1., "width");
         if(hGen) hTrue->Scale(1., "width");
-        TCanvas* cNorm = new TCanvas("cNorm","cNorm",700,600);
+        TCanvas* cNorm = new TCanvas("cNorm","cNorm",800,600);
         SetCanvas(cNorm);
         cNorm->cd();
         hMeas->GetYaxis()->SetTitle("d#it{N}/|#it{t}|");
         hMeas->Draw("E1");
         if(hGen) hTrue->Draw("HIST SAME");
         hUnfo->Draw("E1 SAME");
-        ltx->DrawLatex(0.55,0.96,Form("Unfolded |#it{t}| distribution (norm. to bin width): %s",label.Data()));
+        ltx->DrawLatex(0.55,0.95,Form("Unfolded |#it{t}| distribution: %s",label.Data()));
         l->Draw();
         cNorm->Print("Results/" + str_subfolder + Form("Unfolding/%s/normDists_%02i.pdf",subfolder.Data(),i));
         delete cNorm;
@@ -182,6 +188,52 @@ void UnfoldAndPlotResults(TString subf, TString unf, RooUnfoldResponse* resp, TH
         delete hMeas;
         delete hUnfo;
         delete hTrue;
+    }
+    // how many iterations to use?
+    // let's take a look at the absolute errors of hUnfo after each iteration
+    // and the relative differences in hUnfo values between subsequent iterations
+    if(unf=="Bayes") {
+        Float_t unfoVal[nIter][5] = { 0 };
+        Float_t unfoErr[nIter][5] = { 0 };
+        Float_t diffRel[nIter-1][5] = { 0 }; // in percent
+        // loop over iterations
+        for(Int_t iIt = 1; iIt <= nIter; iIt++)
+        {
+            ifstream ifs("Results/" + str_subfolder + Form("Unfolding/%s/hUnfoErrs_%02i.txt",subfolder.Data(),iIt));
+            for(Int_t iBin = 0; iBin < nPtBins; iBin++) {
+                Int_t i; Float_t val, err1, err2;
+                ifs >> i >> val >> err1 >> err2;
+                unfoErr[iIt-1][iBin] = err1;
+                unfoVal[iIt-1][iBin] = val;
+            }
+            ifs.close();
+        }
+        // calculate the relative differences
+        for(Int_t iIt = 1; iIt <= nIter-1; iIt++) 
+            for(Int_t iBin = 0; iBin < nPtBins; iBin++) 
+                diffRel[iIt-1][iBin] = TMath::Abs(1. - unfoVal[iIt][iBin] / unfoVal[iIt-1][iBin]) * 100.;
+        // print the values
+        ofstream of("Results/" + str_subfolder + Form("Unfolding/%s/iterationsErrsDiffs.txt",subfolder.Data()));
+        // absolute errors
+        of << "absolute errors vs iterations and |t| bins:\n"
+           << "it/bin\t1 \t2 \t3 \t4 \t5 \n"
+           << std::fixed << std::setprecision(0);
+        for(Int_t iIt = 0; iIt < nIter; iIt++) {
+            of << iIt+1 << "\t";
+            for(Int_t iBin = 0; iBin < nPtBins-1; iBin++) of << unfoErr[iIt][iBin] << "\t";
+            of << unfoErr[iIt][nPtBins-1] << "\n";
+        }
+        of << "\n";
+        // relative errors
+        of << "relative diff in consequent iterations:\n"
+           << "it/bin\t1 \t2 \t3 \t4 \t5 \n"
+           << std::fixed << std::setprecision(2);
+        for(Int_t iIt = 1; iIt < nIter; iIt++) {
+            of << iIt << "-" << iIt+1 << "\t";
+            for(Int_t iBin = 0; iBin < nPtBins-1; iBin++) of << diffRel[iIt-1][iBin] << "\t";
+            of << diffRel[iIt-1][nPtBins-1] << "\n";
+        }
+        of.close();
     }
     return;
 }
@@ -192,7 +244,7 @@ void Unfolding(Int_t iAnalysis)
     InitAnalysis(iAnalysis);
     SetPtBinning();
     for(Int_t i = 0; i < nPtBins+1; i++) tBoundaries[i] = TMath::Power(ptBoundaries[i], 2);
-    ltx->SetTextSize(0.033);
+    ltx->SetTextSize(0.048);
     ltx->SetTextAlign(21);
     ltx->SetNDC();
 
@@ -254,7 +306,7 @@ void Unfolding(Int_t iAnalysis)
 
     // plot the reponse matrix
     TMatrixD RespMtx = response.Mresponse();
-    TCanvas* cMtx = new TCanvas("cMtx","cMtx",1600,900);
+    TCanvas* cMtx = new TCanvas("cMtx","cMtx",800,600);
     cMtx->cd();
     TH2D* hRespMtx = new TH2D(*static_cast<TMatrixDBase*>(&RespMtx));
     hRespMtx->SetMarkerSize(2.0);
@@ -290,7 +342,7 @@ void Unfolding(Int_t iAnalysis)
     // unfold hTestRec:
     TString subf = "testMC";
     UnfoldAndPlotResults(subf,"Bayes",&response,hTestRec,hTestGen);
-    UnfoldAndPlotResults(subf,"Svd",&response,hTestRec,hTestGen);
+    //UnfoldAndPlotResults(subf,"Svd",&response,hTestRec,hTestGen);
     //UnfoldAndPlotResults(subf,"BinByBin",&response,hTestRec,hTestGen);
 
     // *************************
@@ -370,7 +422,6 @@ void Unfolding(Int_t iAnalysis)
     }
     ifs.close();
     // print the values
-    subf = "unfMeas";
     ofstream of("Results/" + str_subfolder + "Unfolding/hToUnfold.txt");
     of << "bin \tN \terr \tAxE \terr \tfC \terr \tfD \terr \tcorr \terr \ttoUnf \terr \ttoUnfCS\t stat \n";
     for(Int_t iBin = 0; iBin < nPtBins; iBin++) {
@@ -390,62 +441,22 @@ void Unfolding(Int_t iAnalysis)
            << hToUnfoldCS->GetBinContent(iBin+1) << "\t" << hToUnfoldCS->GetBinError(iBin+1) << "\n";
     }
     of.close();
+
     // unfold hToUnfold:
+    subf = "unfMeas";
+    ///*
     UnfoldAndPlotResults(subf,"Bayes",&response,hToUnfold);
-    UnfoldAndPlotResults(subf,"Svd",&response,hToUnfold);
+    //UnfoldAndPlotResults(subf,"Svd",&response,hToUnfold);
+    //*/
     //UnfoldAndPlotResults(subf,"BinByBin",&response,hToUnfold);
+
     // unfold the full cross section with the statistic error
     subf = "unfCS";
+    ///*
     UnfoldAndPlotResults(subf,"Bayes",&response,hToUnfoldCS);
-    UnfoldAndPlotResults(subf,"Svd",&response,hToUnfoldCS);
+    //UnfoldAndPlotResults(subf,"Svd",&response,hToUnfoldCS);
+    //*/
     //UnfoldAndPlotResults(subf,"BinByBin",&response,hToUnfoldCS);
-    // how many iterations to use?
-    // let's take a look at the absolute errors of hUnfo after each iteration
-    // and the relative differences in hUnfo values between subsequent iterations
-    Float_t unfoVal[nIter][5] = { 0 };
-    Float_t unfoErr[nIter][5] = { 0 };
-    Float_t diffRel[nIter-1][5] = { 0 }; // in percent
-    // loop over iterations
-    for(Int_t iIt = 1; iIt <= nIter; iIt++)
-    {
-        ifs.open("Results/" + str_subfolder + Form("Unfolding/unfMeasBayes/hUnfoErrs_%02i.txt",iIt));
-        for(Int_t iBin = 0; iBin < nPtBins; iBin++) {
-            Int_t i; Float_t val, err1, err2;
-            ifs >> i >> val >> err1 >> err2;
-            unfoErr[iIt-1][iBin] = err1;
-            unfoVal[iIt-1][iBin] = val;
-        }
-        ifs.close();
-    }
-    // calculate the relative differences
-    for(Int_t iIt = 1; iIt <= nIter-1; iIt++) 
-        for(Int_t iBin = 0; iBin < nPtBins; iBin++) diffRel[iIt-1][iBin] = TMath::Abs(1. - unfoVal[iIt][iBin] / unfoVal[iIt-1][iBin]) * 100.;
-    // print the values
-    of.open("Results/" + str_subfolder + "Unfolding/unfMeasBayes/iterationsErrsDiffs.txt");
-    // absolute errors
-    of << "absolute errors vs iterations and |t| bins:\n"
-       << "it/bin\t1 \t2 \t3 \t4 \t5 \n"
-       << std::fixed << std::setprecision(0);
-    for(Int_t iIt = 0; iIt < nIter; iIt++) {
-        of << iIt+1 << "\t";
-        for(Int_t iBin = 0; iBin < nPtBins-1; iBin++) {
-            of << unfoErr[iIt][iBin] << "\t";
-        }
-        of << unfoErr[iIt][nPtBins-1] << "\n";
-    }
-    of << "\n";
-    // relative errors
-    of << "relative diff in consequent iterations:\n"
-       << "it/bin\t1 \t2 \t3 \t4 \t5 \n"
-       << std::fixed << std::setprecision(2);
-    for(Int_t iIt = 1; iIt < nIter; iIt++) {
-        of << iIt << "-" << iIt+1 << "\t";
-        for(Int_t iBin = 0; iBin < nPtBins-1; iBin++) {
-            of << diffRel[iIt-1][iBin] << "\t";
-        }
-        of << diffRel[iIt-1][nPtBins-1] << "\n";
-    }
-    of.close();
 
     return;
 }

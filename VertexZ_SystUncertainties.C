@@ -71,150 +71,168 @@ void NewCutZ_CompareCounts()
     hEvRat_NoSumw2->SetTitle("hEvRat_NoSumw2");
     hEvRat_NoSumw2->Divide(hEv15);
 
-    if(debug)
+    TCanvas *cEv10 = new TCanvas("cEv10","cEv10",900,600);
+    hEv10->Draw("E0");
+    TCanvas *cEv15 = new TCanvas("cEv15","cEv15",900,600);
+    hEv15->Draw("E0");
+    TCanvas *cEvRat = new TCanvas("cEvRat","cEvRat",900,600);
+    hEvRat->Draw("E0");
+
+    // calculate the ratios of yields manually using various methods to compute errors
+    // index 0 -> the 'allbins' range
+    // indices 1 to 5 -> 5 pT bins
+    Double_t nEv10_val[6] = { 0 };
+    Double_t nEv10_err[6] = { 0 };
+    Double_t nEv15_val[6] = { 0 };
+    Double_t nEv15_err[6] = { 0 };
+    Double_t nEvRat_val[6] = { 0 };
+    Double_t nEvRat_err1[6] = { 0 };
+    Double_t nEvRat_err2[6] = { 0 };
+    Double_t nEvRat_err3[6] = { 0 };
+    for(Int_t iBin = 0; iBin < nPtBins+1; iBin++)
     {
-        TCanvas *cx = new TCanvas("cx","cx",900,600);
-        hEv10->Draw("E0");
-        TCanvas *cy = new TCanvas("cy","cy",900,600);
-        hEv15->Draw("E0");
-        TCanvas *cz = new TCanvas("cz","cz",900,600);
-        hEvRat->Draw("E0");
-    }
-    // Calculate the ratios of yields manually using various methods to compute errors
-    Double_t nEvRat_val[5] = { 0 };
-    Double_t nEvRat_err1[5] = { 0 };
-    Double_t nEvRat_err2[5] = { 0 };
-    Double_t nEvRat_err3[5] = { 0 };
-    for(Int_t iBin = 0; iBin < nPtBins; iBin++)
-    {
-        // Calculate the ratio
-        nEvRat_val[iBin] = hEv10->GetBinContent(iBin+1) / hEv15->GetBinContent(iBin+1);
-        // Calculate the error using error propagation formula
-        nEvRat_err1[iBin] = nEvRat_val[iBin] * TMath::Sqrt(TMath::Power(hEv10->GetBinError(iBin+1) / hEv10->GetBinContent(iBin+1), 2) 
-            + TMath::Power(hEv15->GetBinError(iBin+1) / hEv15->GetBinContent(iBin+1), 2));
-        // Calculate the error using binomial distribution
+        if(iBin == 0) {
+            for(Int_t iBin = 1; iBin <= nPtBins; iBin++) {
+                nEv10_val[0] += hEv10->GetBinContent(iBin);
+                nEv15_val[0] += hEv15->GetBinContent(iBin);
+            }
+            nEv10_err[0] = TMath::Sqrt(nEv10_val[0]);
+            nEv15_err[0] = TMath::Sqrt(nEv15_val[0]);
+        } else {
+            nEv10_val[iBin] = hEv10->GetBinContent(iBin);
+            nEv10_err[iBin] = hEv10->GetBinError(iBin); // poisson error
+            nEv15_val[iBin] = hEv15->GetBinContent(iBin);
+            nEv15_err[iBin] = hEv15->GetBinError(iBin); // poisson error
+        }
+        // calculate the ratio
+        nEvRat_val[iBin] = nEv10_val[iBin] / nEv15_val[iBin];
+        // calculate the error using error propagation formula
+        nEvRat_err1[iBin] = nEvRat_val[iBin] * TMath::Sqrt(TMath::Power(nEv10_err[iBin] / nEv10_val[iBin], 2) 
+            + TMath::Power(nEv15_err[iBin] / nEv15_val[iBin], 2));
+        // calculate the error using binomial distribution
         // N = number of events with Z_vtx < 15 cm in a given bin
         // p = we estimate it as N(Z_vtx < 15 cm) / N(Z_vtx < 10 cm)
         // q = 1 - p
-        Double_t N = hEv15->GetBinContent(iBin+1);
-        Double_t p = hEv10->GetBinContent(iBin+1) / hEv15->GetBinContent(iBin+1);
+        Double_t N = nEv15_val[iBin];
+        Double_t p = nEv10_val[iBin] / nEv15_val[iBin];
         Double_t q = 1 - p;
         Double_t variance = N * p * q;
         Double_t sigma = TMath::Sqrt(variance); // this is the error of the mean (Np, hEv10->GetBinContent(iBin+1))
         // to get the error of the ratio, we need to divide the previous value by N again
         nEvRat_err2[iBin] = sigma / N;
         // we would get the same result by using the function CalculateErrorBinomial(.,.), see the paper by Ullrich
-        // Calculate the error using Bayesian formula
-        nEvRat_err3[iBin] = CalculateErrorBayes(hEv10->GetBinContent(iBin+1), hEv15->GetBinContent(iBin+1));
+        // calculate the error using a Bayesian formula
+        nEvRat_err3[iBin] = CalculateErrorBayes(nEv10_val[iBin], nEv15_val[iBin]);
     }
-    // Print the results
-    if(debug)
+    // print the results
+    TString str_out = "Results/" + str_subfolder + "VertexZ_SystUncertainties/";
+    ofstream outfile(Form("%snEv.txt",str_out.Data()));
+    for(Int_t iBin = 0; iBin < nPtBins+1; iBin++)
     {
-        Printf("***");
-        for(Int_t iBin = 0; iBin < nPtBins; iBin++)
-        {
-            Printf("BIN %i:", iBin+1);
-            Printf("nEv15: %.0f pm %.3f (ROOT) pm %.3f (Poisson)", hEv15->GetBinContent(iBin+1), hEv15->GetBinError(iBin+1), TMath::Sqrt(hEv15->GetBinContent(iBin+1)));
-            Printf("nEv10: %.0f pm %.3f (ROOT) pm %.3f (Poisson)", hEv10->GetBinContent(iBin+1), hEv10->GetBinError(iBin+1), TMath::Sqrt(hEv10->GetBinContent(iBin+1)));
-            Printf("ratio: %.4f", nEvRat_val[iBin]);
-            // error calculated as sqrt(bin content):
-            Printf("err: %.4f (ROOT w/o Sumw2 = Poisson)", hEvRat_NoSumw2->GetBinError(iBin+1));
-            // error calculated as sqrt(sum of squares of weights)
-            // https://www-zeuthen.desy.de/~wischnew/amanda/discussion/wgterror/working.html 
-            Printf("err: %.4f (ROOT Sumw2)", hEvRat->GetBinError(iBin+1));
-            // error calculated from the error propagation formula:
-            Printf("err: %.4f (err propagation formula)", nEvRat_err1[iBin]);
-            // error calculated from a binomial distribution
-            Printf("err: %.4f (binomial)", nEvRat_err2[iBin]);
-            // error calculated using Bayesian formula
-            Printf("err: %.4f (Bayes)", nEvRat_err3[iBin]);
-            Printf("***");
-        }
+        outfile << "***\n";
+        if(iBin == 0) outfile << "Bin: allbins\n";
+        else          outfile << "Bin: " << iBin << "\n";
+        outfile << Form("nEv15: %.0f pm %.3f (Poisson)\n", nEv15_val[iBin], nEv15_err[iBin])
+                << Form("nEv10: %.0f pm %.3f (Poisson)\n", nEv10_val[iBin], nEv10_err[iBin])
+                << Form("ratio: %.4f\n", nEvRat_val[iBin]);
+        if(iBin != 0) {
+                // error calculated as sqrt(bin content):
+        outfile << Form("err: %.4f (ROOT w/o Sumw2 = Poisson)\n", hEvRat_NoSumw2->GetBinError(iBin))
+                // error calculated as sqrt(sum of squares of weights)
+                // https://www-zeuthen.desy.de/~wischnew/amanda/discussion/wgterror/working.html 
+                << Form("err: %.4f (ROOT Sumw2)\n", hEvRat->GetBinError(iBin));
+        }    
+                // error calculated from the error propagation formula: 
+        outfile << Form("err: %.4f (err propagation formula)\n", nEvRat_err1[iBin])
+                // error calculated from a binomial distribution
+                << Form("err: %.4f (binomial)\n", nEvRat_err2[iBin])
+                // error calculated using Bayesian formula
+                << Form("err: %.4f (Bayes)\n", nEvRat_err3[iBin]);         
     }
-    // Calculate the values of AxE with the cut on Z_vtx < 15 cm and < 10 cm
+    outfile << "***\n";
+    outfile.close();
+    // calculate the values of AxE with the cut on Z_vtx < 15 cm and < 10 cm
     NewCutZ_AxE_PtBins(15.0);
     NewCutZ_AxE_PtBins(10.0);
-    // To calculate the ratios of AxE: we will compare NRec (NGen are the same in all bins)
+    // to calculate the ratios of AxE: we will compare NRec (NGen are the same in all bins)
     // the errors of the ratios will again be calculated from binomial distribution
-    Double_t nNRec15[5] = { 0 };
-    Double_t nNRec10[5] = { 0 };
+    Double_t nNRec10_val[6] = { 0 };
+    Double_t nNRec15_val[6] = { 0 };
     TString str_AxE15 = "";
     if(cut_fVertexZ == 15.0) str_AxE15 = "Results/" + str_subfolder + Form("AxE_PtBins/NRec_%ibins.txt", nPtBins);
     else                     str_AxE15 = "Results/" + str_subfolder + Form("VertexZ_SystUncertainties/Zcut15.0_AxE_PtBins/NRec_%ibins.txt", nPtBins);
     TString str_AxE10 = "";
     if(cut_fVertexZ == 10.0) str_AxE10 = "Results/" + str_subfolder + Form("AxE_PtBins/NRec_%ibins.txt", nPtBins);
     else                     str_AxE10 = "Results/" + str_subfolder + Form("VertexZ_SystUncertainties/Zcut10.0_AxE_PtBins/NRec_%ibins.txt", nPtBins);
-    // Load the values of NRec
+    // load the values of NRec
     ifstream ifs;
     Int_t bin;
     ifs.open(str_AxE15);    
-    for(Int_t i = 0; i < nPtBins; i++)
-    {
-        ifs >> bin >> nNRec15[i];
-    }
+    for(Int_t iBin = 1; iBin < nPtBins+1; iBin++) ifs >> bin >> nNRec15_val[iBin];
     Printf("Values of AxE for Z_vtx < 15 cm calculated.");
     ifs.close();
     ifs.open(str_AxE10);    
-    for(Int_t i = 0; i < nPtBins; i++)
-    {
-        ifs >> bin >> nNRec10[i];
-    }
+    for(Int_t iBin = 1; iBin < nPtBins+1; iBin++) ifs >> bin >> nNRec10_val[iBin];
     Printf("Values of AxE for Z_vtx < 10 cm calculated.");
     ifs.close();
-    // Calculate the ratios of yields manually using various methods to compute errors
-    Double_t nNRecRat_val[5] = { 0 };
-    Double_t nNRecRat_err1[5] = { 0 };
-    Double_t nNRecRat_err2[5] = { 0 };
-    Double_t nNRecRat_err3[5] = { 0 };
-    for(Int_t iBin = 0; iBin < nPtBins; iBin++)
+    // calculate the ratios of yields manually using various methods to compute errors
+    // index 0 -> the 'allbins' range
+    // indices 1 to 5 -> 5 pT bins
+    Double_t nNRec10_err[6] = { 0 };
+    Double_t nNRec15_err[6] = { 0 };
+    Double_t nNRecRat_val[6] = { 0 };
+    Double_t nNRecRat_err1[6] = { 0 };
+    Double_t nNRecRat_err2[6] = { 0 };
+    Double_t nNRecRat_err3[6] = { 0 };
+    for(Int_t iBin = 0; iBin < nPtBins+1; iBin++)
     {
-        // Calculate the ratio
-        nNRecRat_val[iBin] = nNRec10[iBin] / nNRec15[iBin];
-        // Calculate the error using error propagation formula
-        nNRecRat_err1[iBin] = nNRecRat_val[iBin] * TMath::Sqrt(TMath::Power(TMath::Sqrt(nNRec10[iBin]) / nNRec10[iBin], 2) 
-            + TMath::Power(TMath::Sqrt(nNRec15[iBin]) / nNRec15[iBin], 2));
-        // Calculate the error using binomial distribution
-        nNRecRat_err2[iBin] = CalculateErrorBinomial(nNRec10[iBin], nNRec15[iBin]);
-        // Calculate the error using Bayesian formula
-        nNRecRat_err3[iBin] = CalculateErrorBayes(nNRec10[iBin], nNRec15[iBin]);
-    }
-    // Print the results
-    if(debug)
-    {
-        Printf("***");
-        for(Int_t iBin = 0; iBin < nPtBins; iBin++)
-        {
-            Printf("BIN %i:", iBin+1);
-            Printf("nNRec15: %.0f pm %.0f (Poisson)", nNRec15[iBin], TMath::Sqrt(nNRec15[iBin]));
-            Printf("nNRec10: %.0f pm %.0f (Poisson)", nNRec10[iBin], TMath::Sqrt(nNRec10[iBin]));
-            Printf("ratio: %.4f", nNRecRat_val[iBin]);
-            // error calculated from the error propagation formula:
-            Printf("err: %.4f (err propagation formula)", nNRecRat_err1[iBin]);
-            // error calculated from a binomial distribution
-            Printf("err: %.4f (binomial)", nNRecRat_err2[iBin]);
-            // error calculated using Bayesian formula
-            Printf("err: %.4f (Bayes)", nNRecRat_err3[iBin]);
-            Printf("***");
+        if(iBin == 0) {
+            for(Int_t iBin = 0; iBin < nPtBins; iBin++) {
+                nNRec10_val[0] += nNRec10_val[iBin];
+                nNRec15_val[0] += nNRec15_val[iBin];
+            }
         }
+        nNRec10_err[iBin] = TMath::Sqrt(nNRec10_val[iBin]);
+        nNRec15_err[iBin] = TMath::Sqrt(nNRec15_val[iBin]);
+        // calculate the ratio
+        nNRecRat_val[iBin] = nNRec10_val[iBin] / nNRec15_val[iBin];
+        // calculate the error using error propagation formula
+        nNRecRat_err1[iBin] = nNRecRat_val[iBin] * TMath::Sqrt(TMath::Power(nNRec10_err[iBin] / nNRec10_val[iBin], 2) 
+            + TMath::Power(nNRec15_err[iBin] / nNRec15_val[iBin], 2));
+        // calculate the error using binomial distribution
+        nNRecRat_err2[iBin] = CalculateErrorBinomial(nNRec10_val[iBin], nNRec15_val[iBin]);
+        // calculate the error using Bayesian formula
+        nNRecRat_err3[iBin] = CalculateErrorBayes(nNRec10_val[iBin], nNRec15_val[iBin]);
     }
-    // Calculate the systematic uncertainty
-    Double_t syst_uncr[5] = { 0 };
-    for(Int_t i = 0; i < nPtBins; i++)
+    // print the results
+    outfile.open(Form("%snNrec.txt",str_out.Data()));
+    for(Int_t iBin = 0; iBin < nPtBins+1; iBin++)
     {
-        syst_uncr[i] = (1 - nEvRat_val[i] / nNRecRat_val[i]) * 100;
+        outfile << "***\n";
+        if(iBin == 0) outfile << "Bin: allbins\n";
+        else          outfile << "Bin: " << iBin << "\n";
+        outfile << Form("nNRec15: %.0f pm %.0f (Poisson)\n", nNRec15_val[iBin], nNRec15_err[iBin])
+                << Form("nNRec10: %.0f pm %.0f (Poisson)\n", nNRec10_val[iBin], nNRec10_err[iBin])
+                << Form("ratio: %.4f\n", nNRecRat_val[iBin])
+                // error calculated from the error propagation formula:
+                << Form("err: %.4f (err propagation formula)\n", nNRecRat_err1[iBin])
+                // error calculated from a binomial distribution
+                << Form("err: %.4f (binomial)\n", nNRecRat_err2[iBin])
+                // error calculated using Bayesian formula
+                << Form("err: %.4f (Bayes)\n", nNRecRat_err3[iBin]);
     }
-    TString str_out = "Results/" + str_subfolder + Form("VertexZ_SystUncertainties/syst_uncertainties_%ibins.txt", nPtBins);
-    ofstream outfile(str_out.Data());
-    //outfile << "bin\tsyst\n";
-    outfile << std::fixed << std::setprecision(1);
-    for(Int_t i = 0; i < nPtBins; i++)
-    {
-        outfile << i+1 << "\t" << TMath::Abs(syst_uncr[i]) << "\n";
-    }
+    outfile << "***\n";
     outfile.close();
-    Printf("*** Results printed to %s. ***", str_out.Data());
+    // calculate the systematic uncertainty
+    Double_t syst_uncr[6] = { 0 };
+    for(Int_t i = 0; i < nPtBins+1; i++) syst_uncr[i] = (1 - nEvRat_val[i] / nNRecRat_val[i]) * 100;
+    // print its values
+    outfile.open(Form("%ssyst_uncertainties_%ibins.txt",str_out.Data(),nPtBins));
+    outfile << std::fixed << std::setprecision(1);
+    for(Int_t i = 0; i < nPtBins+1; i++) outfile << i << "\t" << TMath::Abs(syst_uncr[i]) << "\n";
+    outfile.close();
 
-    // Plot the differences
+    // plot the differences
     Double_t x_len = 1200;
     if(nPtBins == 5) x_len += 300;
     TCanvas *c = new TCanvas("c","c",x_len,300);
@@ -232,7 +250,7 @@ void NewCutZ_CompareCounts()
     for(Int_t i = 0; i < nPtBins; i++)
     {
         c->cd(i+1);
-        gr[i] = new TGraphErrors(1,&nNRecRat_val[i],&nEvRat_val[i],&nNRecRat_err3[i],&nEvRat_err3[i]);
+        gr[i] = new TGraphErrors(1,&nNRecRat_val[i+1],&nEvRat_val[i+1],&nNRecRat_err3[i+1],&nEvRat_err3[i+1]);
         gr[i]->SetMarkerColor(kBlue);
         gr[i]->SetMarkerStyle(5);
         gr[i]->SetMarkerSize(2);
@@ -265,10 +283,10 @@ void NewCutZ_CompareCounts()
         if(i == 0){ x_low = 0.19; x_upp = 0.29;}
         else      { x_low = 0.04; x_upp = 0.16;}
         lg[i] = new TLegend(x_low,0.72,x_upp,0.95);
-        lg[i]->AddEntry((TObject*)0,Form("R_{N}^{10/15} = (%.1f pm %.1f)%%", nEvRat_val[i]*100, nEvRat_err3[i]*100),"");
-        lg[i]->AddEntry((TObject*)0,Form("R_{A#times#varepsilon}^{10/15} = (%.1f pm %.1f)%%", nNRecRat_val[i]*100, nNRecRat_err3[i]*100),"");
-        lg[i]->AddEntry((TObject*)0,Form("change = %.1f%%", syst_uncr[i]),"");
-        lg[i]->AddEntry((TObject*)0,Form("syst. uncr. = %.1f%%", TMath::Abs(syst_uncr[i])),"");
+        lg[i]->AddEntry((TObject*)0,Form("R_{N}^{10/15} = (%.1f pm %.1f)%%", nEvRat_val[i+1]*100, nEvRat_err3[i+1]*100),"");
+        lg[i]->AddEntry((TObject*)0,Form("R_{A#times#varepsilon}^{10/15} = (%.1f pm %.1f)%%", nNRecRat_val[i+1]*100, nNRecRat_err3[i+1]*100),"");
+        lg[i]->AddEntry((TObject*)0,Form("change = %.1f%%", syst_uncr[i+1]),"");
+        lg[i]->AddEntry((TObject*)0,Form("syst. uncr. = %.1f%%", TMath::Abs(syst_uncr[i+1])),"");
         lg[i]->SetTextSize(0.05);
         lg[i]->SetBorderSize(0);
         lg[i]->SetFillStyle(0);

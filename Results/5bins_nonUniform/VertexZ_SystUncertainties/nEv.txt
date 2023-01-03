@@ -1,0 +1,59 @@
+***
+Bin: allbins
+nEv15: 734 pm 27.092 (Poisson)
+nEv10: 720 pm 26.833 (Poisson)
+ratio: 0.9809
+err: 0.0515 (err propagation formula)
+err: 0.0050 (binomial)
+err: 0.0052 (Bayes)
+***
+Bin: 1
+nEv15: 166 pm 12.884 (Poisson)
+nEv10: 161 pm 12.689 (Poisson)
+ratio: 0.9699
+err: 0.9848 (ROOT w/o Sumw2 = Poisson)
+err: 0.1073 (ROOT Sumw2)
+err: 0.1073 (err propagation formula)
+err: 0.0133 (binomial)
+err: 0.0143 (Bayes)
+***
+Bin: 2
+nEv15: 166 pm 12.884 (Poisson)
+nEv10: 162 pm 12.728 (Poisson)
+ratio: 0.9759
+err: 0.9879 (ROOT w/o Sumw2 = Poisson)
+err: 0.1078 (ROOT Sumw2)
+err: 0.1078 (err propagation formula)
+err: 0.0119 (binomial)
+err: 0.0131 (Bayes)
+***
+Bin: 3
+nEv15: 132 pm 11.489 (Poisson)
+nEv10: 130 pm 11.402 (Poisson)
+ratio: 0.9848
+err: 0.9924 (ROOT w/o Sumw2 = Poisson)
+err: 0.1217 (ROOT Sumw2)
+err: 0.1217 (err propagation formula)
+err: 0.0106 (binomial)
+err: 0.0127 (Bayes)
+***
+Bin: 4
+nEv15: 139 pm 11.790 (Poisson)
+nEv10: 136 pm 11.662 (Poisson)
+ratio: 0.9784
+err: 0.9891 (ROOT w/o Sumw2 = Poisson)
+err: 0.1180 (ROOT Sumw2)
+err: 0.1180 (err propagation formula)
+err: 0.0123 (binomial)
+err: 0.0139 (Bayes)
+***
+Bin: 5
+nEv15: 131 pm 11.446 (Poisson)
+nEv10: 131 pm 11.446 (Poisson)
+ratio: 1.0000
+err: 1.0000 (ROOT w/o Sumw2 = Poisson)
+err: 0.1236 (ROOT Sumw2)
+err: 0.1236 (err propagation formula)
+err: 0.0000 (binomial)
+err: 0.0075 (Bayes)
+***
