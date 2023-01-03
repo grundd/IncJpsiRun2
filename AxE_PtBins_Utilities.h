@@ -264,6 +264,12 @@ void AxE_PtBins_Calculate(Double_t fCutZ)
     Double_t AxETot = NRecTot / NGenTot;
     Double_t AxETot_err = CalculateErrorBayes(NRecTot, NGenTot);
     Printf("Total AxE = (%.4f pm %.4f)%%", AxETot*100, AxETot_err*100);
+    
+    // print it to a text file
+    outfile.open((str + "_total.txt").Data());
+    outfile << std::fixed << std::setprecision(5)
+            << AxETot << "\t" << AxETot_err << "\n";
+    Printf("*** Results printed to %s.***", (str + "_total.txt").Data());
 
     return;
 }

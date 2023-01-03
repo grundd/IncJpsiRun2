@@ -797,20 +797,24 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
     outfile.close();
     Printf("*** Results printed to %s. ***", (name + "_fD_TeX.txt").Data());
 
-    // Print the values of fC to another file from which they will be loaded in CalculateCrossSection.h
+    // Print the values of fC to another file from which they will be loaded in CrossSec_Calculate.C
     outfile.open((name + "_fC.txt").Data());
     outfile << std::fixed << std::setprecision(3);
-    outfile << Form("Bin \tfC [%%]\terr \n");
+    outfile << "bin index 0 corresponds to the 'allbins' range\n"
+            << Form("Bin \tfC [%%]\terr \n")
+            << "0 \t" << fC_to1_val << "\t" << fC_to1_err << "\n";
     for(Int_t i = 0; i < nPtBins; i++){
         outfile << i+1 << "\t" << fC_bins_val[i] << "\t" << fC_bins_err[i] << "\n";
     }
     outfile.close();
     Printf("*** Results printed to %s. ***", (name + "_fC.txt").Data());
 
-    // Print the values of fD to another file from which they will be loaded in CalculateCrossSection.h
+    // Print the values of fD to another file from which they will be loaded in CrossSec_Calculate.C
     outfile.open((name + "_fD.txt").Data());
     outfile << std::fixed << std::setprecision(3);
-    outfile << Form("Bin \tfD [%%]\terr \n");
+    outfile << "bin index 0 corresponds to the 'allbins' range\n"
+            << Form("Bin \tfD [%%]\terr \n")
+            << "0 \t" << fD_to1_val << "\t" << fD_to1_err << "\n";
     for(Int_t i = 0; i < nPtBins; i++){
         outfile << i+1 << "\t" << fD_bins_val[i] << "\t" << fD_bins_err[i] << "\n";
     }

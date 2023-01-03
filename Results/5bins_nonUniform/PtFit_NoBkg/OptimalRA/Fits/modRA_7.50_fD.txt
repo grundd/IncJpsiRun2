@@ -1,4 +1,6 @@
+bin index 0 corresponds to the 'allbins' range
 Bin 	fD [%]	err 
+0 	25.008	1.628
 1	80.524	6.125
 2	36.102	2.512
 3	9.441	0.729

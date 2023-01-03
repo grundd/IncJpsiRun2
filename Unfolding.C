@@ -382,7 +382,7 @@ void Unfolding(Int_t iAnalysis)
     while(std::getline(ifs,str)){
         istringstream iss(str);
         Int_t bin;
-        if(i > 0) iss >> bin >> fC_val[i-1] >> fC_err[i-1]; // skip the first line
+        if(i > 3) iss >> bin >> fC_val[i-1] >> fC_err[i-1]; // skip first three lines (2 lines of text + value for the fiducial CS)
         i++;   
     }
     ifs.close();

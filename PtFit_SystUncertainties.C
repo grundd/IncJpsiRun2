@@ -3,33 +3,33 @@
 
 #include "PtFit_Utilities.h"
 
-// #############################################################################################
-
 // values of fD returned from the fit:
-Double_t CorrFD_fromFit_val[5] = { 0 };
-Double_t CorrFD_fromFit_err[5] = { 0 };
+// index 0 -> the 'allbins' range (=> fiducial cross section)
+// remaining indices -> cross section in pT bins
+Double_t fD_fromFit_val[6] = { 0 };
+Double_t fD_fromFit_err[6] = { 0 };
 // values of fD when the value of R is varied:
-Double_t CorrFD_16_val[5] = { 0 };
-Double_t CorrFD_16_err[5] = { 0 };
-Double_t CorrFD_20_val[5] = { 0 };
-Double_t CorrFD_20_err[5] = { 0 };
+Double_t fD_16_val[6] = { 0 };
+Double_t fD_16_err[6] = { 0 };
+Double_t fD_20_val[6] = { 0 };
+Double_t fD_20_err[6] = { 0 };
 // values of fD when the dissociative shape is varied:
-Double_t CorrFD_DissLL_val[5] = { 0 }; // diss low low
-Double_t CorrFD_DissLL_err[5] = { 0 };
-Double_t CorrFD_DissUL_val[5] = { 0 }; // diss upp low
-Double_t CorrFD_DissUL_err[5] = { 0 };
-Double_t CorrFD_DissLU_val[5] = { 0 }; // diss upp low
-Double_t CorrFD_DissLU_err[5] = { 0 };
-Double_t CorrFD_DissUU_val[5] = { 0 }; // diss upp low
-Double_t CorrFD_DissUU_err[5] = { 0 };
+Double_t fD_DissLL_val[6] = { 0 }; // diss low low
+Double_t fD_DissLL_err[6] = { 0 };
+Double_t fD_DissUL_val[6] = { 0 }; // diss upp low
+Double_t fD_DissUL_err[6] = { 0 };
+Double_t fD_DissLU_val[6] = { 0 }; // diss upp low
+Double_t fD_DissLU_err[6] = { 0 };
+Double_t fD_DissUU_val[6] = { 0 }; // diss upp low
+Double_t fD_DissUU_err[6] = { 0 };
 // arrays showing the final errors
 // (errors returned by the pT fit and the differences added in quadrature)
-Double_t CorrFD_err[5] = { 0 };
+Double_t fD_err[6] = { 0 };
 
-void PtFit_ReadResultsFromFile(TString sIn, Double_t val[5], Double_t err[5])
+void PtFit_ReadResultsFromFile(TString sIn, Double_t val[6], Double_t err[6])
 {
     ifstream ifs;
-    Int_t iBin;
+    Int_t i_bin;
     ifs.open(sIn.Data());
     // read data from the file
     if(!ifs.fail()){
@@ -37,8 +37,8 @@ void PtFit_ReadResultsFromFile(TString sIn, Double_t val[5], Double_t err[5])
         std::string str;
         while(std::getline(ifs,str)) {
             istringstream inStream(str);
-            // skip first line
-            if(i > 0) inStream >> iBin >> val[i-1] >> err[i-1];
+            // skip first two lines
+            if(i > 1) inStream >> i_bin >> val[i-2] >> err[i-2];
             i++;   
         }
     }
@@ -57,7 +57,7 @@ void PtFit_SystUncertainties(Int_t iAnalysis)
 
     // load values of fD returned from the fit
     sIn = "Results/" + str_subfolder + "PtFit_NoBkg/RecSh4_fD0_fD.txt";
-    PtFit_ReadResultsFromFile(sIn,CorrFD_fromFit_val,CorrFD_fromFit_err);
+    PtFit_ReadResultsFromFile(sIn,fD_fromFit_val,fD_fromFit_err);
 
     // *******************************************************************************************
     // Try various values of R
@@ -67,20 +67,20 @@ void PtFit_SystUncertainties(Int_t iAnalysis)
 
     // load values of fD with R = 0.16
     sIn = "Results/" + str_subfolder + "PtFit_SystUncertainties/RecSh4_fD-2_fD.txt";
-    PtFit_ReadResultsFromFile(sIn,CorrFD_16_val,CorrFD_16_err);
+    PtFit_ReadResultsFromFile(sIn,fD_16_val,fD_16_err);
 
     // load values of fD with R = 0.20
     sIn = "Results/" + str_subfolder + "PtFit_SystUncertainties/RecSh4_fD2_fD.txt";
-    PtFit_ReadResultsFromFile(sIn,CorrFD_20_val,CorrFD_20_err);
+    PtFit_ReadResultsFromFile(sIn,fD_20_val,fD_20_err);
 
     // calculate the differences between 0.16/0.18 and 0.18/0.20
-    Double_t diff_low[5] = { 0 };
-    Double_t diff_upp[5] = { 0 };
-    Double_t diff_mean[5] = { 0 };
-    for(Int_t i = 0; i < nPtBins; i++)
+    Double_t diff_low[6] = { 0 };
+    Double_t diff_upp[6] = { 0 };
+    Double_t diff_mean[6] = { 0 };
+    for(Int_t i = 0; i < nPtBins+1; i++)
     {
-        diff_low[i] = CorrFD_fromFit_val[i] - CorrFD_16_val[i];
-        diff_upp[i] = CorrFD_20_val[i] - CorrFD_fromFit_val[i];
+        diff_low[i] = fD_fromFit_val[i] - fD_16_val[i];
+        diff_upp[i] = fD_20_val[i] - fD_fromFit_val[i];
         diff_mean[i] = (diff_low[i] + diff_upp[i]) / 2;
     }
 
@@ -90,9 +90,9 @@ void PtFit_SystUncertainties(Int_t iAnalysis)
     outfile.open(str_out.Data());
     outfile << std::fixed << std::setprecision(2)
             << "18_val\t18_err\tdiff_l\tdiff_u\tdiff_m\n";
-    for(Int_t i = 0; i < nPtBins; i++)
+    for(Int_t i = 0; i < nPtBins+1; i++)
     {
-        outfile << CorrFD_fromFit_val[i] << "\t" << CorrFD_fromFit_err[i] << "\t" << diff_low[i] << "\t" << diff_upp[i] << "\t" 
+        outfile << fD_fromFit_val[i] << "\t" << fD_fromFit_err[i] << "\t" << diff_low[i] << "\t" << diff_upp[i] << "\t" 
                 << diff_mean[i] << "\n";
     }
     outfile.close();
@@ -106,32 +106,32 @@ void PtFit_SystUncertainties(Int_t iAnalysis)
 
     // load values of fD with diss low low
     sIn = "Results/" + str_subfolder + "PtFit_SystUncertainties/RecSh4_Diss6_fD.txt";
-    PtFit_ReadResultsFromFile(sIn,CorrFD_DissLL_val,CorrFD_DissLL_err);
+    PtFit_ReadResultsFromFile(sIn,fD_DissLL_val,fD_DissLL_err);
 
     // load values of fD with diss upp low
     sIn = "Results/" + str_subfolder + "PtFit_SystUncertainties/RecSh4_Diss7_fD.txt";
-    PtFit_ReadResultsFromFile(sIn,CorrFD_DissUL_val,CorrFD_DissUL_err);
+    PtFit_ReadResultsFromFile(sIn,fD_DissUL_val,fD_DissUL_err);
 
     // load values of fD with diss low upp
     sIn = "Results/" + str_subfolder + "PtFit_SystUncertainties/RecSh4_Diss8_fD.txt";
-    PtFit_ReadResultsFromFile(sIn,CorrFD_DissLU_val,CorrFD_DissLU_err);
+    PtFit_ReadResultsFromFile(sIn,fD_DissLU_val,fD_DissLU_err);
 
     // load values of fD with diss upp upp
     sIn = "Results/" + str_subfolder + "PtFit_SystUncertainties/RecSh4_Diss9_fD.txt";
-    PtFit_ReadResultsFromFile(sIn,CorrFD_DissUU_val,CorrFD_DissUU_err);
+    PtFit_ReadResultsFromFile(sIn,fD_DissUU_val,fD_DissUU_err);
 
     // calculate the differences between the values from the original fit and LL, UL, LU, UU
-    Double_t diff_LL[5] = { 0 };
-    Double_t diff_UL[5] = { 0 };
-    Double_t diff_LU[5] = { 0 };
-    Double_t diff_UU[5] = { 0 };
-    Double_t diff_max[5] = { 0 };
-    for(Int_t i = 0; i < nPtBins; i++)
+    Double_t diff_LL[6] = { 0 };
+    Double_t diff_UL[6] = { 0 };
+    Double_t diff_LU[6] = { 0 };
+    Double_t diff_UU[6] = { 0 };
+    Double_t diff_max[6] = { 0 };
+    for(Int_t i = 0; i < nPtBins+1; i++)
     {
-        diff_LL[i] = CorrFD_fromFit_val[i] - CorrFD_DissLL_val[i];
-        diff_UL[i] = CorrFD_fromFit_val[i] - CorrFD_DissUL_val[i];
-        diff_LU[i] = CorrFD_fromFit_val[i] - CorrFD_DissLU_val[i];
-        diff_UU[i] = CorrFD_fromFit_val[i] - CorrFD_DissUU_val[i];
+        diff_LL[i] = fD_fromFit_val[i] - fD_DissLL_val[i];
+        diff_UL[i] = fD_fromFit_val[i] - fD_DissUL_val[i];
+        diff_LU[i] = fD_fromFit_val[i] - fD_DissLU_val[i];
+        diff_UU[i] = fD_fromFit_val[i] - fD_DissUU_val[i];
         // find the maximum difference for each bin
         Double_t maxDiff = 0;
         if(TMath::Abs(diff_LL[i]) > TMath::Abs(maxDiff)) maxDiff = diff_LL[i];
@@ -146,9 +146,9 @@ void PtFit_SystUncertainties(Int_t iAnalysis)
     outfile.open(str_out.Data());
     outfile << std::fixed << std::setprecision(2)
             << "18_val\t18_err\tdiff_LL\tdiff_UL\tdiff_LU\tdiff_UU\tmaxDiff\n";
-    for(Int_t i = 0; i < nPtBins; i++)
+    for(Int_t i = 0; i < nPtBins+1; i++)
     {
-        outfile << CorrFD_fromFit_val[i] << "\t" << CorrFD_fromFit_err[i] << "\t" << diff_LL[i] << "\t" << diff_UL[i] << "\t" 
+        outfile << fD_fromFit_val[i] << "\t" << fD_fromFit_err[i] << "\t" << diff_LL[i] << "\t" << diff_UL[i] << "\t" 
                 << diff_LU[i] << "\t" << diff_UU[i] << "\t" << diff_max[i] << "\n";
     }
     outfile.close();
@@ -158,20 +158,20 @@ void PtFit_SystUncertainties(Int_t iAnalysis)
     // Summarize the results
     // *******************************************************************************************
 
-    for(Int_t i = 0; i < nPtBins; i++) 
+    for(Int_t i = 0; i < nPtBins+1; i++) 
     {
-        CorrFD_err[i] = TMath::Sqrt(TMath::Power(diff_mean[i], 2)); 
+        fD_err[i] = TMath::Sqrt(TMath::Power(diff_mean[i], 2)); 
         //+ TMath::Power(diff_max[i], 2)
-        //+ TMath::Power(CorrFD_fromFit_err[i], 2)
+        //+ TMath::Power(fD_fromFit_err[i], 2)
     }
 
-    // print the results to be read by PhotoCrossSec_Calculate()
+    // print the results to be read by CrossSec_Calculate()
     str_out = "Results/" + str_subfolder + "PtFit_SystUncertainties/fD_syst_errors.txt";
     outfile.open(str_out.Data());
     outfile << std::fixed << std::setprecision(1);
-    for(Int_t i = 0; i < nPtBins; i++)
+    for(Int_t i = 0; i < nPtBins+1; i++)
     {
-        outfile << CorrFD_fromFit_val[i] << "\t" << CorrFD_err[i] << "\n";
+        outfile << fD_fromFit_val[i] << "\t" << fD_err[i] << "\n";
     }
     outfile.close();
     Printf("*** Results printed to %s. ***", str_out.Data());
