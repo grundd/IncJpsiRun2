@@ -369,9 +369,13 @@ void Unfolding(Int_t iAnalysis)
     // import the AxE
     sIn = Form("Results/" + str_subfolder + "AxE_PtBins/AxE_%ibins.txt", nPtBins);
     ifs.open(sIn.Data());
-    for(Int_t iBin = 0; iBin < nPtBins; iBin++) {
-        Int_t bin;
-        ifs >> bin >> AxE_val[iBin] >> AxE_err[iBin];
+    for(Int_t iBin = 0; iBin < nPtBins+1; iBin++) {
+        Int_t bin; Float_t val, err;
+        ifs >> bin >> val >> err;
+        if(iBin > 0) { 
+            AxE_val[iBin-1] = val;
+            AxE_err[iBin-1] = err;
+        }
     }
     ifs.close();
     // import fCs
@@ -379,18 +383,23 @@ void Unfolding(Int_t iAnalysis)
     ifs.open(sIn.Data());
     Int_t i = 0;
     std::string str;
-    while(std::getline(ifs,str)){
+    while(std::getline(ifs,str)) {
         istringstream iss(str);
         Int_t bin;
-        if(i > 3) iss >> bin >> fC_val[i-1] >> fC_err[i-1]; // skip first three lines (2 lines of text + value for the fiducial CS)
+        if(i > 2) iss >> bin >> fC_val[i-3] >> fC_err[i-3]; // skip first three lines (2 lines of text + value for the fiducial CS)
         i++;   
     }
     ifs.close();
     // import fDs
     sIn = "Results/" + str_subfolder + "PtFit_SystUncertainties/fD_syst_errors.txt";
     ifs.open(sIn.Data());
-    for(Int_t iBin = 0; iBin < nPtBins; iBin++) {
-        ifs >> fD_val[iBin] >> fD_err[iBin];
+    for(Int_t iBin = 0; iBin < nPtBins+1; iBin++) {
+        Float_t val, err;
+        ifs >> val >> err;
+        if(iBin > 0) { 
+            fD_val[iBin-1] = val;
+            fD_err[iBin-1] = err;
+        }
     }
     ifs.close();
     // create histogram to unfold

@@ -209,7 +209,7 @@ void AxE_PtBins_Calculate(Double_t fCutZ)
     AxE_PtBins_hAxE->GetXaxis()->SetDecimals(1);
     // Eventually draw it
     AxE_PtBins_hAxE->Draw("P E1");
-    // Legend
+    // legend
     TLegend *l = new TLegend(0.52,0.77,0.85,0.97);
     l->AddEntry((TObject*)0,Form("ALICE Simulation"),""); 
     l->AddEntry((TObject*)0,Form("Pb#minusPb #sqrt{#it{s}_{NN}} = 5.02 TeV"),"");
@@ -218,7 +218,7 @@ void AxE_PtBins_Calculate(Double_t fCutZ)
     l->SetBorderSize(0); // no border
     l->SetFillStyle(0);  // legend is transparent
     l->Draw();
-    // Legend 2
+    // legend 2
     TLegend *l2 = new TLegend(0.15,0.17,0.35,0.32);
     l2->AddEntry((TObject*)0,Form("|#it{y}| < 0.8"),""); 
     l2->AddEntry((TObject*)0,Form("2.2 < #it{m} < 4.5 GeV/#it{c}^{2}"),"");
@@ -227,34 +227,26 @@ void AxE_PtBins_Calculate(Double_t fCutZ)
     l2->SetFillStyle(0);  // legend is transparent
     l2->Draw();
 
-    // Save the figures and print the results to txt file
+    // save the figures and print the results to txt file
     TString str;
     if(fCutZ == cut_fVertexZ) str = "Results/" + str_subfolder + Form("AxE_PtBins/AxE_%ibins", nPtBins);
     else                      str = "Results/" + str_subfolder + Form("VertexZ_SystUncertainties/Zcut%.1f_AxE_PtBins/AxE_%ibins", fCutZ, nPtBins);
     c->Print((str + ".pdf").Data());
     c->Print((str + ".png").Data());
-    ofstream outfile((str + ".txt").Data());
-    outfile << std::fixed << std::setprecision(5);
-    //outfile << "Bin \tAxE [%%] \tAxE_err [%%] \n";
-    for(Int_t i = 1; i <= nPtBins; i++){
-        outfile << i << "\t" << AxE_PtBins_hAxE->GetBinContent(i)*100 << "\t\t" << AxE_PtBins_hAxE->GetBinError(i)*100 << "\n";
-    }
-    outfile.close();
-    Printf("*** Results printed to %s.***", (str + ".txt").Data());
 
-    // Compare errors that Root gives with CalculateErrorBayes
+    // compare errors that Root gives with CalculateErrorBayes
     Bool_t DebugErrors = kFALSE;
     if(DebugErrors){
         Double_t ErrRoot = 0;
         Double_t ErrBayes = 0;    
-        for(Int_t i = 1; i <= nPtBins; i++){
+        for(Int_t i = 1; i <= nPtBins; i++) {
             ErrRoot = AxE_PtBins_hAxE->GetBinError(i);
             ErrBayes = CalculateErrorBayes(AxE_PtBins_hNRec->GetBinContent(i),AxE_PtBins_hNGen->GetBinContent(i));
             Printf("Root: %.5f, Bayes: %.5f", ErrRoot, ErrBayes);
         }
     }
 
-    // Cross-check: calculate the total value of AxE
+    // calculate the total value of AxE
     Double_t NRecTot = 0;
     Double_t NGenTot = 0;
     for(Int_t i = 1; i <= nPtBins; i++){
@@ -263,13 +255,19 @@ void AxE_PtBins_Calculate(Double_t fCutZ)
     }
     Double_t AxETot = NRecTot / NGenTot;
     Double_t AxETot_err = CalculateErrorBayes(NRecTot, NGenTot);
-    Printf("Total AxE = (%.4f pm %.4f)%%", AxETot*100, AxETot_err*100);
-    
-    // print it to a text file
-    outfile.open((str + "_total.txt").Data());
-    outfile << std::fixed << std::setprecision(5)
-            << AxETot << "\t" << AxETot_err << "\n";
-    Printf("*** Results printed to %s.***", (str + "_total.txt").Data());
+    Printf("Total AxE = (%.4f pm %.4f)%%", AxETot*100., AxETot_err*100.);
+
+    // print the results to a text file
+    // index zero -> fiducial cross section
+    ofstream outfile((str + ".txt").Data());
+    outfile << std::fixed << std::setprecision(3);
+    outfile //<< "Bin \tAxE [%%] \tAxE_err [%%] \n";
+            << "0\t" << AxETot*100. << "\t" << AxETot_err*100. << "\n";
+    for(Int_t i = 1; i <= nPtBins; i++){
+        outfile << i << "\t" << AxE_PtBins_hAxE->GetBinContent(i)*100. << "\t" << AxE_PtBins_hAxE->GetBinError(i)*100. << "\n";
+    }
+    outfile.close();
+    Printf("*** Results printed to %s.***", (str + ".txt").Data());
 
     return;
 }

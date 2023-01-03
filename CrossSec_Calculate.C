@@ -17,6 +17,7 @@
 // remaining indices -> cross section in pT bins
 Float_t N_yield_val[6] = { 0 };
 Float_t N_yield_err[6] = { 0 };
+Float_t pT2_boundaries[6][2] = { 0 };
 Float_t pT2_widths[6] = { 0 };
 Float_t AxE_MC_val[6] = { 0 };
 Float_t AxE_MC_err[6] = { 0 };
@@ -60,7 +61,8 @@ Float_t eff_veto_pileup_err = eff_veto_pileup_val * syst_eff_veto_pileup / 100.;
 Float_t eff_veto_diss_val = 63.7;
 Float_t eff_veto_diss_err = eff_veto_diss_val * syst_eff_veto_diss / 100.;
 
-// temporary variable used when loading data
+// temporary variables used when loading data
+TString s_in;
 Int_t i_bin;
 
 void CalculateCrossSec_PtBins();
@@ -92,11 +94,11 @@ void CalculateCrossSec_PtBins()
     TString str_period[2] = {"18q", "18r"};
     for(Int_t iPeriod = 0; iPeriod < 2; iPeriod++)
     {
-        TString str_lumi = Form("Results/" + str_subfolder + "Lumi/lumi_%s.txt", str_period[iPeriod].Data());
-        ifs.open(str_lumi.Data());
+        s_in = Form("Results/" + str_subfolder + "Lumi/lumi_%s.txt", str_period[iPeriod].Data());
+        ifs.open(s_in.Data());
         if(!ifs.fail()) ifs >> lumi_periods[iPeriod];
         else {
-            PrintErr(str_lumi);
+            PrintErr(s_in);
             return;
         }
         ifs.close(); 
@@ -109,13 +111,12 @@ void CalculateCrossSec_PtBins()
     // total value + in pT bins
     for(Int_t iBin = 0; iBin < nPtBins+1; iBin++)
     {
-        TString str_yield;
-        if(iBin == 0) str_yield = "Results/" + str_subfolder + "InvMassFit/allbins/allbins_signal.txt"; 
-        else          str_yield = "Results/" + str_subfolder + Form("InvMassFit/%ibins/bin%i_signal.txt",nPtBins,iBin);
-        ifs.open(str_yield.Data());
+        if(iBin == 0) s_in = "Results/" + str_subfolder + "InvMassFit/allbins/allbins_signal.txt"; 
+        else          s_in = "Results/" + str_subfolder + Form("InvMassFit/%ibins/bin%i_signal.txt",nPtBins,iBin);
+        ifs.open(s_in.Data());
         if(!ifs.fail()) ifs >> N_yield_val[iBin] >> N_yield_err[iBin];
         else {
-            PrintErr(str_yield);
+            PrintErr(s_in);
             return;
         }
         ifs.close(); 
@@ -123,21 +124,12 @@ void CalculateCrossSec_PtBins()
     Printf("Loaded: yields");
 
     // AxE_MC
-    // total value -> fiducial
-    TString str_AxE = Form("Results/" + str_subfolder + "AxE_PtBins/AxE_%ibins_total.txt",nPtBins);
-    ifs.open(str_AxE.Data());
-    if(!ifs.fail()) ifs >> i_bin >> AxE_MC_val[0] >> AxE_MC_err[0];
+    // total value + in pT bins
+    s_in = Form("Results/" + str_subfolder + "AxE_PtBins/AxE_%ibins.txt",nPtBins);
+    ifs.open(s_in.Data());
+    if(!ifs.fail()) for(Int_t iBin = 0; iBin < nPtBins+1; iBin++) ifs >> i_bin >> AxE_MC_val[iBin] >> AxE_MC_err[iBin];
     else {
-        PrintErr(str_AxE);
-        return;            
-    }
-    ifs.close();
-    // in pT bins
-    TString str_AxEs = Form("Results/" + str_subfolder + "AxE_PtBins/AxE_%ibins.txt",nPtBins);
-    ifs.open(str_AxEs.Data());
-    if(!ifs.fail()) for(Int_t iBin = 0; iBin < nPtBins; iBin++) ifs >> i_bin >> AxE_MC_val[iBin+1] >> AxE_MC_err[iBin+1];
-    else {
-        PrintErr(str_AxEs);
+        PrintErr(s_in);
         return;            
     }
     ifs.close();
@@ -145,11 +137,11 @@ void CalculateCrossSec_PtBins()
 
     // fD corrections 
     // total value + in pT bins
-    TString str_FDs = "Results/" + str_subfolder + "PtFit_SystUncertainties/fD_syst_errors.txt";
-    ifs.open(str_FDs.Data());
+    s_in = "Results/" + str_subfolder + "PtFit_SystUncertainties/fD_syst_errors.txt";
+    ifs.open(s_in.Data());
     if(!ifs.fail()) for(Int_t i = 0; i < nPtBins+1; i++) ifs >> fD_val[i] >> fD_err[i];
     else {
-        PrintErr(str_FDs);
+        PrintErr(s_in);
         return;
     }
     ifs.close();
@@ -157,8 +149,8 @@ void CalculateCrossSec_PtBins()
 
     // fC corrections 
     // total value + in pT bins
-    TString str_FCs = "Results/" + str_subfolder + "PtFit_NoBkg/RecSh4_fD0_fC.txt";
-    ifs.open(str_FCs.Data());
+    s_in = "Results/" + str_subfolder + "PtFit_NoBkg/RecSh4_fD0_fC.txt";
+    ifs.open(s_in.Data());
     if(!ifs.fail()) {
         Int_t i = 0;
         std::string str;
@@ -169,27 +161,30 @@ void CalculateCrossSec_PtBins()
             i++;   
         }
     } else {
-        PrintErr(str_FCs);
+        PrintErr(s_in);
         return;
     }
     ifs.close();
     Printf("Loaded: fC correction factors");
 
-    // widths of intervals in pT^2 [GeV^2]
-    pT2_widths[0] = ptBoundaries[nPtBins] - ptBoundaries[0];
-    for(Int_t iBin = 1; iBin < nPtBins+1; iBin++)
-    {
-        pT2_widths[iBin] = TMath::Power(ptBoundaries[iBin], 2) - TMath::Power(ptBoundaries[iBin-1], 2);
+    // boundaries of intervals in pT^2 or |t| ([GeV^2/c^2] or [GeV^2])
+    pT2_boundaries[0][0] = TMath::Power(ptBoundaries[0], 2);
+    pT2_boundaries[0][1] = TMath::Power(ptBoundaries[nPtBins], 2);
+    for(Int_t iBin = 1; iBin < nPtBins+1; iBin++) {
+        pT2_boundaries[iBin][0] = TMath::Power(ptBoundaries[iBin-1], 2);
+        pT2_boundaries[iBin][1] = TMath::Power(ptBoundaries[iBin], 2);
     }
-    Printf("Calculated: pT^2 widths");
+    // widths
+    for(Int_t iBin = 0; iBin < nPtBins+1; iBin++) pT2_widths[iBin] = pT2_boundaries[iBin][1] - pT2_boundaries[iBin][0];
+    Printf("Calculated: pT^2 boundaries and widths");
 
     // cross-check: print the loaded values
     Printf("The following values will be used:");
     Printf("pT_low\tpT_upp\tpT2_w\tN_val\tN_err\tAxE_val\tAxE_err\tfD_val\tfD_err\tfC_val\tfC_err");
-    for(Int_t iBin = 1; iBin < nPtBins+1; iBin++)
+    for(Int_t iBin = 0; iBin < nPtBins+1; iBin++)
     {
         Printf("%.3f\t%.3f\t%.4f\t%.1f\t%.1f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f",
-            ptBoundaries[iBin-1], ptBoundaries[iBin], pT2_widths[iBin], N_yield_val[iBin], N_yield_err[iBin], 
+            pT2_boundaries[iBin][0], pT2_boundaries[iBin][1], pT2_widths[iBin], N_yield_val[iBin], N_yield_err[iBin], 
             AxE_MC_val[iBin], AxE_MC_err[iBin], fD_val[iBin], fD_err[iBin], fC_val[iBin], fC_err[iBin]);
     }
     
@@ -215,22 +210,22 @@ void CalculateCrossSec_PtBins()
     Printf("Calculating systematic uncertainties...");
 
     // signal extraction
-    TString str_sig_extr = "Results/" + str_subfolder + Form("InvMassFit_SystUncertainties/ErrSystSignalExtraction_%ibins.txt",nPtBins);
-    ifs.open(str_sig_extr.Data());
+    s_in = "Results/" + str_subfolder + Form("InvMassFit_SystUncertainties/ErrSystSignalExtraction_%ibins.txt",nPtBins);
+    ifs.open(s_in.Data());
     if(!ifs.fail()) for(Int_t iBin = 0; iBin < nPtBins+1; iBin++) ifs >> i_bin >> syst_sig_extr[iBin];
     else {
-        PrintErr(str_sig_extr);
+        PrintErr(s_in);
         return;        
     }
     ifs.close();
     Printf("Loaded: signal extraction syst errs");
 
     // |z_vtx| selection
-    TString str_SystZVtx = "Results/" + str_subfolder + Form("VertexZ_SystUncertainties/syst_uncertainties_%ibins.txt",nPtBins);
-    ifs.open(str_SystZVtx.Data());
+    s_in = "Results/" + str_subfolder + Form("VertexZ_SystUncertainties/syst_uncertainties_%ibins.txt",nPtBins);
+    ifs.open(s_in.Data());
     if(!ifs.fail()) for(Int_t iBin = 0; iBin < nPtBins+1; iBin++) ifs >> i_bin >> syst_z_vtx[iBin];
     else {
-        PrintErr(str_SystZVtx);
+        PrintErr(s_in);
         return;        
     }
     ifs.close();
@@ -266,8 +261,7 @@ void CalculateCrossSec_PtBins()
     Printf("Calculated: fC and fD syst errs");
 
     // calculate systematic errors of the UPC cross section
-    for(Int_t iBin = 0; iBin < nPtBins+1; iBin++)
-    {
+    for(Int_t iBin = 0; iBin < nPtBins+1; iBin++) {
         syst_BR = BR_err / BR_val * 100.;
         sig_upc_err_syst_corr[iBin] = sig_upc_val[iBin] * TMath::Sqrt(
             TMath::Power(syst_fD[iBin] / 100., 2) +
@@ -292,8 +286,7 @@ void CalculateCrossSec_PtBins()
     Printf("Calculating the photonuclear cross section and its errors...");
 
     // calculate the photonuclear cross section in pT bins
-    for(Int_t iBin = 0; iBin < nPtBins+1; iBin++)
-    {
+    for(Int_t iBin = 0; iBin < nPtBins+1; iBin++) {
         sig_gPb_val[iBin] = sig_upc_val[iBin] / 2. / flux_val * 1000;
         sig_gPb_err_stat[iBin] = sig_upc_err_stat[iBin] / 2. / flux_val * 1000;
         sig_gPb_err_syst_uncr[iBin] = sig_upc_err_syst_uncr[iBin] / 2. / flux_val * 1000;
@@ -305,61 +298,63 @@ void CalculateCrossSec_PtBins()
     Printf("Calculated: photonuclear cross section and errors");
 
     // avg values of |t| per bin
-    TString str_t_avg = "Results/" + str_subfolder + "STARlight_tVsPt/AvgTPerBin.txt";
-    ifs.open(str_t_avg.Data());
+    s_in = "Results/" + str_subfolder + "STARlight_tVsPt/AvgTPerBin.txt";
+    ifs.open(s_in.Data());
     if(!ifs.fail()) for(Int_t iBin = 0; iBin < nPtBins; iBin++) { 
         ifs >> i_bin >> avgt_val[iBin];  
-        if(kFALSE) Printf("Reading: bin %i, |t| = %.4f", i_bin, avgt_val[iBin]);
+        if(kTRUE) Printf("Reading: bin %i, |t| = %.4f", i_bin, avgt_val[iBin]);
     } else {
-        PrintErr(str_t_avg);
+        PrintErr(s_in);
         return;
     }
     ifs.close();
     Printf("Loaded: average |t| values");
 
-    // print the results to text files
-    // print the UPC cross section 
-    TString str_out = "Results/" + str_subfolder + "CrossSec/CrossSec_UPC.txt";
-    ofstream outfile(str_out.Data());
+    // *******************************************************************************************
+    // print the results
+    // *******************************************************************************************
+
+    // UPC cross section 
+    TString s_out = "Results/" + str_subfolder + "CrossSec/CrossSec_UPC.txt";
+    ofstream outfile(s_out.Data());
     outfile << Form("Lumi\terr\tRapW\tBR\terr\te_p-up\terr\te_diss\terr\tflux\terr\n")
-                  << Form("%.1f \t%.1f \t%.1f \t%.3f \t%.3f \t%.1f \t%.1f \t%.1f \t%.1f \t%.1f \t%.1f \n\n",
-                            lumi_val, lumi_err, 
-                            rap_width, 
-                            BR_val*100., BR_err*100., 
-                            eff_veto_pileup_val, eff_veto_pileup_err, 
-                            eff_veto_diss_val, eff_veto_diss_err,
-                            flux_val, flux_err);
+            << Form("%.1f \t%.1f \t%.1f \t%.3f \t%.3f \t%.1f \t%.1f \t%.1f \t%.1f \t%.1f \t%.1f \n\n",
+                lumi_val, lumi_err, rap_width, 
+                BR_val*100., BR_err*100., 
+                eff_veto_pileup_val, eff_veto_pileup_err, 
+                eff_veto_diss_val, eff_veto_diss_err,
+                flux_val, flux_err);
     outfile << Form("Bin\tPt2Low\tPt2Upp\tPt2_W\tN\terr\tAxE\terr\tFD [%%]\terr\tFC [%%]\terr\tsig\tstat\tsyst u\tsyst c\n");
-    for(Int_t i = 1; i <= nPtBins; i++) {
+    for(Int_t i = 0; i <= nPtBins; i++) {
         outfile << std::fixed << std::setprecision(3)
                 << i << "\t"
-                << ptBoundaries[i-1] * ptBoundaries[i-1] << "\t"
-                << ptBoundaries[i] * ptBoundaries[i] << "\t"
-                << std::fixed << std::setprecision(4) << pT2_widths[i] << "\t"
+                << pT2_boundaries[i][0] << "\t"
+                << pT2_boundaries[i][1] << "\t"
+                << pT2_widths[i] << "\t"
                 << std::fixed << std::setprecision(1) << N_yield_val[i] << "\t" << N_yield_err[i] << "\t"
-                << std::fixed << std::setprecision(2) << AxE_MC_val[i] << "\t" << AxE_MC_err[i] << "\t"
+                << std::fixed << std::setprecision(3) << AxE_MC_val[i] << "\t" << AxE_MC_err[i] << "\t"
                 << std::fixed << std::setprecision(1) << fD_val[i] << "\t" << fD_err[i] << "\t"
                 << std::fixed << std::setprecision(3) << fC_val[i] << "\t" << fC_err[i] << "\t"
                 << std::fixed << std::setprecision(2) 
                 << sig_upc_val[i] << "\t" << sig_upc_err_stat[i] << "\t" << sig_upc_err_syst_uncr[i] << "\t" << sig_upc_err_syst_corr[i] << "\n";
     }
     outfile.close();
-    Printf("Results printed to %s.", str_out.Data()); 
+    Printf("Results printed to %s.", s_out.Data()); 
 
-    // print the UPC cross section: TeX table
-    str_out = "Results/" + str_subfolder + "CrossSec/CrossSec_UPC_TeX.txt";
-    outfile.open(str_out.Data());
+    // UPC cross section: TeX table
+    s_out = "Results/" + str_subfolder + "CrossSec/CrossSec_UPC_TeX.txt";
+    outfile.open(s_out.Data());
     outfile << Form("$%.0f", lumi_val) << R"( \pm )" << Form("%.0f$", lumi_err) << " &\n" 
             << Form("%.1f", rap_width) << " &\n"
             << Form("$%.3f", BR_val*100.) << R"( \pm )" << Form("%.3f$", BR_err*100.) << " &\n"
             << Form("$%.1f", eff_veto_pileup_val) << R"( \pm )"<< Form("%.1f$", eff_veto_pileup_err)<< " &\n"
             << Form("$%.1f", eff_veto_diss_val) << R"( \pm )" << Form("%.1f$", eff_veto_diss_err) << " &\n"
             << Form("$%.1f", flux_val) << R"( \pm )" << Form("%.1f$", flux_err) << R"( \\)" << "\n\n";
-    for(Int_t i = 1; i <= nPtBins; i++) {
+    for(Int_t i = 0; i <= nPtBins; i++) {
         outfile << std::fixed << std::setprecision(3) << "$(" 
-                << ptBoundaries[i-1] * ptBoundaries[i-1] << "," 
-                << ptBoundaries[i] * ptBoundaries[i] << ")$ & "
-                << std::fixed << std::setprecision(4) << pT2_widths[i] << " &\t$"
+                << pT2_boundaries[i][0] << "," 
+                << pT2_boundaries[i][1] << ")$ & "
+                << pT2_widths[i] << " &\t$"
                 << std::fixed << std::setprecision(0) << N_yield_val[i] << R"( \pm )" << N_yield_err[i] << "$ &\t$"
                 << std::fixed << std::setprecision(2) << AxE_MC_val[i] << R"( \pm )" << AxE_MC_err[i] << "$ &\t$"
                 << std::fixed << std::setprecision(1) << fD_val[i] << R"( \pm )" << fD_err[i] << "$ &\t$"
@@ -368,19 +363,19 @@ void CalculateCrossSec_PtBins()
                 << sig_upc_val[i] << R"( \pm )" << sig_upc_err_stat[i] << R"( \pm )" << sig_upc_err_syst_uncr[i] << R"( \pm )" << sig_upc_err_syst_corr[i] << R"($ \\)" << "\n";
     }                  
     outfile.close();
-    Printf("Results printed to %s.", str_out.Data());
+    Printf("Results printed to %s.", s_out.Data());
 
-    // print the systematic uncertainties
-    str_out = "Results/" + str_subfolder + "CrossSec/Systematics.txt";
-    outfile.open(str_out.Data());
+    // systematic uncertainties
+    s_out = "Results/" + str_subfolder + "CrossSec/Systematics.txt";
+    outfile.open(s_out.Data());
     outfile << "[all in percent]\n"
-            << "CORRELATED:\n"
+            << "correlated:\n"
             << "lumi\tveto\tEMD\ttracks\tCCUP31\tBR\n"
             << Form("%.1f \t%.1f \t%.1f \t%.1f \t%.1f \t%.1f \n\n",
                 syst_lumi, syst_eff_veto_pileup, syst_eff_veto_diss, syst_tracking, syst_trig_eff, syst_BR);
-    outfile << "UNCORRELATED:\n"
-            << "Bin\tSigExt\tZVtx\tfD\tfC\n";
-    for(Int_t i = 1; i <= nPtBins; i++) {
+    outfile << "uncorrelated:\n"
+            << "bin\tsigExtr\tz_vtx\tfD\tfC\n";
+    for(Int_t i = 0; i <= nPtBins; i++) {
         outfile << i << std::fixed << std::setprecision(1) << "\t"
                 << syst_sig_extr[i] << "\t"
                 << syst_z_vtx[i] << "\t"
@@ -388,14 +383,14 @@ void CalculateCrossSec_PtBins()
                 << syst_fC[i] << "\n";
     }    
     outfile.close();
-    Printf("Results printed to %s.", str_out.Data());
+    Printf("Results printed to %s.", s_out.Data());
 
-    // print the systematic uncertainties: TeX table
-    str_out = "Results/" + str_subfolder + "CrossSec/Systematics_TeX.txt";
-    outfile.open(str_out.Data());
-    for(Int_t i = 1; i <= nPtBins; i++) {
+    // systematic uncertainties: TeX table
+    s_out = "Results/" + str_subfolder + "CrossSec/Systematics_TeX.txt";
+    outfile.open(s_out.Data());
+    for(Int_t i = 0; i <= nPtBins; i++) {
         outfile << std::fixed << std::setprecision(3)
-                << "$(" << ptBoundaries[i-1] << "," << ptBoundaries[i] << ")$ & "
+                << "$(" << pT2_boundaries[i][0] << "," << pT2_boundaries[i][1] << ")$ & "
                 << std::fixed << std::setprecision(1)
                 << syst_sig_extr[i] << " & "
                 << syst_z_vtx[i] << " & "
@@ -404,16 +399,16 @@ void CalculateCrossSec_PtBins()
                             
     }
     outfile.close();
-    Printf("Results printed to %s.", str_out.Data()); 
+    Printf("Results printed to %s.", s_out.Data()); 
 
-    // print the photonuclear cross section
-    str_out = "Results/" + str_subfolder + "CrossSec/CrossSec_photo.txt";
-    outfile.open(str_out.Data());
+    // photonuclear cross section
+    s_out = "Results/" + str_subfolder + "CrossSec/CrossSec_photo.txt";
+    outfile.open(s_out.Data());
     //outfile << "Bin \tt_low \tt_upp \tsig \tstat\tsyst u\tsyst c\n";
-    for(Int_t i = 1; i <= nPtBins; i++) {
-        outfile << i << std::fixed << std::setprecision(4) << "\t" 
-                << ptBoundaries[i-1] * ptBoundaries[i-1] << "\t" 
-                << ptBoundaries[i] * ptBoundaries[i] << "\t" 
+    for(Int_t i = 0; i <= nPtBins; i++) {
+        outfile << i << std::fixed << std::setprecision(3) << "\t" 
+                << pT2_boundaries[i][0] << "\t" 
+                << pT2_boundaries[i][1] << "\t" 
                 << std::fixed << std::setprecision(2)
                 << sig_gPb_val[i] << "\t"
                 << sig_gPb_err_stat[i] << "\t"
@@ -421,21 +416,32 @@ void CalculateCrossSec_PtBins()
                 << sig_gPb_err_syst_corr[i] << "\n";
     }
     outfile.close();
-    Printf("Results printed to %s.", str_out.Data()); 
+    Printf("Results printed to %s.", s_out.Data()); 
 
-    // print the photonuclear cross section: TeX table
-    str_out = "Results/" + str_subfolder + "CrossSec/CrossSec_photo_TeX.txt";
-    outfile.open(str_out.Data());
-    for(Int_t i = 1; i <= nPtBins; i++) {
+    // photonuclear cross section: TeX table
+    s_out = "Results/" + str_subfolder + "CrossSec/CrossSec_photo_TeX.txt";
+    outfile.open(s_out.Data());
+    for(Int_t i = 0; i <= nPtBins; i++) {
         outfile << std::fixed << std::setprecision(3) << "$(" 
-                << ptBoundaries[i-1] * ptBoundaries[i-1] << "," 
-                << ptBoundaries[i] * ptBoundaries[i] << ")$ & "
-                << avgt_val[i] << " &\t$"
+                << pT2_boundaries[i][0] << "," 
+                << pT2_boundaries[i][1] << ")$ & "
+                << avgt_val[i+1] << " &\t$"
                 << std::fixed << std::setprecision(2)
                 << sig_gPb_val[i] << R"( \pm )" << sig_gPb_err_stat[i] << R"( \pm )" << sig_gPb_err_syst_uncr[i] << R"( \pm )" << sig_gPb_err_syst_corr[i] << R"($ \\)" << "\n";
     }
     outfile.close();
-    Printf("Results printed to %s.", str_out.Data()); 
+    Printf("Results printed to %s.", s_out.Data()); 
+
+    // fiducial cross section
+    s_out = "Results/" + str_subfolder + "CrossSec/CrossSec_fiducial.txt";
+    outfile.open(s_out.Data());
+    outfile << std::fixed << std::setprecision(3)
+            << sig_gPb_val[0] * pT2_widths[0] << "\t"
+            << sig_gPb_err_stat[0] * pT2_widths[0] << "\t"
+            << sig_gPb_err_syst_uncr[0] * pT2_widths[0] << "\t"
+            << sig_gPb_err_syst_corr[0] * pT2_widths[0] << "\n";
+    outfile.close();
+    Printf("Results printed to %s.", s_out.Data()); 
 
     return;
 }
