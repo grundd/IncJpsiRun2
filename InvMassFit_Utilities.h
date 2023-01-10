@@ -311,8 +311,10 @@ void InvMassFit_DoFit(Int_t opt, Double_t fMCutLow, Double_t fMCutUpp, Double_t 
     TCanvas *c1 = new TCanvas("c1","c1",800,600);
     InvMassFit_SetCanvas(c1,kFALSE);
 
+    gStyle->SetEndErrorSize(0.);
+
     RooPlot* fFrameM = fM.frame(Title("Mass fit")); 
-    fDataSet->plotOn(fFrameM,Name("fDataSet"),Binning(binM),MarkerStyle(20),MarkerSize(1.));
+    fDataSet->plotOn(fFrameM,Name("fDataSet"),Binning(binM),MarkerStyle(kFullCircle),MarkerSize(1.),LineWidth(2));
     DSCBAndBkgPdf.plotOn(fFrameM,Name("DoubleSidedCB"),Components(DoubleSidedCB),LineColor(kBlack),LineStyle(kDashed),LineWidth(3));
     DSCBAndBkgPdf.plotOn(fFrameM,Name("BkgPdf"),Components(BkgPdf),LineColor(kRed),LineStyle(kDashed),LineWidth(3));
     DSCBAndBkgPdf.plotOn(fFrameM,Name("DSCBAndBkgPdf"),LineColor(215),LineWidth(3));

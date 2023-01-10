@@ -290,8 +290,10 @@ void InvMassFit_MC_DoFit(Int_t opt, TString str_out, Bool_t isSystUncr = kFALSE,
     TCanvas *cHist = new TCanvas("cHist","cHist",800,600);
     InvMassFit_MC_SetCanvas(cHist,kFALSE);
 
+    gStyle->SetEndErrorSize(0.);
+
     RooPlot* frameM = fM.frame(Title("Mass fit")); 
-    fDataSet->plotOn(frameM,Name("fDataSet"),Binning(binM),MarkerStyle(20),MarkerSize(1.));
+    fDataSet->plotOn(frameM,Name("fDataSet"),Binning(binM),MarkerStyle(kFullCircle),MarkerSize(1.),LineWidth(2));
     DSCBExtended.plotOn(frameM,Name("DSCBExtended"),LineColor(215),LineWidth(3),LineStyle(kDashed));
     // Y axis
     frameM->GetYaxis()->SetTitleSize(0.045);

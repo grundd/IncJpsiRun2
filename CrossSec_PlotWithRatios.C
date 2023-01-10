@@ -43,20 +43,20 @@ void SetFrame(TH1* fr, Double_t textSize)
     fr->GetXaxis()->SetNdivisions(505);
 }
 
-void DrawLegend1(Int_t iModels, Double_t x1, Double_t y1, Double_t x2, Double_t y2, Double_t textSize, TString drawLeg)
+void DrawLegend1(Int_t iModels, Double_t x1, Double_t y1, Double_t x2, Double_t y2, Double_t textSize, TString draw_leg)
 {
     TLegend *l1 = SetLegend(x1,y1,x2,y2);
     l1->SetTextSize(textSize);
     l1->SetFillStyle(0);
     l1->SetMargin(0.30);
     //for(Int_t i = 0; i < 7; i++) l1->AddEntry(gr_models[i],str_models[i],"L");
-    if(iModels != 1 && iModels != 3) l1->AddEntry(gr_models[0],str_models[0],drawLeg.Data());
-    if(iModels != 2 && iModels != 3) l1->AddEntry(gr_models[1],str_models[1],drawLeg.Data());
-    if(iModels != 1 && iModels != 3) l1->AddEntry(gr_models[2],str_models[2],drawLeg.Data());
-    if(iModels != 2) l1->AddEntry(gr_models[3],str_models[3],drawLeg.Data());
-    if(iModels != 1) l1->AddEntry(gr_models[4],str_models[4],drawLeg.Data());
-    if(iModels != 2) l1->AddEntry(gr_models[5],str_models[5],drawLeg.Data());
-    if(iModels != 1) l1->AddEntry(gr_models[6],str_models[6],drawLeg.Data());
+    if(iModels != 1 && iModels != 3) l1->AddEntry(gr_models[0],str_models[0],draw_leg.Data());
+    if(iModels != 2 && iModels != 3) l1->AddEntry(gr_models[1],str_models[1],draw_leg.Data());
+    if(iModels != 1 && iModels != 3) l1->AddEntry(gr_models[2],str_models[2],draw_leg.Data());
+    if(iModels != 2) l1->AddEntry(gr_models[3],str_models[3],draw_leg.Data());
+    if(iModels != 1) l1->AddEntry(gr_models[4],str_models[4],draw_leg.Data());
+    if(iModels != 2) l1->AddEntry(gr_models[5],str_models[5],draw_leg.Data());
+    if(iModels != 1) l1->AddEntry(gr_models[6],str_models[6],draw_leg.Data());
     l1->Draw();
 
     return;
@@ -67,7 +67,7 @@ void DrawLegend2(Double_t x1, Double_t y1, Double_t x2, Double_t y2, Double_t te
     TLegend *l2 = SetLegend(x1,y1,x2,y2);
     l2->SetTextSize(textSize);
     l2->SetFillStyle(0);
-    l2->SetMargin(0.11);
+    l2->SetMargin(0.12);
     l2->AddEntry((TObject*)0,"ALICE incoherent J/#psi, |y| < 0.8", "");
     l2->AddEntry(gr_data_uncr,"Uncorrelated stat. + syst.", "EPL");
     l2->AddEntry(gr_data_corr,"Correlated syst.", "F");
@@ -130,20 +130,20 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
     TString bin_load = "";
     TString bin_save = "";
     TString draw_opt = "";
-    TString drawLeg = "";
+    TString draw_leg = "";
     if(iBinn == 0)
     {
         bin_load = "gr_";
         bin_save = "";
         draw_opt = "L SAME";
-        drawLeg = "L";
+        draw_leg = "LP";
     }    
     else if(iBinn == 1)
     {
         bin_load = "grBinned_";
         bin_save = "binned_";
         draw_opt = "P SAME";
-        drawLeg = "P";
+        draw_leg = "P";
     } 
     else return;
     for(Int_t i = 0; i < 9; i++) gr_models[i] = (TGraph*)lg->FindObject(bin_load + str_models[i]);
@@ -162,34 +162,27 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
 
     // set up properties of the graphs
     // STARlight
-    SetLineColorStyleWidth(gr_models[0],colors[0],1);
-    SetMarkerColorStyleSize(gr_models[0],colors[0],kFullTriangleDown,1);
+    SetLineMarkerProperties(gr_models[0],colors[0],1,kFullDiamond,1.8);
     // CCK-hs
-    SetLineColorStyleWidth(gr_models[1],colors[1],2);
-    SetMarkerColorStyleSize(gr_models[1],colors[1],kFullCircle,1);
+    SetLineMarkerProperties(gr_models[1],colors[1],2,kOpenCross,1.2);
     // CCK-n
-    SetLineColorStyleWidth(gr_models[2],colors[2],6);
-    SetMarkerColorStyleSize(gr_models[2],colors[2],kFullTriangleDown,1);
+    SetLineMarkerProperties(gr_models[2],colors[2],6,kFullCross,1.2);
     // MS-hs
-    SetLineColorStyleWidth(gr_models[3],colors[3],7);
-    SetMarkerColorStyleSize(gr_models[3],colors[3],kFullCircle,1);
+    SetLineMarkerProperties(gr_models[3],colors[3],7,kOpenSquare,1.2);
     // MS-p
-    SetLineColorStyleWidth(gr_models[4],colors[4],8);
-    SetMarkerColorStyleSize(gr_models[4],colors[4],kFullTriangleDown,1);
+    SetLineMarkerProperties(gr_models[4],colors[4],8,kFullSquare,1.2);
     // GSZ-el+diss
-    SetLineColorStyleWidth(gr_models[5],colors[5],9);
-    SetMarkerColorStyleSize(gr_models[5],colors[5],kFullCircle,1);
+    SetLineMarkerProperties(gr_models[5],colors[5],9,kOpenCircle,1.2);
     // GSZ-el
-    SetLineColorStyleWidth(gr_models[6],colors[6],4);
-    SetMarkerColorStyleSize(gr_models[6],colors[6],kFullTriangleDown,1);
+    SetLineMarkerProperties(gr_models[6],colors[6],4,kFullCircle,1.2);
     // GSZ error bands:
     SetupSysErrorBox(gr_GSZ_err[0],kGreen);
     SetupSysErrorBox(gr_GSZ_err[1],kOrange);
 
     // global style settings:
     gStyle->SetTextFont(42); // so that latex text is not bold
-    gStyle->SetEndErrorSize(4); 
     /*
+    gStyle->SetEndErrorSize(4); 
     gStyle->SetErrorX(0.02);
     gStyle->SetLineScalePS(2.0);
     gStyle->SetOptStat(0);
@@ -233,7 +226,7 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
     gr_models[5]->Draw(draw_opt.Data());
     gr_data_corr->Draw("5 SAME");
     for(Int_t i = 0; i < 5; i++) gr_models[i]->Draw(draw_opt.Data());
-    gr_data_uncr->Draw("P SAME");
+    gr_data_uncr->Draw("PZ SAME");
 
     // ALICE PbPb label
     TLatex* ltx = new TLatex();
@@ -243,7 +236,7 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
     ltx->DrawLatex(0.55,0.94,"ALICE Pb+Pb #rightarrow Pb+Pb+J/#psi   #sqrt{#it{s}_{NN}} = 5.02 TeV");
 
     // draw the legend with the models
-    DrawLegend1(0,0.17,0.15,0.40,0.40,textSize1*0.7,drawLeg);
+    DrawLegend1(0,0.17,0.15,0.40,0.40,textSize1*0.7,draw_leg);
 
     // draw the legend with the data + uncertainties
     DrawLegend2(0.54,0.80,0.92,0.92,textSize1*0.7);
@@ -251,10 +244,8 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
     c1->Print("Results/" + str_subfolder + "CrossSec/PlotWithRatios/" + bin_save + "plot.pdf");
 
     // ********************************************************************************
-
     // calculate and plot the ratios
-    for(Int_t i = 0; i < 7; i++)
-    {
+    for(Int_t i = 0; i < 7; i++) {
         gr_ratios[i] = new TGraphErrors(nPtBins);
         gr_binned[i] = (TGraph*)lg->FindObject("grBinned_" + str_models[i]);
     } 
@@ -291,19 +282,19 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
     }
 
     // STARlight
-    SetMarkerColorStyleSize(gr_ratios[0],colors[0],kFullSquare,1.);
+    SetLineMarkerProperties(gr_ratios[0],colors[0],1,kFullDiamond,1.8);
     // CCK-hs
-    SetMarkerColorStyleSize(gr_ratios[1],colors[1],kOpenCircle,1.);
+    SetLineMarkerProperties(gr_ratios[1],colors[1],1,kOpenCross,1.2);
     // CCK-n
-    SetMarkerColorStyleSize(gr_ratios[2],colors[2],kFullCircle,1.);
+    SetLineMarkerProperties(gr_ratios[2],colors[2],1,kFullCross,1.2);
     // MS-hs
-    SetMarkerColorStyleSize(gr_ratios[3],colors[3],kOpenTriangleDown,1.);
+    SetLineMarkerProperties(gr_ratios[3],colors[3],1,kOpenSquare,1.2);
     // MS-p
-    SetMarkerColorStyleSize(gr_ratios[4],colors[4],kFullTriangleDown,1.);
+    SetLineMarkerProperties(gr_ratios[4],colors[4],1,kFullSquare,1.2);
     // GSZ-el+diss
-    SetMarkerColorStyleSize(gr_ratios[5],colors[5],kOpenCross,1.);
+    SetLineMarkerProperties(gr_ratios[5],colors[5],1,kOpenCircle,1.2);
     // GSZ-el
-    SetMarkerColorStyleSize(gr_ratios[6],colors[6],kFullCross,1.);
+    SetLineMarkerProperties(gr_ratios[6],colors[6],1,kFullCircle,1.2);
 
     // ********************************************************************************
     // draw the canvas with "ratios"
@@ -312,7 +303,9 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
     SetPadMarginsLTRB(gPad,0.10,0.03,0.03,0.23);
 
     // draw frame
-    TH1F* frRatio = gPad->DrawFrame(0.04,0.0,1.0,2.4);
+    Float_t upperY = 2.4;
+    if(iModels == 3) upperY = 2.2;
+    TH1F* frRatio = gPad->DrawFrame(0.04,0.0,1.0,upperY);
     SetFrame(frRatio,textSize2);
     frRatio->SetTitle("Ratios model/data;|#it{t}| (GeV^{2});Model / Data");
     // y-axis
@@ -325,11 +318,11 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
     frRatio->Draw("AXIS");
     gr_err_corr->Draw("5 SAME");
     for(Int_t i = 0; i < 7; i++) gr_ratios[i]->Draw("SAME P");
-    gr_err_uncr->Draw("SAME P");
+    gr_err_uncr->Draw("SAME PZ");
 
     // dashed line at y = 1
     TLine *line = new TLine(0.04,1.,1.0,1.0);
-    line->SetLineColor(kOrange+2);
+    line->SetLineColor(kBlack);
     line->SetLineWidth(1);
     line->SetLineStyle(2);
     line->Draw("SAME");
@@ -371,15 +364,15 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
     if(iModels != 1 && iModels != 3) gr_models[2]->Draw(draw_opt.Data());
     if(iModels != 2) gr_models[3]->Draw(draw_opt.Data());
     if(iModels != 1) gr_models[4]->Draw(draw_opt.Data());
-    gr_data_uncr->Draw("P SAME");
+    gr_data_uncr->Draw("PZ SAME");
 
     // draw latex label
     ltx->SetTextSize(textSize3*0.88);
     ltx->DrawLatex(0.55,0.92,"ALICE Pb+Pb #rightarrow Pb+Pb+J/#psi   #sqrt{#it{s}_{NN}} = 5.02 TeV");
     // draw legends
-    if(iModels == 0) DrawLegend1(iModels,0.17,0.04,0.42,0.34,textSize3*0.8,drawLeg);
-    else             DrawLegend1(iModels,0.17,0.04,0.42,0.28,textSize3*0.8,drawLeg);
-    DrawLegend2(0.56,0.74,0.86,0.88,textSize3*0.8);
+    if(iModels == 0) DrawLegend1(iModels,0.17,0.04,0.42,0.34,textSize3*0.8,draw_leg);
+    else             DrawLegend1(iModels,0.17,0.04,0.42,0.28,textSize3*0.8,draw_leg);
+    DrawLegend2(0.54,0.74,0.98,0.88,textSize3*0.8);
 
     // pad with the ratios
     c3->cd();
@@ -409,12 +402,13 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
     if(iModels != 1) gr_ratios[4]->Draw("P SAME");
     if(iModels != 2) gr_ratios[5]->Draw("P SAME");
     if(iModels != 1) gr_ratios[6]->Draw("P SAME");
-    gr_err_uncr->Draw("SAME P");
+    gr_err_uncr->Draw("SAME PZ");
     line->Draw("SAME");
+    /*
     if(iModels == 0)      DrawLegend3(iModels,0.72,0.385,0.93,0.945,textSize4*0.60);
     else if(iModels == 3) DrawLegend3(iModels,0.71,0.385,0.96,0.945,textSize4*0.80);
-    else                  DrawLegend3(iModels,0.72,0.385,0.93,0.945,textSize4*0.65);
-    
+    else                  DrawLegend3(iModels,0.72,0.385,0.93,0.945,textSize4*0.65); 
+    */
 
     TString append = "";
     if(iModels == 0) append += "_allModels";

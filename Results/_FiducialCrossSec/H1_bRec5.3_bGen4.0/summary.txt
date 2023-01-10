@@ -1,0 +1,12 @@
+binning	direct 	integral
+orig.	7.242	8.282
+1 bins	7.242	7.242
+2 bins	7.242	8.123
+3 bins	7.242	8.376
+4 bins	7.242	8.420
+5 bins	7.242	8.531
+6 bins	7.242	8.525
+7 bins	7.242	8.570
+8 bins	7.242	8.526
+9 bins	7.242	8.589
+10 bins	7.242	8.572

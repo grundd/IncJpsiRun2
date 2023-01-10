@@ -1,0 +1,12 @@
+differential cross section dsigma_gPb/d|t| (5 bins):
+range 	N_rec 	N_gen 	N_data 	cross sec. (mub)
+full	81000	3254000	405	7.52
+bin 1	52107	1782648	256	20.25
+bin 2	18791	827530	105	10.69
+bin 3	6778	383099	29	3.79
+bin 4	2477	178492	9	1.50
+bin 5	847	82231	6	1.35
+
+fiducial cross section sigma_gPb:
+directly: 7.22 mub
+integral: 7.22 mub

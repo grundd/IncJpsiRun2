@@ -17,10 +17,13 @@
 TH1D* AxE_PtBins_hNRec = NULL; 
 TH1D* AxE_PtBins_hNGen = NULL; 
 TH1D* AxE_PtBins_hAxE = NULL;
+Double_t NRec_total;
+Double_t NGen_total;
 
-void AxE_PtBins_SaveToFile(TH1D* hist, TString name){
+void AxE_PtBins_SaveToFile(Double_t N_total, TH1D* hist, TString name) {
     ofstream outfile (name.Data());
-    for(Int_t iBin = 1; iBin <= hist->GetNbinsX(); iBin++){
+    outfile << "0\t" << N_total << "\n";
+    for(Int_t iBin = 1; iBin <= hist->GetNbinsX(); iBin++) {
         outfile << iBin << "\t" << hist->GetBinContent(iBin) << "\n";
     }
     outfile.close();
@@ -37,62 +40,62 @@ Double_t CalculateErrorBayes(Double_t k, Double_t n){ // k = NRec, n = NGen
 
 void AxE_PtBins_FillHistNRec(Double_t fCutZ)
 {
-    // Check if the corresponding text file already exists
+    // check if the corresponding text file already exists
     TString file;
     if(fCutZ == cut_fVertexZ) file = "Results/" + str_subfolder + "AxE_PtBins/";
     else                      file = "Results/" + str_subfolder + Form("VertexZ_SystUncertainties/Zcut%.1f_AxE_PtBins/", fCutZ);
     file.Append(Form("NRec_%ibins.txt", nPtBins));
 
-    ifstream inFile;
-    inFile.open(file);
-    if(!(inFile.fail())){
-        // This configuration has already been calculated
+    ifstream ifs;
+    ifs.open(file);
+    if(!ifs.fail())
+    {
+        // this configuration has already been calculated
         Printf("*** The file %s already exists. ***", file.Data());
-        // Fill AxE_PtBins_hNRec with data from the text file
-        Int_t inBin;
-        Double_t inValue;
-        while(!inFile.eof()){
-            inFile >> inBin >> inValue; // fist and second column
-            AxE_PtBins_hNRec->SetBinContent(inBin, inValue);
+        // fill AxE_PtBins_hNRec with data from the file
+        Int_t i_bin; Double_t NRec;
+        // fiducial
+        ifs >> i_bin >> NRec_total;
+        // pT bins
+        for(Int_t iBin = 1; iBin <= nPtBins; iBin++) {
+            ifs >> i_bin >> NRec;
+            AxE_PtBins_hNRec->SetBinContent(iBin, NRec);
         }
-        inFile.close(); 
-
+        ifs.close(); 
         return;
-    } else {
-        // This configuration is yet to be calculated
+    } 
+    else 
+    {
+        // this configuration is yet to be calculated
         Printf("*** Calculating N rec per bin for %s... ***", file.Data());
-
         TFile *fRec = TFile::Open((str_in_MC_fldr_rec + "AnalysisResults_MC_kIncohJpsiToMu.root").Data(), "read");
         if(fRec) Printf("MC rec file loaded.");
-
         TTree *tRec = dynamic_cast<TTree*> (fRec->Get(str_in_MC_tree_rec.Data()));
         if(tRec) Printf("MC rec tree loaded.");
-        
         ConnectTreeVariablesMCRec(tRec);
 
         // |> *********** for VertexZ_SystUncertainties.C ***********
         // save the original value of cut_fVertexZ
         Printf("Original cut on vertex Z: %.1f", cut_fVertexZ);
         Double_t fCutZ_orig = cut_fVertexZ;
-        if(fCutZ != cut_fVertexZ)
-        {
+        if(fCutZ != cut_fVertexZ) {
             // set the new value of cut_fVertexZ
             cut_fVertexZ = fCutZ;
             Printf("New cut on vertex Z: %.1f", cut_fVertexZ);
         }
         // <| *****************************************************
 
-        // Loop over all pt bins
-        for(Int_t iPtBin = 1; iPtBin <= nPtBins; iPtBin++){
-            Int_t NRec = 0;
-            for(Int_t iEntry = 0; iEntry < tRec->GetEntries(); iEntry++){
-                tRec->GetEntry(iEntry);
-                // m between 2.2 and 4.5 GeV/c^2, pT in a given bin 
-                if(EventPassedMCRec(0, 4, iPtBin)) NRec++;
-            }
-            AxE_PtBins_hNRec->SetBinContent(iPtBin, NRec);
-            Printf("*** Bin %i done. ***", iPtBin);
+        // go over tree entries and calculate NRec in the total range and in bins
+        Int_t NRec[6] = { 0 };
+        for(Int_t iEntry = 0; iEntry < tRec->GetEntries(); iEntry++) {
+            tRec->GetEntry(iEntry);
+            // m between 2.2 and 4.5 GeV/c^2
+            // & pT from 0.2 to 1.0 GeV/c
+            if(EventPassedMCRec(0, 3)) NRec[0]++;
+            // & pT in range of a given bin 
+            for(Int_t iBin = 1; iBin <= nPtBins; iBin++) if(EventPassedMCRec(0, 4, iBin)) NRec[iBin]++;
         }
+        for(Int_t iBin = 1; iBin <= nPtBins; iBin++) AxE_PtBins_hNRec->SetBinContent(iBin, NRec[iBin]);
         Printf("*** Finished! ***");
 
         // |> *********** for VertexZ_SystUncertainties.C ***********
@@ -104,60 +107,59 @@ void AxE_PtBins_FillHistNRec(Double_t fCutZ)
         }
         // <| *****************************************************
         
-        AxE_PtBins_SaveToFile(AxE_PtBins_hNRec, file);
-
+        AxE_PtBins_SaveToFile(NRec[0], AxE_PtBins_hNRec, file);
         return;
     }
 }
 
 void AxE_PtBins_FillHistNGen()
 {
-    // Check if the corresponding text file already exists
+    // check if the corresponding text file already exists
     TString file = "Results/" + str_subfolder + "AxE_PtBins/";
     file.Append(Form("NGen_%ibins.txt", nPtBins));
 
-    ifstream inFile;
-    inFile.open(file);
-    if(!(inFile.fail())){
-        // This configuration has already been calculated
+    ifstream ifs;
+    ifs.open(file);
+    if(!ifs.fail())
+    {
+        // this configuration has already been calculated
         Printf("*** The file %s already exists. ***", file.Data());
-        // Fill AxE_PtBins_hNGen with data from the text file
-        Int_t inBin;
-        Double_t inValue;
-        while(!inFile.eof()){
-            inFile >> inBin >> inValue; // fist and second column
-            AxE_PtBins_hNGen->SetBinContent(inBin, inValue);
+        // fill AxE_PtBins_hNGen with data from the text file
+        Int_t i_bin; Double_t NGen;
+        // fiducial
+        ifs >> i_bin >> NGen_total;
+        // pT bins
+        for(Int_t iBin = 1; iBin <= nPtBins; iBin++) {
+            ifs >> i_bin >> NGen;
+            AxE_PtBins_hNGen->SetBinContent(iBin, NGen);
         }
-        inFile.close(); 
-
+        ifs.close(); 
         return;
-    } else {
-        // This configuration is yet to be calculated
+    } 
+    else 
+    {
+        // this configuration is yet to be calculated
         Printf("*** Calculating N gen per bin for %s... ***", file.Data());
-
         TFile *fGen = TFile::Open((str_in_MC_fldr_gen + "AnalysisResults_MC_kIncohJpsiToMu.root").Data(), "read");
         if(fGen) Printf("MC gen file loaded.");
-
         TTree *tGen = dynamic_cast<TTree*> (fGen->Get(str_in_MC_tree_gen.Data()));
         if(tGen) Printf("MC gen tree loaded.");
-        
         ConnectTreeVariablesMCGen(tGen);
 
-        // Loop over all pt bins
-        for(Int_t iPtBin = 1; iPtBin <= nPtBins; iPtBin++){
-            Int_t NGen = 0;
-            for(Int_t iEntry = 0; iEntry < tGen->GetEntries(); iEntry++){
-                tGen->GetEntry(iEntry);
-                // pT in a given bin 
-                if(EventPassedMCGen(4, iPtBin)) NGen++;
-            }
-            AxE_PtBins_hNGen->SetBinContent(iPtBin, NGen);
-            Printf("*** Bin %i done. ***", iPtBin);
+        // go over tree entries and calculate NRec in the total range and in bins
+        Int_t NGen[6] = { 0 };
+        for(Int_t iEntry = 0; iEntry < tGen->GetEntries(); iEntry++) {
+            tGen->GetEntry(iEntry);
+            // m between 2.2 and 4.5 GeV/c^2
+            // & pT from 0.2 to 1.0 GeV/c
+            if(EventPassedMCGen(3)) NGen[0]++;
+            // & pT in range of a given bin 
+            for(Int_t iBin = 1; iBin <= nPtBins; iBin++) if(EventPassedMCGen(4, iBin)) NGen[iBin]++;
         }
+        for(Int_t iBin = 1; iBin <= nPtBins; iBin++) AxE_PtBins_hNGen->SetBinContent(iBin, NGen[iBin]);
         Printf("*** Finished! ***");
         
-        AxE_PtBins_SaveToFile(AxE_PtBins_hNGen, file);
-
+        AxE_PtBins_SaveToFile(NGen[0], AxE_PtBins_hNGen, file);
         return;
     }
     return;
@@ -211,20 +213,20 @@ void AxE_PtBins_Calculate(Double_t fCutZ)
     AxE_PtBins_hAxE->Draw("P E1");
     // legend
     TLegend *l = new TLegend(0.52,0.77,0.85,0.97);
-    l->AddEntry((TObject*)0,Form("ALICE Simulation"),""); 
+    l->AddEntry((TObject*)0,Form("ALICE Simulation"),"");
     l->AddEntry((TObject*)0,Form("Pb#minusPb #sqrt{#it{s}_{NN}} = 5.02 TeV"),"");
     l->AddEntry((TObject*)0,Form("inc J/#psi #rightarrow #mu^{+}#mu^{-}"),"");
     l->SetTextSize(0.056);
-    l->SetBorderSize(0); // no border
-    l->SetFillStyle(0);  // legend is transparent
+    l->SetBorderSize(0);
+    l->SetFillStyle(0);
     l->Draw();
     // legend 2
     TLegend *l2 = new TLegend(0.15,0.17,0.35,0.32);
-    l2->AddEntry((TObject*)0,Form("|#it{y}| < 0.8"),""); 
+    l2->AddEntry((TObject*)0,Form("|#it{y}| < 0.8"),"");
     l2->AddEntry((TObject*)0,Form("2.2 < #it{m} < 4.5 GeV/#it{c}^{2}"),"");
     l2->SetTextSize(0.056);
-    l2->SetBorderSize(0); // no border
-    l2->SetFillStyle(0);  // legend is transparent
+    l2->SetBorderSize(0);
+    l2->SetFillStyle(0);
     l2->Draw();
 
     // save the figures and print the results to txt file
@@ -247,22 +249,16 @@ void AxE_PtBins_Calculate(Double_t fCutZ)
     }
 
     // calculate the total value of AxE
-    Double_t NRecTot = 0;
-    Double_t NGenTot = 0;
-    for(Int_t i = 1; i <= nPtBins; i++){
-        NRecTot += AxE_PtBins_hNRec->GetBinContent(i);
-        NGenTot += AxE_PtBins_hNGen->GetBinContent(i);
-    }
-    Double_t AxETot = NRecTot / NGenTot;
-    Double_t AxETot_err = CalculateErrorBayes(NRecTot, NGenTot);
-    Printf("Total AxE = (%.4f pm %.4f)%%", AxETot*100., AxETot_err*100.);
+    Double_t AxE_tot_val = NRec_total / NGen_total;
+    Double_t AxE_tot_err = CalculateErrorBayes(NRec_total, NGen_total);
+    Printf("Total AxE = (%.4f pm %.4f)%%", AxE_tot_val*100., AxE_tot_err*100.);
 
     // print the results to a text file
     // index zero -> fiducial cross section
     ofstream outfile((str + ".txt").Data());
     outfile << std::fixed << std::setprecision(3);
     outfile //<< "Bin \tAxE [%%] \tAxE_err [%%] \n";
-            << "0\t" << AxETot*100. << "\t" << AxETot_err*100. << "\n";
+            << "0\t" << AxE_tot_val*100. << "\t" << AxE_tot_err*100. << "\n";
     for(Int_t i = 1; i <= nPtBins; i++){
         outfile << i << "\t" << AxE_PtBins_hAxE->GetBinContent(i)*100. << "\t" << AxE_PtBins_hAxE->GetBinError(i)*100. << "\n";
     }

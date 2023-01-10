@@ -50,13 +50,13 @@ Int_t n_models[7] = {125, 75, 75, 183, 183, 100, 100};
 Double_t *tBoundaries = NULL;
 Double_t tBoundaries_4bins[5] = { 0 };
 Double_t tBoundaries_5bins[6] = { 0 };
-Int_t lineWidth = 2;
+Int_t lineWidth = 3;
 Color_t colors[7] = {
-    kBlue, // STARlight
+    kYellow+2, // STARlight
     kRed+1, // CCK-hs
     kCyan+2, // CCK-n
     kViolet-1, // MS-hs
-    kGray+2, // MS-p
+    kBlue, // MS-p
     kGreen+2, // GSZ-el+diss
     kOrange+2 // GSZ-el
 };
@@ -108,11 +108,17 @@ void LoadGraphs_data(Bool_t print = kFALSE, Int_t iModelForAvgT = 1)
     Double_t sig_err_corr[5] = { 0 };
     ifstream ifs;
     ifs.open("Results/" + str_subfolder + "CrossSec/CrossSec_photo.txt");
-    for(Int_t i = 0; i < nPtBins; i++)
+    for(Int_t i = 0; i <= nPtBins; i++)
     {
         // cross section values in mub
-        Int_t bin; Double_t t_low, t_upp;
-        ifs >> bin >> t_low >> t_upp >> sig_val[i] >> sig_err_stat[i] >> sig_err_syst_uncr[i] >> sig_err_syst_corr[i];
+        Int_t bin; Double_t t_low, t_upp, val, stat, syst_uncr, syst_corr;
+        ifs >> bin >> t_low >> t_upp >> val >> stat >> syst_uncr >> syst_corr;
+        if(i > 0) { // index 0 -> fiducial
+            sig_val[i-1] = val;
+            sig_err_stat[i-1] = stat;
+            sig_err_syst_uncr[i-1] = syst_uncr;
+            sig_err_syst_corr[i-1] = syst_corr;
+        }
     }
     ifs.close();
     TString str_avgt;
@@ -476,19 +482,14 @@ void SetStyle(TGraph* g, Color_t color, Style_t style, Width_t width = 3)
     g->SetLineWidth(width);
 }
 
-void SetLineColorStyleWidth(TGraph *gr, Color_t col, Int_t stl)
+void SetLineMarkerProperties(TGraph *gr, Color_t color, Int_t lineStyle, Int_t markerStyle = kCircle, Size_t markerSize = 1.)
 {
-    gr->SetLineColor(col);
-    gr->SetLineStyle(stl);
+    gr->SetLineColor(color);
+    gr->SetLineStyle(lineStyle);
     gr->SetLineWidth(lineWidth);
-    return;
-}
-
-void SetMarkerColorStyleSize(TGraph *gr, Color_t col, Int_t stl, Double_t size)
-{
-    gr->SetMarkerColor(col);
-    gr->SetMarkerStyle(stl);
-    gr->SetMarkerSize(size);
+    gr->SetMarkerColor(color);
+    gr->SetMarkerStyle(markerStyle);
+    gr->SetMarkerSize(markerSize);
     return;
 }
 

@@ -49,19 +49,19 @@ void Plot()
 
     // set up properties of the graphs
     // STARlight
-    SetLineColorStyleWidth(gr_models[0],colors[0],1);
+    SetLineMarkerProperties(gr_models[0],colors[0],1);
     // CCK-hs
-    SetLineColorStyleWidth(gr_models[1],colors[1],2);
+    SetLineMarkerProperties(gr_models[1],colors[1],2);
     // CCK-n
-    SetLineColorStyleWidth(gr_models[2],colors[2],6);
+    SetLineMarkerProperties(gr_models[2],colors[2],6);
     // MS-hs
-    SetLineColorStyleWidth(gr_models[3],colors[3],7);
+    SetLineMarkerProperties(gr_models[3],colors[3],7);
     // MS-p
-    SetLineColorStyleWidth(gr_models[4],colors[4],8);
+    SetLineMarkerProperties(gr_models[4],colors[4],8);
     // GSZ-el+diss
-    SetLineColorStyleWidth(gr_models[5],colors[5],9);
+    SetLineMarkerProperties(gr_models[5],colors[5],9);
     // GSZ-el
-    SetLineColorStyleWidth(gr_models[6],colors[6],4);
+    SetLineMarkerProperties(gr_models[6],colors[6],4);
     // GSZ error bands:
     SetupSysErrorBox(gr_GSZ_err[0],kGreen);
     SetupSysErrorBox(gr_GSZ_err[1],kOrange); 
@@ -133,7 +133,7 @@ void Plot()
     h2->GetXaxis()->SetRangeUser(0.04,1.0);
     // draw everything
     gr_data_corr->Draw("A5");
-    gr_data_uncr->Draw("P SAME");
+    gr_data_uncr->Draw("PZ SAME");
     // legends
     gStyle->SetTextFont(42);
     TLatex* latex = new TLatex();

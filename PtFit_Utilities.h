@@ -829,6 +829,7 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
                             // 0 = no information
     gStyle->SetPalette(1);  // set color map
     gStyle->SetPaintTextFormat("4.2f"); // precision if plotted with "TEXT"
+    gStyle->SetEndErrorSize(0.);
 
     // Draw the Correlation Matrix
     TCanvas *cCM = new TCanvas("cCM","cCM",600,500);
@@ -837,7 +838,7 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
     // Draw the pT fit
     // Without log scale
     RooPlot* PtFrame = fPt.frame(Title("pT fit"));
-    DHisData.plotOn(PtFrame,Name("DHisData"),MarkerStyle(20), MarkerSize(1.),Binning(fPtBins_PtFit));
+    DHisData.plotOn(PtFrame,Name("DHisData"),Binning(fPtBins_PtFit),MarkerStyle(kFullCircle),MarkerSize(1.),LineWidth(2));
     if(iRecShape == 0 || iRecShape == 1 || iRecShape == 4 || iRecShape > 1000){
         Mod->plotOn(PtFrame,Name("hPDFCohJ"),Components(hPDFCohJ),     LineColor(222),LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
     } else if(iRecShape == 2){
@@ -874,7 +875,7 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
 
     // With log scale
     RooPlot* PtFrameLog = fPt.frame(Title("pT fit log scale"));
-    DHisData.plotOn(PtFrameLog,Name("DHisData"),MarkerStyle(20), MarkerSize(1.),Binning(fPtBins_PtFit));
+    DHisData.plotOn(PtFrameLog,Name("DHisData"),Binning(fPtBins_PtFit),MarkerStyle(kFullCircle),MarkerSize(1.),LineWidth(2));
     if(iRecShape == 0 || iRecShape == 1 || iRecShape == 4 || iRecShape > 1000){
         Mod->plotOn(PtFrameLog,Name("hPDFCohJ"),Components(hPDFCohJ),     LineColor(222),LineStyle(1),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
     } else if(iRecShape == 2){
@@ -964,7 +965,7 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
     // Legend 2
     TLegend *l2 = new TLegend(0.59,0.555,0.9,0.93);
     //leg2->SetTextSize(0.027);
-    l2->AddEntry("DHisData","Data", "EP");
+    l2->AddEntry("DHisData","Data", "EPL");
     l2->AddEntry("Mod","sum","L");
     l2->AddEntry((TObject*)0,Form("#chi^{2}/NDF = %.3f = %.3f/%i",chi2,chi2*ResFit->floatParsFinal().getSize(), ResFit->floatParsFinal().getSize()),"");
     if(iRecShape == 0 || iRecShape == 1 || iRecShape == 4 || iRecShape > 1000) l2->AddEntry("hPDFCohJ","coherent J/#psi", "L");
@@ -974,7 +975,6 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
     l2->AddEntry("hPDFDiss","inc. J/#psi with nucl. diss.", "L");
     l2->AddEntry("hPDFCohP","J/#psi from coh. #psi(2#it{S}) decay", "L");
     l2->AddEntry("hPDFIncP","J/#psi from inc. #psi(2S) decay", "L");
-    //l2->AddEntry((TObject*)0,Form("f_{C} = %.4f #pm %.4f", f_C, f_C_err),""); // (#it{p}_T #in (0.2,2.0) GeV/#it{c})
     l2->SetTextSize(0.043);
     l2->SetBorderSize(0);
     l2->SetFillStyle(0);
@@ -1040,7 +1040,7 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
         TLegend *lz = new TLegend(0.53,0.444,0.93,0.876);
         lz->AddEntry((TObject*)0,"J/#psi #rightarrow #mu^{+} #mu^{-}","");
         lz->AddEntry((TObject*)0,"UPC, L_{int} = (232 #pm 6) #mub^{-1}","");
-        lz->AddEntry("DHisData","ALICE measurement", "EP");
+        lz->AddEntry("DHisData","ALICE measurement", "EPL");
         lz->AddEntry("hPDFCohJ","coherent J/#psi", "L");
         lz->AddEntry("hPDFIncJ","incoherent J/#psi", "L");
         lz->AddEntry("hPDFDiss","inc. J/#psi with nucleon diss.", "L");
