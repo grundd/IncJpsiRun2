@@ -15,8 +15,6 @@
 #include "TSystem.h"
 #include "TStyle.h"
 
-Int_t iCount(0);
-
 void TH1_SetStyle(TH1F* h, Color_t c, Int_t style = 1)
 {
     h->SetLineColor(c);
@@ -104,33 +102,33 @@ void CalculateAxE(TString name, TH1F* hRec, TH1F* hGen)
 
 void PlotFilledHist(TString subfolder, TTree* t, TH1F* h)
 {
-    t->Draw(Form("fPt>>%s",h->GetName()));
+    t->Draw(Form("fPt2>>%s",h->GetName()));
     PlotHistos(Form("%s%s",subfolder.Data(),h->GetName()),"E0",kFALSE,h);
     return;
 }
 
-void GenerateEvents(TString subfolder, Float_t par_rec[], Float_t par_gen[], Float_t N_data, Bool_t useH1 = kTRUE)
+void GenerateEvents(TString subfolder, Float_t lowPt2, Float_t uppPt2, Float_t par_rec[], Float_t par_gen[], Float_t N_data, Bool_t useH1 = kTRUE)
 {
     TF1* fSTARlight = Pt2Shape("fSTARlight",1.,1.);
     TString s = "Results/_FiducialCrossSec/" + subfolder + "generatedEvs.root";
     TFile* f = new TFile(s.Data(),"RECREATE");
-    Float_t fPt;
+    Float_t fPt2;
     // rec
     TTree* tRec = new TTree("tRec","");
-    tRec->Branch("fPt", &fPt, "fPt/F"); 
+    tRec->Branch("fPt2", &fPt2, "fPt2/F"); 
     fSTARlight->SetParameter(1,par_rec[1]);
     for(Int_t i = 0; i < par_rec[0]; i++) { 
-        fPt = 0;
-        while(fPt < 0.04 || fPt > 1.00) fPt = fSTARlight->GetRandom(); 
+        fPt2 = 0;
+        while(fPt2 < 0.04 || fPt2 > 1.0) fPt2 = fSTARlight->GetRandom(); 
         tRec->Fill();
     }
     // gen
     TTree* tGen = new TTree("tGen","");
-    tGen->Branch("fPt", &fPt, "fPt/F"); 
+    tGen->Branch("fPt2", &fPt2, "fPt2/F"); 
     fSTARlight->SetParameter(1,par_gen[1]);
     for(Int_t i = 0; i < par_gen[0]; i++) { 
-        fPt = 0;
-        while(fPt < 0.04 || fPt > 1.00) fPt = fSTARlight->GetRandom(); 
+        fPt2 = 0;
+        while(fPt2 < 0.04 || fPt2 > 1.0) fPt2 = fSTARlight->GetRandom(); 
         tGen->Fill(); 
     }
     // data
@@ -141,13 +139,13 @@ void GenerateEvents(TString subfolder, Float_t par_rec[], Float_t par_gen[], Flo
         N_data_H1 = N_data * 0.3;
     }
     TTree* tData = new TTree("tData","");
-    tData->Branch("fPt", &fPt, "fPt/F"); 
+    tData->Branch("fPt2", &fPt2, "fPt2/F"); 
     // first mimic inc from STARlight
     // according to the pT from our analysis, this is ~ 281/(281+121) ~ 70% of events
     fSTARlight->SetParameter(1,par_rec[1]);
     for(Int_t i = 0; i < N_data_SL; i++) { 
-        fPt = 0;
-        while(fPt < 0.04 || fPt > 1.00) fPt = fSTARlight->GetRandom(); 
+        fPt2 = 0;
+        while(fPt2 < 0.04 || fPt2 > 1.0) fPt2 = fSTARlight->GetRandom(); 
         tData->Fill(); 
     }
     // now mimic inc dissociative using the H1 shape
@@ -155,16 +153,16 @@ void GenerateEvents(TString subfolder, Float_t par_rec[], Float_t par_gen[], Flo
     fDissH1->SetParameter(0,1.79);
     fDissH1->SetParameter(1,3.58);
     for(Int_t i = 0; i < N_data_H1; i++) { 
-        fPt = 0;
-        while(fPt < 0.04 || fPt > 1.00) fPt = fDissH1->GetRandom(); 
+        fPt2 = 0;
+        while(fPt2 < 0.04 || fPt2 > 1.0) fPt2 = fDissH1->GetRandom(); 
         tData->Fill();
     }
     // plot the histograms
-    TH1F* hRnd_rec = new TH1F("hRnd_rec","simulated #it{N}_{rec} vs #it{p}_{T}^{2}",100,0.04,1.);
+    TH1F* hRnd_rec = new TH1F("hRnd_rec","simulated #it{N}_{rec} vs #it{p}_{T}^{2}",25,lowPt2,uppPt2);
     PlotFilledHist(subfolder,tRec,hRnd_rec);
-    TH1F* hRnd_gen = new TH1F("hRnd_gen","simulated #it{N}_{gen} vs #it{p}_{T}^{2}",100,0.04,1.);
+    TH1F* hRnd_gen = new TH1F("hRnd_gen","simulated #it{N}_{gen} vs #it{p}_{T}^{2}",25,lowPt2,uppPt2);
     PlotFilledHist(subfolder,tGen,hRnd_gen);
-    TH1F* hRnd_data = new TH1F("hRnd_data","simulated pseudo-data vs #it{p}_{T}^{2}",100,0.04,1.);
+    TH1F* hRnd_data = new TH1F("hRnd_data","simulated pseudo-data vs #it{p}_{T}^{2}",25,lowPt2,uppPt2);
     PlotFilledHist(subfolder,tData,hRnd_data);
     // AxE
     CalculateAxE(subfolder + "hRnd_AxE",hRnd_rec,hRnd_gen);
@@ -173,8 +171,14 @@ void GenerateEvents(TString subfolder, Float_t par_rec[], Float_t par_gen[], Flo
     return;
 }
 
-void TryBinning(TString subfolder, Int_t nBins, Float_t &fiducialDir, Float_t &fiducialInt, Float_t* fBins = NULL)
+void TryBinning(TString subfolder, Float_t &fiducialDir, Float_t &fiducialInt, Int_t bins = 0, Float_t lowPt2 = 0.04, Float_t uppPt2 = 1.0)
 {
+    // if binning == 0, use the same binning as in the analysis
+    Int_t nBins = 5;
+    Float_t fBins[6] = {0.04, 0.08, 0.15, 0.26, 0.48, 1.00};
+    // else, use uniform N bins
+    if(bins > 0) nBins = bins;
+
     TString s = "Results/_FiducialCrossSec/" + subfolder + "generatedEvs.root";
     TFile* f = new TFile(s.Data(),"read");
     TTree *tRec = dynamic_cast<TTree*> (f->Get("tRec"));
@@ -185,18 +189,18 @@ void TryBinning(TString subfolder, Int_t nBins, Float_t &fiducialDir, Float_t &f
     TH1F* hGen = NULL;
     TH1F* hData = NULL;
     TH1F* hCS = NULL;
-    if(fBins == NULL) {
-        cout << "Using uniform binning.\n";
-        hRec = new TH1F(Form("%02i_hRec",iCount),"",nBins,0.04,1.00);
-        hGen = new TH1F(Form("%02i_hGen",iCount),"",nBins,0.04,1.00);
-        hData = new TH1F(Form("%02i_hData",iCount),"",nBins,0.04,1.00);
-        hCS = new TH1F(Form("%02i_hCS",iCount),"",nBins,0.04,1.00);
-    } else {
+    if(bins == 0) {
         cout << "Using variable bins sizes.\n";
-        hRec = new TH1F(Form("%02i_hRec",iCount),"",nBins,fBins);
-        hGen = new TH1F(Form("%02i_hGen",iCount),"",nBins,fBins);
-        hData = new TH1F(Form("%02i_hData",iCount),"",nBins,fBins);
-        hCS = new TH1F(Form("%02i_hCS",iCount),"",nBins,fBins);
+        hRec = new TH1F(Form("%02i_hRec",bins),"",nBins,fBins);
+        hGen = new TH1F(Form("%02i_hGen",bins),"",nBins,fBins);
+        hData = new TH1F(Form("%02i_hData",bins),"",nBins,fBins);
+        hCS = new TH1F(Form("%02i_hCS",bins),"",nBins,fBins);
+    } else {
+        cout << "Using uniform binning.\n";
+        hRec = new TH1F(Form("%02i_hRec",bins),"",nBins,lowPt2,uppPt2);
+        hGen = new TH1F(Form("%02i_hGen",bins),"",nBins,lowPt2,uppPt2);
+        hData = new TH1F(Form("%02i_hData",bins),"",nBins,lowPt2,uppPt2);
+        hCS = new TH1F(Form("%02i_hCS",bins),"",nBins,lowPt2,uppPt2);
     }
     hRec->SetTitle("#it{p}_{T}^{2} dist of simulated #it{N}_{rec}");
     hGen->SetTitle("#it{p}_{T}^{2} dist of simulated #it{N}_{gen}");
@@ -207,7 +211,7 @@ void TryBinning(TString subfolder, Int_t nBins, Float_t &fiducialDir, Float_t &f
     PlotFilledHist(subfolder,tData,hData);
 
     // AxE
-    CalculateAxE(Form("%s%02i_hAxE",subfolder.Data(),iCount),hRec,hGen);
+    CalculateAxE(Form("%s%02i_hAxE",subfolder.Data(),bins),hRec,hGen);
     // cross section in |t| bins
     Float_t num_fact = 4.44e-4;
     for(Int_t i = 1; i <= nBins; i++) {
@@ -220,7 +224,7 @@ void TryBinning(TString subfolder, Int_t nBins, Float_t &fiducialDir, Float_t &f
             * TMath::Sqrt(hData->GetBinContent(i))
             / hData->GetBinContent(i));
     }
-    PlotHistos(Form("%s%02i_hCS",subfolder.Data(),iCount),"E0",kTRUE,hCS);
+    PlotHistos(Form("%s%02i_hCS",subfolder.Data(),bins),"E0",kTRUE,hCS);
     // cross section (per the full interval of |t|) - direct calculation
     Float_t CS = num_fact * hData->Integral() * hGen->Integral() / hRec->Integral() / (hCS->GetBinLowEdge(nBins+1) - hCS->GetBinLowEdge(1));
     // fiducial cross section
@@ -232,7 +236,7 @@ void TryBinning(TString subfolder, Int_t nBins, Float_t &fiducialDir, Float_t &f
         fiducialInt += hCS->GetBinContent(i) * (hCS->GetBinLowEdge(i+1) - hCS->GetBinLowEdge(i));
     }
     // compare:
-    ofstream outfile(Form("Results/_FiducialCrossSec/%s%02i_log.txt",subfolder.Data(),iCount));
+    ofstream outfile(Form("Results/_FiducialCrossSec/%s%02i_log.txt",subfolder.Data(),bins));
     outfile << "differential cross section dsigma_gPb/d|t| (" << nBins << " bins):\n"
             << "range \tN_rec \tN_gen \tN_data \tcross sec. (mub)\n"
             << "full\t" 
@@ -255,13 +259,19 @@ void TryBinning(TString subfolder, Int_t nBins, Float_t &fiducialDir, Float_t &f
             << "directly: " << fiducialDir << " mub\n"
             << "integral: " << fiducialInt << " mub\n";
     outfile.close();
-    iCount++; // counter of tries
     return;
 }
 
-void TryConfiguration(Bool_t useH1, Float_t b_rec, Float_t b_gen)
+Bool_t areSame(Float_t a, Float_t b)
 {
-    TString subfolder = "";
+    // desired precision: ~0.00001
+    Float_t epsilon = 1e-5;
+    return TMath::Abs(a - b) < epsilon;
+}
+
+void TryConfiguration(Float_t lowPt2, Float_t uppPt2, Bool_t useH1, Float_t b_rec, Float_t b_gen)
+{
+    TString subfolder = Form("range%.2f-%.2f_",lowPt2,uppPt2);
     if(useH1) subfolder += "H1_";
     else      subfolder += "noH1_";
     subfolder += Form("bRec%.1f_",b_rec);
@@ -272,21 +282,18 @@ void TryConfiguration(Bool_t useH1, Float_t b_rec, Float_t b_gen)
     // pars: N, b
     Float_t par_rec[2] = {81000, b_rec};
     Float_t par_gen[2] = {3254000, b_gen};
-    Float_t N_data = 405;
-    GenerateEvents(subfolder,par_rec,par_gen,N_data,useH1);
+    Float_t N_data = 405.;
+    GenerateEvents(subfolder,lowPt2,uppPt2,par_rec,par_gen,N_data,useH1);
     
     // try various binnings
     Float_t fiducialDir[11] = { 0 };
     Float_t fiducialInt[11] = { 0 };
-    // binning from the original analysis
-    Float_t bins[6] = {0.04, 0.08, 0.15, 0.26, 0.48, 1.00};
-    TryBinning(subfolder,5,fiducialDir[0],fiducialInt[0],bins);
-    // new binnings: 1 to 10 bins in total
-    for(Int_t i = 1; i <= 10; i++) TryBinning(subfolder,i,fiducialDir[i],fiducialInt[i]);
+    if(areSame(lowPt2,0.04) && areSame(uppPt2,1.0)) TryBinning(subfolder,fiducialDir[0],fiducialInt[0]);
+    for(Int_t i = 1; i <= 10; i++) TryBinning(subfolder,fiducialDir[i],fiducialInt[i],i,lowPt2,uppPt2);
 
     ofstream outfile("Results/_FiducialCrossSec/" + subfolder + "summary.txt");
-    outfile << "binning\tdirect \tintegral\n" << std::fixed << std::setprecision(3)
-            << "orig.\t" << fiducialDir[0] << "\t" << fiducialInt[0] << "\n";
+    outfile << "binning\tdirect \tintegral\n" << std::fixed << std::setprecision(3);
+    if(areSame(lowPt2,0.04) && areSame(uppPt2,1.0)) outfile << "orig.\t" << fiducialDir[0] << "\t" << fiducialInt[0] << "\n";
     for(Int_t i = 1; i <= 10; i++) {
         outfile << i << " bins\t" << fiducialDir[i] << "\t" << fiducialInt[i] << "\n";
     }
@@ -297,11 +304,33 @@ void TryConfiguration(Bool_t useH1, Float_t b_rec, Float_t b_gen)
 void _FiducialCrossSec()
 {
     // arguments: useH1, b_rec, b_gen
-    // b_rec and b_gen from the fits
-    TryConfiguration(kTRUE,5.3,4.0);
-    TryConfiguration(kFALSE,5.3,4.0);
-    // b_rec same as b_gen
-    TryConfiguration(kTRUE,4.0,4.0);
-    TryConfiguration(kFALSE,4.0,4.0);
+
+    if(kTRUE) // full |t| range
+    { 
+        // b_rec and b_gen from the fits
+        TryConfiguration(0.04,1.0,kTRUE,5.3,4.0);
+        TryConfiguration(0.04,1.0,kFALSE,5.3,4.0);
+        // b_rec same as b_gen
+        TryConfiguration(0.04,1.0,kTRUE,4.0,4.0);
+        TryConfiguration(0.04,1.0,kFALSE,4.0,4.0);
+    }
+    if(kFALSE) // only 0.04 to 0.36 GeV^2
+    {
+        // b_rec and b_gen from the fits
+        TryConfiguration(0.04,0.36,kTRUE,5.3,4.0);
+        TryConfiguration(0.04,0.36,kFALSE,5.3,4.0);
+        // b_rec same as b_gen
+        TryConfiguration(0.04,0.36,kTRUE,4.0,4.0);
+        TryConfiguration(0.04,0.36,kFALSE,4.0,4.0);
+    }
+    if(kFALSE) // only 0.36 to 1.0 GeV^2
+    {
+        // b_rec and b_gen from the fits
+        TryConfiguration(0.36,1.0,kTRUE,5.3,4.0);
+        TryConfiguration(0.36,1.0,kFALSE,5.3,4.0);
+        // b_rec same as b_gen
+        TryConfiguration(0.36,1.0,kTRUE,4.0,4.0);
+        TryConfiguration(0.36,1.0,kFALSE,4.0,4.0);
+    }
     return;
 }

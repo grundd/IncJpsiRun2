@@ -42,7 +42,7 @@ Float_t syst_z_vtx[6] = { 0 };
 Float_t syst_fD[6] = { 0 };
 Float_t syst_fC[6] = { 0 };
 Float_t syst_BR = 0.; // calculated later
-Float_t syst_lumi = 2.7;
+Float_t syst_lumi = 2.9;
 Float_t syst_eff_veto_pileup = 3.0;
 Float_t syst_eff_veto_diss = 3.8;
 Float_t syst_tracking = 2.8; // added quadratically (the PF committee suggested to add linearly)
@@ -409,7 +409,7 @@ void CalculateCrossSec_PtBins()
         outfile << i << std::fixed << std::setprecision(3) << "\t" 
                 << pT2_boundaries[i][0] << "\t" 
                 << pT2_boundaries[i][1] << "\t" 
-                << std::fixed << std::setprecision(2)
+                << std::fixed << std::setprecision(1)
                 << sig_gPb_val[i] << "\t"
                 << sig_gPb_err_stat[i] << "\t"
                 << sig_gPb_err_syst_uncr[i] << "\t"

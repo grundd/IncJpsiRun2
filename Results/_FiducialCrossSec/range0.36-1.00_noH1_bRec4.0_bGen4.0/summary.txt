@@ -1,0 +1,11 @@
+binning	direct 	integral
+1 bins	1.537	1.537
+2 bins	1.537	1.536
+3 bins	1.537	1.536
+4 bins	1.537	1.537
+5 bins	1.537	1.536
+6 bins	1.537	1.536
+7 bins	1.537	1.538
+8 bins	1.537	1.539
+9 bins	1.537	1.538
+10 bins	1.537	1.534
