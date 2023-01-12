@@ -14,13 +14,13 @@
 #include "TStyle.h"
 #include "TMath.h"
 
-TH1D* AxE_PtBins_hNRec = NULL; 
-TH1D* AxE_PtBins_hNGen = NULL; 
-TH1D* AxE_PtBins_hAxE = NULL;
+TH1F* AxE_PtBins_hNRec = NULL; 
+TH1F* AxE_PtBins_hNGen = NULL; 
+TH1F* AxE_PtBins_hAxE = NULL;
 Double_t NRec_total;
 Double_t NGen_total;
 
-void AxE_PtBins_SaveToFile(Double_t N_total, TH1D* hist, TString name) {
+void AxE_PtBins_SaveToFile(Double_t N_total, TH1F* hist, TString name) {
     ofstream outfile (name.Data());
     outfile << "0\t" << N_total << "\n";
     for(Int_t iBin = 1; iBin <= hist->GetNbinsX(); iBin++) {
@@ -167,13 +167,13 @@ void AxE_PtBins_FillHistNGen()
 
 void AxE_PtBins_Calculate(Double_t fCutZ)
 {
-    AxE_PtBins_hNRec = new TH1D("AxE_PtBins_hNRec","N_rec per bin",nPtBins,ptBoundaries);
-    AxE_PtBins_hNGen = new TH1D("AxE_PtBins_hNGen","N_gen per bin",nPtBins,ptBoundaries);
+    AxE_PtBins_hNRec = new TH1F("AxE_PtBins_hNRec","N_rec per bin",nPtBins,ptBoundaries);
+    AxE_PtBins_hNGen = new TH1F("AxE_PtBins_hNGen","N_gen per bin",nPtBins,ptBoundaries);
 
     AxE_PtBins_FillHistNRec(fCutZ);
     AxE_PtBins_FillHistNGen();
 
-    AxE_PtBins_hAxE = (TH1D*)AxE_PtBins_hNRec->Clone("AxE_PtBins_hAxE");
+    AxE_PtBins_hAxE = (TH1F*)AxE_PtBins_hNRec->Clone("AxE_PtBins_hAxE");
     AxE_PtBins_hAxE->SetTitle("AxE per bin");
     AxE_PtBins_hAxE->Sumw2();
     AxE_PtBins_hAxE->Divide(AxE_PtBins_hNGen);
