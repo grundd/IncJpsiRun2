@@ -184,5 +184,15 @@ void PlotFiducialCrossSection()
 
     gr_err_corr->Print();
 
+    path = "Results/" + str_subfolder + "CrossSec/CrossSec_fiducial_int.txt";
+    ofstream outfile(path.Data());
+    outfile << std::fixed << std::setprecision(3)
+            << int_data * 1e3 << "\t"
+            << err_stat_low * 1e3 << "\t"
+            << err_syst_uncr_low * 1e3 << "\t"
+            << err_syst_corr_low * 1e3 << "\n";
+    outfile.close();
+    Printf("Results printed to %s.", path.Data());
+
     return;
 }

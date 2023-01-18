@@ -87,9 +87,11 @@ then
     if [[ "$compile" -eq 0 ]]
     then 
         root -q AxE_PtBins.C\($iAnalysis\)
+        root -q AxE_Dissociative.C\($iAnalysis\)
         root -q VetoEfficiency.C\($iAnalysis\)
     else 
         root -q AxE_PtBins.C+\($iAnalysis\)
+        root -q AxE_Dissociative.C+\($iAnalysis\)
         root -q VetoEfficiency.C+\($iAnalysis\)
     fi
 fi

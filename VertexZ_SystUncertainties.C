@@ -89,12 +89,12 @@ void NewCutZ_CompareCounts()
     Double_t nEvRat_err1[6] = { 0 };
     Double_t nEvRat_err2[6] = { 0 };
     Double_t nEvRat_err3[6] = { 0 };
-    for(Int_t iBin = 0; iBin < nPtBins+1; iBin++)
+    for(Int_t iBin = 0; iBin <= nPtBins; iBin++)
     {
         if(iBin == 0) {
-            for(Int_t iBin = 1; iBin <= nPtBins; iBin++) {
-                nEv10_val[0] += hEv10->GetBinContent(iBin);
-                nEv15_val[0] += hEv15->GetBinContent(iBin);
+            for(Int_t j = 1; j <= nPtBins; j++) {
+                nEv10_val[0] += hEv10->GetBinContent(j);
+                nEv15_val[0] += hEv15->GetBinContent(j);
             }
             nEv10_err[0] = TMath::Sqrt(nEv10_val[0]);
             nEv15_err[0] = TMath::Sqrt(nEv15_val[0]);
@@ -127,7 +127,7 @@ void NewCutZ_CompareCounts()
     // print the results
     TString str_out = "Results/" + str_subfolder + "VertexZ_SystUncertainties/";
     ofstream outfile(Form("%snEv.txt",str_out.Data()));
-    for(Int_t iBin = 0; iBin < nPtBins+1; iBin++)
+    for(Int_t iBin = 0; iBin <= nPtBins; iBin++)
     {
         outfile << "***\n";
         if(iBin == 0) outfile << "Bin: allbins\n";
@@ -157,7 +157,9 @@ void NewCutZ_CompareCounts()
     // to calculate the ratios of AxE: we will compare NRec (NGen are the same in all bins)
     // the errors of the ratios will again be calculated from binomial distribution
     Double_t nNRec10_val[6] = { 0 };
+    Double_t nNRec10_err[6] = { 0 };
     Double_t nNRec15_val[6] = { 0 };
+    Double_t nNRec15_err[6] = { 0 };
     TString str_AxE15 = "";
     if(cut_fVertexZ == 15.0) str_AxE15 = "Results/" + str_subfolder + Form("AxE_PtBins/NRec_%ibins.txt", nPtBins);
     else                     str_AxE15 = "Results/" + str_subfolder + Form("VertexZ_SystUncertainties/Zcut15.0_AxE_PtBins/NRec_%ibins.txt", nPtBins);
@@ -166,34 +168,24 @@ void NewCutZ_CompareCounts()
     else                     str_AxE10 = "Results/" + str_subfolder + Form("VertexZ_SystUncertainties/Zcut10.0_AxE_PtBins/NRec_%ibins.txt", nPtBins);
     // load the values of NRec
     ifstream ifs;
-    Int_t bin;
+    Int_t bin; Float_t err;
     ifs.open(str_AxE15);    
-    for(Int_t iBin = 1; iBin < nPtBins+1; iBin++) ifs >> bin >> nNRec15_val[iBin];
+    for(Int_t iBin = 0; iBin <= nPtBins; iBin++) ifs >> bin >> nNRec15_val[iBin] >> nNRec15_err[iBin];
     Printf("Values of AxE for Z_vtx < 15 cm calculated.");
     ifs.close();
     ifs.open(str_AxE10);    
-    for(Int_t iBin = 1; iBin < nPtBins+1; iBin++) ifs >> bin >> nNRec10_val[iBin];
+    for(Int_t iBin = 0; iBin <= nPtBins; iBin++) ifs >> bin >> nNRec10_val[iBin] >> nNRec10_err[iBin];
     Printf("Values of AxE for Z_vtx < 10 cm calculated.");
     ifs.close();
     // calculate the ratios of yields manually using various methods to compute errors
     // index 0 -> the 'allbins' range
     // indices 1 to 5 -> 5 pT bins
-    Double_t nNRec10_err[6] = { 0 };
-    Double_t nNRec15_err[6] = { 0 };
     Double_t nNRecRat_val[6] = { 0 };
     Double_t nNRecRat_err1[6] = { 0 };
     Double_t nNRecRat_err2[6] = { 0 };
     Double_t nNRecRat_err3[6] = { 0 };
-    for(Int_t iBin = 0; iBin < nPtBins+1; iBin++)
+    for(Int_t iBin = 0; iBin <= nPtBins; iBin++)
     {
-        if(iBin == 0) {
-            for(Int_t iBin = 0; iBin < nPtBins; iBin++) {
-                nNRec10_val[0] += nNRec10_val[iBin];
-                nNRec15_val[0] += nNRec15_val[iBin];
-            }
-        }
-        nNRec10_err[iBin] = TMath::Sqrt(nNRec10_val[iBin]);
-        nNRec15_err[iBin] = TMath::Sqrt(nNRec15_val[iBin]);
         // calculate the ratio
         nNRecRat_val[iBin] = nNRec10_val[iBin] / nNRec15_val[iBin];
         // calculate the error using error propagation formula
@@ -206,7 +198,7 @@ void NewCutZ_CompareCounts()
     }
     // print the results
     outfile.open(Form("%snNrec.txt",str_out.Data()));
-    for(Int_t iBin = 0; iBin < nPtBins+1; iBin++)
+    for(Int_t iBin = 0; iBin <= nPtBins; iBin++)
     {
         outfile << "***\n";
         if(iBin == 0) outfile << "Bin: allbins\n";

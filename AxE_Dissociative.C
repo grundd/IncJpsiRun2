@@ -3,6 +3,7 @@
 
 // root headers
 #include "TFile.h"
+#include "TList.h"
 #include "TTree.h"
 #include "TH1.h"
 #include "TCanvas.h"
@@ -18,6 +19,7 @@
 #include "AnalysisManager.h"
 #include "AnalysisConfig.h"
 #include "SetPtBinning.h"
+#include "SetPtBinning_PtFit.h"
 #include "AxE_PtBins_Utilities.h"
 
 using namespace RooFit;
@@ -25,7 +27,7 @@ using namespace RooFit;
 const Int_t nBins(240);
 Float_t fPtLow(0.0);
 Float_t fPtUpp(1.2);
-Float_t perc_gen_H1 = 57.;
+Float_t perc_gen_H1 = 57.1;
 
 void TH1_SetStyle(TH1F* h, Color_t c, Int_t style = 1)
 {
@@ -34,7 +36,7 @@ void TH1_SetStyle(TH1F* h, Color_t c, Int_t style = 1)
     h->SetLineStyle(style);
 }
 
-void PlotHistos(TString opt, Bool_t log, TH1F* h1, TH1F* h2 = NULL)
+void PlotHistos(TString name, TString opt, Bool_t log, TH1F* h1, TH1F* h2 = NULL, TLegend* l = NULL)
 {
     TCanvas c("c","c",700,600);
     c.SetLeftMargin(0.12);
@@ -43,7 +45,11 @@ void PlotHistos(TString opt, Bool_t log, TH1F* h1, TH1F* h2 = NULL)
     c.SetBottomMargin(0.12);
     if(log) c.SetLogy();
     TH1_SetStyle(h1,kBlue);
-    if(h2) TH1_SetStyle(h2,kRed);
+    if(h2) {
+        h1->SetBit(TH1::kNoStats);
+        h2->SetBit(TH1::kNoStats);
+        TH1_SetStyle(h2,kRed);
+    }
     // x-axis
     h1->GetXaxis()->SetTitle("#it{p}_{T} (GeV/#it{c})");
     h1->GetXaxis()->SetTitleOffset(1.1);
@@ -67,8 +73,8 @@ void PlotHistos(TString opt, Bool_t log, TH1F* h1, TH1F* h2 = NULL)
     h1->Draw(Form("%s",opt.Data()));
     if(h2) h2->Draw(Form("%s SAME",opt.Data()));
     // legend
-    // (...)
-    c.Print(("Results/" + str_subfolder + "AxE_Dissociative/" + h1->GetName() + ".pdf").Data());
+    if(l) l->Draw();
+    c.Print("Results/" + str_subfolder + "AxE_Dissociative/" + name + ".pdf");
     return;
 }
 
@@ -79,38 +85,50 @@ void ReweightIncPtShape()
     TTree *tGen = dynamic_cast<TTree*> (fGen->Get("AnalysisOutput/fTreeJpsiMCGen"));
     if(tGen) Printf("MC gen tree loaded.");
     ConnectTreeVariablesMCGen(tGen);
-    TH1F* hGenOld = new TH1F("hGenOld","#it{N}_{gen}^{old}",nBins,fPtLow,fPtUpp);
-    TH1F* hGenNew = new TH1F("hGenNew","#it{N}_{gen}^{new}",nBins,fPtLow,fPtUpp);
+    TH1F* hGenOld = new TH1F("hGenOld","#it{N}_{gen}",nBins,fPtLow,fPtUpp);
+    TH1F* hGenNew = new TH1F("hGenNew","#it{N}_{gen}",nBins,fPtLow,fPtUpp);
+    TH1F* hH1_fit = new TH1F("hH1_fit","#it{N}_{rec}^{H1}",60,fPtLow,fPtUpp);
 
     // go over generated events
     Float_t NGen_tot = tGen->GetEntries();
-    Float_t NGen_rap = 0;
     for(Int_t iEntry = 0; iEntry < NGen_tot; iEntry++) 
     {
         tGen->GetEntry(iEntry);
-        if(TMath::Abs(fYGen) < 1.0) { 
-            NGen_rap++;
-            hGenOld->Fill(fPtGen);
-        }
+        if(TMath::Abs(fYGen) < 1.0) hGenOld->Fill(fPtGen);
     }
     // now take 70% of hGenOld
-    Float_t howMany_SL = NGen_rap * (100. - perc_gen_H1) / 100.;
+    Float_t NGen_old = hGenOld->Integral();
+    cout << "NGen old events: " << NGen_old << "\n";
+    Float_t howMany_SL = NGen_old * (100. - perc_gen_H1) / 100.;
+    cout << "NGen SL events: " << howMany_SL << "\n";
     for(Int_t i = 0; i < howMany_SL; i++) hGenNew->Fill(hGenOld->GetRandom());
     // and add 30% from the H1 parametrization
     TF1 *fH1 = new TF1("fH1","x*pow((1 + x*x*[0]/[1]),-[1])",fPtLow,fPtUpp);
     fH1->SetParameter(0,1.79);
     fH1->SetParameter(1,3.58);
-    Float_t howMany_H1 = NGen_rap * (perc_gen_H1) / 100.;
-    for(Int_t i = 0; i < howMany_H1; i++) hGenNew->Fill(fH1->GetRandom());
+    Float_t howMany_H1 = NGen_old * (perc_gen_H1) / 100.;
+    cout << "NGen H1 events: " << howMany_H1 << "\n";
+    for(Int_t i = 0; i < howMany_H1; i++) {
+        Float_t fPtH1 = fH1->GetRandom();
+        hGenNew->Fill(fPtH1);
+        hH1_fit->Fill(fPtH1);
+    }
     // calculate the ratios
     TH1F* hRatios = (TH1F*)hGenNew->Clone("hRatios");
-    hRatios->SetTitle("#it{N}_{gen}^{new}/#it{N}_{gen}^{old}");
+    hRatios->SetTitle("#it{R} = #it{N}_{gen}^{new}/#it{N}_{gen}^{old}");
     hRatios->Sumw2();
     hRatios->Divide(hGenOld);
     TAxis *xAxis = hRatios->GetXaxis();
     // plot everything
-    PlotHistos("E0",kFALSE,hGenOld,hGenNew);
-    PlotHistos("E0",kFALSE,hRatios);
+    TLegend lGen(0.55,0.80,0.95,0.90);
+    lGen.AddEntry(hGenOld,Form("#it{N}_{gen}^{old} (%.0f events)",hGenOld->Integral()),"L");
+    lGen.AddEntry(hGenNew,Form("#it{N}_{gen}^{new} (%.0f events)",hGenNew->Integral()),"L");
+    lGen.SetTextSize(0.040);
+    lGen.SetBorderSize(0);
+    lGen.SetFillStyle(0);
+    lGen.Draw();
+    PlotHistos("hGen_oldNew","E0",kFALSE,hGenOld,hGenNew,&lGen);
+    PlotHistos("ratios","E0",kFALSE,hRatios);
 
     TFile *fRec = TFile::Open("Trees/AnalysisDataMC_pass3/PIDCalibrated/AnalysisResults_MC_kIncohJpsiToMu.root","read");
     if(fRec) Printf("MC rec file loaded.");
@@ -118,10 +136,11 @@ void ReweightIncPtShape()
     if(tRec) Printf("MC rec tree loaded.");
     ConnectTreeVariablesMCRec(tRec);
 
-    TH1F* hRecOld = new TH1F("hRecOld","#it{N}_{rec}^{old}",nBins,fPtLow,fPtUpp);
-    TH1F* hRecNew = new TH1F("hRecNew","#it{N}_{rec}^{new}",nBins,fPtLow,fPtUpp);
-    TH1F* hRecOld_fit = new TH1F("hRecOld_fit","#it{N}_{rec}^{old}",60,fPtLow,fPtUpp);
-    TH1F* hRecNew_fit = new TH1F("hRecNew_fit","#it{N}_{rec}^{new}",60,fPtLow,fPtUpp);
+    TH1F* hRecOld = new TH1F("hRecOld","#it{N}_{rec}",nBins,fPtLow,fPtUpp);
+    TH1F* hRecNew = new TH1F("hRecNew","#it{N}_{rec}",nBins,fPtLow,fPtUpp);
+    TH1F* hRecOld_fit = new TH1F("hRecOld_fit","#it{N}_{rec}",60,fPtLow,fPtUpp);
+    TH1F* hRecNew_fit = new TH1F("hRecNew_fit","#it{N}_{rec}",60,fPtLow,fPtUpp);
+    TH1D* hRec_ptFit = new TH1D("hRec_ptFit","",nPtBins_PtFit,ptBoundaries_PtFit);
     // go over reconstructed events and apply ratios
     for(Int_t iEntry = 0; iEntry < tRec->GetEntries(); iEntry++) 
     {
@@ -137,31 +156,41 @@ void ReweightIncPtShape()
             Float_t weight = hRatios->GetBinContent(iBinGen);
             hRecNew->Fill(fPt,weight);
             hRecNew_fit->Fill(fPt,weight);
+            hRec_ptFit->Fill(fPt,weight);
         }
     }
-    PlotHistos("E0",kFALSE,hRecOld,hRecNew);
-    PlotHistos("E0",kFALSE,hRecOld_fit,hRecNew_fit);
+    TLegend lRec(0.55,0.80,0.95,0.90);
+    lRec.AddEntry(hRecOld,Form("#it{N}_{rec}^{old} (%.0f events)",hRecOld->Integral()),"L");
+    lRec.AddEntry(hRecNew,Form("#it{N}_{rec}^{new} (%.0f events)",hRecNew->Integral()),"L");
+    lRec.SetTextSize(0.040);
+    lRec.SetBorderSize(0);
+    lRec.SetFillStyle(0);
+    lRec.Draw();
+    PlotHistos("hRec_oldNew","E0",kFALSE,hRecOld,hRecNew,&lRec);
+    PlotHistos("hRec_oldNew_fit","E0",kFALSE,hRecOld_fit,hRecNew_fit);
 
     // fit hNRecNew to get the fraction of events coming from H1
-    RooRealVar vPt("vPt", "vPt", fPtLow, fPtUpp);
-    RooDataHist dhData("dhData","dhData",vPt,hRecNew_fit);
-    RooRealVar vb_SL("vb_SL","vb_SL",4.,1.,10.);
-    RooRealVar vb_H1("vb_H1","vb_H1",1.79,1.,10.);
-    RooRealVar vn_H1("vn_H1","vn_H1",3.58,1.,10.);
+    RooRealVar vPt("vPt","",fPtLow,fPtUpp);
+    RooDataHist dhData("dhData","",vPt,hRecNew_fit);
+    RooRealVar vb_SL("vb_SL","",4.,1.,10.);
+    RooRealVar vb_H1("vb_H1","",1.79,1.,10.);
+    RooRealVar vn_H1("vn_H1","",3.58,1.,10.);
     vb_H1.setConstant(kTRUE);
     vn_H1.setConstant(kTRUE);
     RooGenericPdf pdfSL("pdfSL","","vPt*exp(-vb_SL*pow(vPt,2))",RooArgSet(vPt,vb_SL));
     RooGenericPdf pdfH1("pdfH1","","vPt*pow((1 + pow(vPt,2)*vb_H1/vn_H1),-vn_H1)",RooArgSet(vPt,vb_H1,vn_H1));
-    RooDataHist dhSL("dhSL","dhSL",vPt,hRecOld_fit);
-    RooHistPdf  hpdfSL("hpdfSL","hpdfSL",vPt,dhSL,0);
+    RooDataHist dhSL("dhSL","",vPt,hRecOld_fit);
+    RooHistPdf  hpdfSL("hpdfSL","",vPt,dhSL,0);
+    RooDataHist dhH1("dhH1","",vPt,hH1_fit);
+    RooHistPdf  hpdfH1("hpdfH1","",vPt,dhH1,0);
     Float_t NRec_tot = hRecNew->Integral();
-    RooRealVar vN_SL("vN_SL","vN_SL",NRec_tot*0.7,NRec_tot*0.1,NRec_tot*1.);
-    RooRealVar vN_H1("vN_H1","vN_H1",NRec_tot*0.3,NRec_tot*0.1,NRec_tot*1.);
+    RooRealVar vN_SL("vN_SL","",NRec_tot*0.7,NRec_tot*0.1,NRec_tot*1.);
+    RooRealVar vN_H1("vN_H1","",NRec_tot*0.3,NRec_tot*0.1,NRec_tot*1.);
     RooAddPdf* CombinedPDF = NULL;
     // fit with hpdfSL instead of pdfSL?
-    Bool_t useHPdf = kTRUE;
-    if(useHPdf) CombinedPDF = new RooAddPdf("CombinedPDF","", RooArgList(hpdfSL,pdfH1),RooArgList(vN_SL,vN_H1));
-    else        CombinedPDF = new RooAddPdf("CombinedPDF","", RooArgList(pdfSL,pdfH1),RooArgList(vN_SL,vN_H1));
+    Bool_t useHistPdfs = kTRUE;
+    if(useHistPdfs) CombinedPDF = new RooAddPdf("CombinedPDF","", RooArgList(hpdfSL,hpdfH1),RooArgList(vN_SL,vN_H1));
+    else            CombinedPDF = new RooAddPdf("CombinedPDF","", RooArgList(pdfSL,pdfH1),RooArgList(vN_SL,vN_H1));
 
     RooFitResult* fResFit = CombinedPDF->fitTo(dhData,SumW2Error(kFALSE),Extended(kTRUE),Save());
     TCanvas c("c","c",700,600);
@@ -171,9 +200,13 @@ void ReweightIncPtShape()
     c.SetBottomMargin(0.12);
     RooPlot* fPlot = vPt.frame(Title("fit of the #it{p}_{T} distribution of #it{N}_{rec}^{new}")); 
     dhData.plotOn(fPlot,Name("dhData"),MarkerStyle(kFullCircle),MarkerSize(0.8),MarkerColor(kBlack),LineColor(kBlack),LineWidth(2));
-    if(useHPdf) CombinedPDF->plotOn(fPlot,Name("hpdfSL"),Components(hpdfSL),Range(0.001,fPtUpp),LineColor(kRed),LineWidth(3),LineStyle(2));
-    else        CombinedPDF->plotOn(fPlot,Name("pdfSL"),Components(pdfSL),Range(0.001,fPtUpp),LineColor(kRed),LineWidth(3),LineStyle(2));
-    CombinedPDF->plotOn(fPlot,Name("pdfH1"),Components(pdfH1),Range(0.001,fPtUpp),LineColor(kViolet),LineWidth(3),LineStyle(2));
+    if(useHistPdfs) {
+        CombinedPDF->plotOn(fPlot,Name("hpdfSL"),Components(hpdfSL),Range(0.001,fPtUpp),LineColor(kRed),LineWidth(3),LineStyle(2));
+        CombinedPDF->plotOn(fPlot,Name("hpdfH1"),Components(hpdfH1),Range(0.001,fPtUpp),LineColor(kViolet),LineWidth(3),LineStyle(2));
+    } else {
+        CombinedPDF->plotOn(fPlot,Name("pdfSL"),Components(pdfSL),Range(0.001,fPtUpp),LineColor(kRed),LineWidth(3),LineStyle(2));
+        CombinedPDF->plotOn(fPlot,Name("pdfH1"),Components(pdfH1),Range(0.001,fPtUpp),LineColor(kViolet),LineWidth(3),LineStyle(2));
+    }
     CombinedPDF->plotOn(fPlot,Name("CombinedPDF"),Range(0.001,fPtUpp),LineColor(kBlue),LineWidth(3),LineStyle(9));
     Float_t chi2 = fPlot->chiSquare("CombinedPDF","dhData",fResFit->floatParsFinal().getSize());
     // x-axis
@@ -191,29 +224,38 @@ void ReweightIncPtShape()
     fPlot->GetYaxis()->SetLabelSize(0.045);
     fPlot->GetYaxis()->SetLabelOffset(0.01);
     fPlot->GetYaxis()->SetMaxDigits(3);
-    fPlot->Draw();
+    fPlot->Draw("][");
     // legend
     vPt.setRange("rPt_all",fPtLow,fPtUpp);
-    RooAbsReal* arN_SL = NULL;
-    if(useHPdf) arN_SL = hpdfSL.createIntegral(vPt,NormSet(vPt),Range("rPt_all"));
-    else        arN_SL = pdfSL.createIntegral(vPt,NormSet(vPt),Range("rPt_all"));
-    RooAbsReal* arN_H1 = pdfH1.createIntegral(vPt,NormSet(vPt),Range("rPt_all"));
+    RooAbsReal *arN_SL(NULL), *arN_H1(NULL);
+    if(useHistPdfs) {
+        arN_SL = hpdfSL.createIntegral(vPt,NormSet(vPt),Range("rPt_all"));
+        arN_H1 = hpdfH1.createIntegral(vPt,NormSet(vPt),Range("rPt_all"));
+    } else {
+        arN_SL = pdfSL.createIntegral(vPt,NormSet(vPt),Range("rPt_all"));
+        arN_H1 = pdfH1.createIntegral(vPt,NormSet(vPt),Range("rPt_all"));
+    }        
     Float_t N_SL = arN_SL->getVal()*vN_SL.getVal();
     Float_t N_H1 = arN_H1->getVal()*vN_H1.getVal();
     Float_t perc_SL = 100. * N_SL / NRec_tot;
     Float_t perc_H1 = 100. * N_H1 / NRec_tot;
     Int_t nRows(4);
     TLegend l(0.55,0.90-nRows*0.05,0.90,0.90);
-    l.AddEntry((TObject*)0,Form("#chi^{2}: %.3f",chi2),"");
-    l.AddEntry((TObject*)0,Form("total #it{N}_{rec} = %.0f",NRec_tot),"");
-    l.AddEntry((TObject*)0,Form("#it{N}_{rec}^{SL} = %.0f (%.1f%%)",N_SL,perc_SL),"");
-    l.AddEntry((TObject*)0,Form("#it{N}_{rec}^{H1} = %.0f (%.1f%%)",N_H1,perc_H1),"");
+    l.AddEntry((TObject*)0,Form("#chi^{2}/NDF: %.3f",chi2),"");
+    l.AddEntry("CombinedPDF",Form("total #it{N}_{rec}^{new} = %.0f",NRec_tot),"L");
+    if(useHistPdfs) {
+        l.AddEntry("hpdfSL",Form("#it{N}_{rec}^{SL} = %.0f (%.1f%%)",N_SL,perc_SL),"L");
+        l.AddEntry("hpdfH1",Form("#it{N}_{rec}^{H1} = %.0f (%.1f%%)",N_H1,perc_H1),"L");
+    } else {
+        l.AddEntry("pdfSL",Form("#it{N}_{rec}^{SL} = %.0f (%.1f%%)",N_SL,perc_SL),"L");
+        l.AddEntry("pdfH1",Form("#it{N}_{rec}^{H1} = %.0f (%.1f%%)",N_H1,perc_H1),"L");
+    }
     l.SetTextSize(0.045);
     l.SetBorderSize(0);
     l.SetFillStyle(0);
     l.Draw();
-    if(useHPdf) c.Print("Results/" + str_subfolder + "AxE_Dissociative/fit_pdf.pdf");
-    else        c.Print("Results/" + str_subfolder + "AxE_Dissociative/fit_hPdf.pdf");
+    if(useHistPdfs) c.Print("Results/" + str_subfolder + "AxE_Dissociative/fit_histPdfs.pdf");
+    else            c.Print("Results/" + str_subfolder + "AxE_Dissociative/fit_pdfs.pdf");
 
     // AxE in pT bins
     TH1F* hNGen = new TH1F("hNGen","#it{N}_{gen}",nPtBins,ptBoundaries);
@@ -232,8 +274,9 @@ void ReweightIncPtShape()
             hNGen->Fill(fPtGen,weight);
         }
     }
-    PlotHistos("E0",kFALSE,hNGen);
-    AxE_PtBins_SaveToFile(NGen_all,hNGen,"Results/" + str_subfolder + Form("AxE_Dissociative/NGen_%ibins.txt",nPtBins));
+    PlotHistos(Form("NGen_%ibins",nPtBins),"E0",kFALSE,hNGen);
+    TString sGen = "Results/" + str_subfolder + Form("AxE_Dissociative/NGen_%ibins.txt",nPtBins);
+    AxE_PtBins_SaveToFile(sGen,NGen_all,TMath::Sqrt(NGen_all),hNGen);
     // go over reconstructed events
     Float_t NRec_all = 0;
     for(Int_t iEntry = 0; iEntry < tRec->GetEntries(); iEntry++) 
@@ -248,14 +291,30 @@ void ReweightIncPtShape()
             hNRec->Fill(fPt,weight);
         }
     }
-    PlotHistos("E0",kFALSE,hNRec);
-    AxE_PtBins_SaveToFile(NRec_all,hNRec,"Results/" + str_subfolder + Form("AxE_Dissociative/NRec_%ibins.txt",nPtBins));
+    PlotHistos(Form("NRec_%ibins",nPtBins),"E0",kFALSE,hNRec);
+    TString sRec = "Results/" + str_subfolder + Form("AxE_Dissociative/NRec_%ibins.txt",nPtBins);
+    AxE_PtBins_SaveToFile(sRec,NRec_all,TMath::Sqrt(NRec_all),hNRec);
     // calculate AxE
     TH1F* hAxE = (TH1F*)hNRec->Clone("hAxE");
     hAxE->SetTitle("(Acc#times#varepsilon)_{MC} = #it{N}_{rec}/#it{N}_{gen}");
     hAxE->Sumw2();
     hAxE->Divide(hNGen);
-    PlotHistos("E0",kFALSE,hAxE);
+    PlotHistos(Form("AxE_%ibins",nPtBins),"E0",kFALSE,hAxE);
+    // calculate the total value of AxE
+    Float_t AxE_tot_val = NRec_all / NGen_all;
+    Float_t AxE_tot_err = CalculateErrorBayes(NRec_all, NGen_all);
+    Printf("Total AxE = (%.4f pm %.4f)%%", AxE_tot_val*100., AxE_tot_err*100.);
+    // print the results
+    TString sAxE = "Results/" + str_subfolder + Form("AxE_Dissociative/AxE_%ibins.txt",nPtBins);
+    AxE_PtBins_SaveToFile(sAxE,AxE_tot_val,AxE_tot_err,hAxE,3,100.);
+    // save the new template for the pT fit
+    TFile* fOut = new TFile("Results/" + str_subfolder + "AxE_Dissociative/incTemplate.root","RECREATE");
+    TList *lOut = new TList();
+    lOut->Add(hRec_ptFit);
+    lOut->Write("HistList", TObject::kSingleKey);
+    lOut->ls();
+    fOut->ls();
+    fOut->Close();
 
     return;
 }
@@ -264,6 +323,7 @@ void AxE_Dissociative(Int_t iAnalysis)
 {
     InitAnalysis(iAnalysis);
     SetPtBinning();
+    SetPtBinning_PtFit();
     gSystem->Exec("mkdir -p Results/" + str_subfolder + "AxE_Dissociative/");
 
     ReweightIncPtShape();

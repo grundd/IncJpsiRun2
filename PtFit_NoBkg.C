@@ -24,7 +24,7 @@ void PtFit_NoBkg(Int_t iAnalysis)
 
     // CohJ: to find the optimal value of R_A
     for(Int_t i = 1001; i < 1014; i++) PtFit_NoBkg_DoFit(i);
-
+    
     // Fit using the optimal value of R_A
     PtFit_NoBkg_DoFit(4);
 

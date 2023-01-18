@@ -306,6 +306,18 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
     TH1D *hDiss = (TH1D*)list->FindObject(("h" + NamesPDFs[iDiss]).Data());
     if(hDiss) Printf("Histogram %s loaded.", hDiss->GetName());
 
+    /*{
+        TString s_inc = "Results/" + str_subfolder + "AxE_Dissociative/incTemplate.root";
+        TFile *f_inc = TFile::Open(s_inc.Data(),"read");
+        if(f_inc) Printf("Input file %s loaded.", f_inc->GetName()); 
+
+        TList *l_inc = (TList*) f_inc->Get("HistList");
+        if(l_inc) Printf("List %s loaded.", l_inc->GetName()); 
+
+        hIncJ = (TH1D*)l_inc->FindObject("hRec_ptFit");
+        if(hIncJ) Printf("Histogram %s loaded.", hIncJ->GetName());
+    }*/
+
     //###################################################################################
     // Create PDFs
     // Definition of roofit variables
@@ -438,19 +450,19 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
     // The model:
     RooAddPdf *Mod = NULL;
     // if CohJ from SL => use hPDFCohJ
-    if(iRecShape == 0 || iRecShape == 1 || iRecShape == 4 || iRecShape > 1000){
+    if(iRecShape == 0 || iRecShape == 1 || iRecShape == 4 || iRecShape > 1000) {
         Mod = new RooAddPdf("Mod","Sum of all PDFs",
             RooArgList(hPDFCohJ, hPDFIncJ, hPDFCohP, hPDFIncP, hPDFDiss),
             RooArgList(NCohJ, NIncJ, NCohP, NIncP, NDiss)
         );
     // if CohJ as a gaussian => use gPDFCohJ
-    } else if(iRecShape == 2){
+    } else if(iRecShape == 2) {
         Mod = new RooAddPdf("Mod","Sum of all PDFs",
             RooArgList(*gPDFCohJ, hPDFIncJ, hPDFCohP, hPDFIncP, hPDFDiss),
             RooArgList(NCohJ, NIncJ, NCohP, NIncP, NDiss)
         );    
     // if CohJ as the SL formfactor => use sumPdfCohJ
-    } else if(iRecShape == 3){
+    } else if(iRecShape == 3) {
         Mod = new RooAddPdf("Mod","Sum of all PDFs",
             RooArgList(*sumPdfCohJ, hPDFIncJ, hPDFCohP, hPDFIncP, hPDFDiss),
             RooArgList(NCohJ, NIncJ, NCohP, NIncP, NDiss)
@@ -516,7 +528,7 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
     RooAbsReal *fN_Diss_inc = hPDFDiss.createIntegral(fPt,NormSet(fPt),Range("fPt_inc"));  
     RooAbsReal *fN_CohP_inc = hPDFCohP.createIntegral(fPt,NormSet(fPt),Range("fPt_inc")); 
     RooAbsReal *fN_IncP_inc = hPDFIncP.createIntegral(fPt,NormSet(fPt),Range("fPt_inc"));  
-    // Integrals of the PDFs with 0.2 < pT < 1.0 GeV/c (allbins)
+    // Integrals of the PDFs in 0.2 < pT < 1.0 GeV/c (allbins)
     fPt.setRange("fPt_to1",0.2,1.0);
     RooAbsReal *fN_CohJ_to1 = NULL;
     if(iRecShape == 0 || iRecShape == 1 || iRecShape == 4 || iRecShape > 1000) fN_CohJ_to1 = hPDFCohJ.createIntegral(fPt,NormSet(fPt),Range("fPt_to1"));
@@ -526,6 +538,10 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
     RooAbsReal *fN_Diss_to1 = hPDFDiss.createIntegral(fPt,NormSet(fPt),Range("fPt_to1"));  
     RooAbsReal *fN_CohP_to1 = hPDFCohP.createIntegral(fPt,NormSet(fPt),Range("fPt_to1")); 
     RooAbsReal *fN_IncP_to1 = hPDFIncP.createIntegral(fPt,NormSet(fPt),Range("fPt_to1"));  
+    // integral within 0.0 < pT < 1.2 GeV/c (for AxE_Dissociative.C)
+    fPt.setRange("fPt_dis",0.0,1.2);
+    RooAbsReal *fN_IncJ_dis = hPDFIncJ.createIntegral(fPt,NormSet(fPt),Range("fPt_dis"));
+    RooAbsReal *fN_Diss_dis = hPDFDiss.createIntegral(fPt,NormSet(fPt),Range("fPt_dis"));
     // Number of events in the whole pT range
         // values
         Double_t N_CohJ_all_val = fN_CohJ_all->getVal()*NCohJ.getVal();
@@ -565,6 +581,13 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
         Double_t N_Diss_to1_err = fN_Diss_to1->getVal()*NDiss.getError();
         Double_t N_CohP_to1_err = fN_CohP_to1->getVal()*fDCoh*NCohJ.getError();
         Double_t N_IncP_to1_err = fN_IncP_to1->getVal()*fDInc*NIncJ.getError();
+    // Number of events with 0.0 < pT < 1.2 GeV/c
+        // values
+        Double_t N_IncJ_dis_val = fN_IncJ_dis->getVal()*NIncJ.getVal();
+        Double_t N_Diss_dis_val = fN_Diss_dis->getVal()*NDiss.getVal();
+        // errors
+        Double_t N_IncJ_dis_err = fN_IncJ_dis->getVal()*NIncJ.getError();
+        Double_t N_Diss_dis_err = fN_Diss_dis->getVal()*NDiss.getError();
     // Total fC and fD corrections
     // a) for the whole IES (0.2 < pT < 2.0 GeV/c)
     // fC
@@ -821,6 +844,16 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
     outfile.close();
     Printf("*** Results printed to %s. ***", (name + "_fD.txt").Data());
 
+    // for AxE_Dissociative.C
+    if(iRecShape == 4) {
+        outfile.open("Results/" + str_subfolder + "AxE_Dissociative/fromPtFit.txt");
+        outfile << std::fixed << std::setprecision(1);
+        outfile << "range 0.0 < pT < 1.2 GeV/c:\n"
+                << "inc\t" << N_IncJ_dis_val << "\t" << N_IncJ_dis_err << "\n"
+                << "diss\t" << N_Diss_dis_val << "\t" << N_Diss_dis_err << "\n";
+        outfile.close();
+    }
+
     // ###############################################################################################################
 
     // Plot the results
@@ -1029,7 +1062,7 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
         lx->Draw();
 
         TLegend *ly = new TLegend(0.24,0.780,0.64,0.876);
-        ly->AddEntry((TObject*)0,"(3.0 < #it{m}_{#mu#mu} < 3.2) GeV/#it{c}^{2}","");
+        ly->AddEntry((TObject*)0,"3.0 < #it{m}_{#mu#mu} < 3.2 GeV/#it{c}^{2}","");
         ly->AddEntry((TObject*)0,"|#it{y}| < 0.8","");
         ly->SetMargin(0.);
         ly->SetTextSize(0.038);
@@ -1039,7 +1072,7 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
 
         TLegend *lz = new TLegend(0.53,0.444,0.93,0.876);
         lz->AddEntry((TObject*)0,"J/#psi #rightarrow #mu^{+} #mu^{-}","");
-        lz->AddEntry((TObject*)0,"UPC, L_{int} = (232 #pm 6) #mub^{-1}","");
+        lz->AddEntry((TObject*)0,"UPC, L_{int} = 232 #pm 6 #mub^{-1}","");
         lz->AddEntry("DHisData","ALICE measurement", "EPL");
         lz->AddEntry("hPDFCohJ","coherent J/#psi", "L");
         lz->AddEntry("hPDFIncJ","incoherent J/#psi", "L");

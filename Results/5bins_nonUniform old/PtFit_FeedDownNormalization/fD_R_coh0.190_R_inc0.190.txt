@@ -1,8 +1,0 @@
-	CohJ 	IncJ 	CohCh 	CohNe 	IncCh 	IncNe 
-AxE [%]	3.632	2.630	1.118	3.465	0.939	3.035
-err [%]	0.010	0.008	0.005	0.009	0.005	0.009
-
-	CohCh 	CohNe 	IncCh 	IncNe 
-fD  [%]	2.03	4.60	2.35	5.56
-err [%]	0.02	0.06	0.02	0.07
-

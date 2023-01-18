@@ -125,7 +125,7 @@ void CalculateCrossSec_PtBins()
 
     // AxE_MC
     // total value + in pT bins
-    s_in = Form("Results/" + str_subfolder + "AxE_PtBins/AxE_%ibins.txt",nPtBins);
+    s_in = Form("Results/" + str_subfolder + "AxE_Dissociative/AxE_%ibins.txt",nPtBins);
     ifs.open(s_in.Data());
     if(!ifs.fail()) for(Int_t iBin = 0; iBin < nPtBins+1; iBin++) ifs >> i_bin >> AxE_MC_val[iBin] >> AxE_MC_err[iBin];
     else {
@@ -433,7 +433,7 @@ void CalculateCrossSec_PtBins()
     Printf("Results printed to %s.", s_out.Data()); 
 
     // fiducial cross section
-    s_out = "Results/" + str_subfolder + "CrossSec/CrossSec_fiducial.txt";
+    s_out = "Results/" + str_subfolder + "CrossSec/CrossSec_fiducial_dir.txt";
     outfile.open(s_out.Data());
     outfile << std::fixed << std::setprecision(3)
             << sig_gPb_val[0] * pT2_widths[0] << "\t"

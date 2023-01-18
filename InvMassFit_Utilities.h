@@ -459,8 +459,8 @@ void InvMassFit_DoFit(Int_t opt, Double_t fMCutLow, Double_t fMCutUpp, Double_t 
 
         TLegend *ly = new TLegend(0.56,0.57,0.92,0.85);
         ly->AddEntry((TObject*)0,"J/#psi #rightarrow #mu^{+} #mu^{-}","");
-        ly->AddEntry((TObject*)0,"UPC, L_{int} = (232 #pm 6) #mub^{-1}","");
-        ly->AddEntry((TObject*)0,"(0.2 < #it{p}_{T} < 1.0) GeV/#it{c}","");
+        ly->AddEntry((TObject*)0,"UPC, L_{int} = 232 #pm 6 #mub^{-1}","");
+        ly->AddEntry((TObject*)0,"0.2 < #it{p}_{T} < 1.0 GeV/#it{c}","");
         ly->AddEntry((TObject*)0,"|#it{y}| < 0.8","");
         ly->AddEntry((TObject*)0,"#it{N}_{J/#psi} = 512 #pm 26","");
         //ly->AddEntry((TObject*)0,Form("#chi^{2}/dof = %.2f", chi2),"");

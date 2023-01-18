@@ -81,15 +81,15 @@ void DrawLegend3(Int_t iModels, Double_t x1, Double_t y1, Double_t x2, Double_t 
     TLegend *l3 = SetLegend(x1,y1,x2,y2);
     l3->SetTextSize(textSize);
     // here we do not want the legend to be transparent
-    l3->SetMargin(0.16);
-    //for(Int_t i = 0; i < 7; i++) l3->AddEntry(gr_ratios[i],str_models[i] + " / Data","P");
-    if(iModels != 1 && iModels != 3) l3->AddEntry(gr_ratios[0],str_models[0] + " / Data","P");
-    if(iModels != 2 && iModels != 3) l3->AddEntry(gr_ratios[1],str_models[1] + " / Data","P");
-    if(iModels != 1 && iModels != 3) l3->AddEntry(gr_ratios[2],str_models[2] + " / Data","P");
-    if(iModels != 2) l3->AddEntry(gr_ratios[3],str_models[3] + " / Data","P");
-    if(iModels != 1) l3->AddEntry(gr_ratios[4],str_models[4] + " / Data","P");
-    if(iModels != 2) l3->AddEntry(gr_ratios[5],str_models[5] + " / Data","P");
-    if(iModels != 1) l3->AddEntry(gr_ratios[6],str_models[6] + " / Data","P");
+    l3->SetMargin(0.20);
+    //for(Int_t i = 0; i < 7; i++) l3->AddEntry(gr_ratios[i],str_models[i],"P");
+    if(iModels != 1 && iModels != 3) l3->AddEntry(gr_ratios[0],str_models[0],"P");
+    if(iModels != 2 && iModels != 3) l3->AddEntry(gr_ratios[1],str_models[1],"P");
+    if(iModels != 1 && iModels != 3) l3->AddEntry(gr_ratios[2],str_models[2],"P");
+    if(iModels != 2) l3->AddEntry(gr_ratios[3],str_models[3],"P");
+    if(iModels != 1) l3->AddEntry(gr_ratios[4],str_models[4],"P");
+    if(iModels != 2) l3->AddEntry(gr_ratios[5],str_models[5],"P");
+    if(iModels != 1) l3->AddEntry(gr_ratios[6],str_models[6],"P");
     l3->Draw();
 
     return;
@@ -327,7 +327,7 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
     line->SetLineStyle(2);
     line->Draw("SAME");
     // draw a legend
-    DrawLegend3(0,0.74,0.30,0.96,0.90,textSize2*0.65);
+    DrawLegend3(0,0.80,0.30,0.96,0.90,textSize2*0.65);
     c2->Modified();
     c2->Update();
     

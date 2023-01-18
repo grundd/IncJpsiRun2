@@ -1,11 +1,11 @@
 ***
 Bin: allbins
-nNRec15: 74935 pm 274 (Poisson)
-nNRec10: 73108 pm 270 (Poisson)
-ratio: 0.9756
-err: 0.0051 (err propagation formula)
-err: 0.0006 (binomial)
-err: 0.0006 (Bayes)
+nNRec15: 83361 pm 289 (Poisson)
+nNRec10: 81297 pm 285 (Poisson)
+ratio: 0.9752
+err: 0.0048 (err propagation formula)
+err: 0.0005 (binomial)
+err: 0.0004 (Bayes)
 ***
 Bin: 1
 nNRec15: 17112 pm 131 (Poisson)
@@ -13,7 +13,7 @@ nNRec10: 16706 pm 129 (Poisson)
 ratio: 0.9763
 err: 0.0106 (err propagation formula)
 err: 0.0012 (binomial)
-err: 0.0012 (Bayes)
+err: 0.0011 (Bayes)
 ***
 Bin: 2
 nNRec15: 22007 pm 148 (Poisson)
@@ -21,7 +21,7 @@ nNRec10: 21469 pm 147 (Poisson)
 ratio: 0.9756
 err: 0.0094 (err propagation formula)
 err: 0.0010 (binomial)
-err: 0.0010 (Bayes)
+err: 0.0011 (Bayes)
 ***
 Bin: 3
 nNRec15: 18770 pm 137 (Poisson)
@@ -29,13 +29,13 @@ nNRec10: 18304 pm 135 (Poisson)
 ratio: 0.9752
 err: 0.0101 (err propagation formula)
 err: 0.0011 (binomial)
-err: 0.0011 (Bayes)
+err: 0.0012 (Bayes)
 ***
 Bin: 4
 nNRec15: 17046 pm 131 (Poisson)
 nNRec10: 16629 pm 129 (Poisson)
 ratio: 0.9755
-err: 0.0106 (err propagation formula)
+err: 0.0107 (err propagation formula)
 err: 0.0012 (binomial)
 err: 0.0012 (Bayes)
 ***
