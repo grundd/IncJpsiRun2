@@ -58,7 +58,7 @@ void VetoEfficiency(Int_t iAnalysis)
     VetoEff_Calculate(1,kFALSE);
     VetoEff_Calculate(2,kFALSE);
     // calculate systematic uncertainties
-    if(kFALSE) VetoEff_SystUncertainty();
+    if(kTRUE) VetoEff_SystUncertainty();
 
     return;
 }
@@ -354,7 +354,7 @@ void VetoEff_SystUncertainty()
     cTotal->SetRightMargin(0.04);
     cTotal->SetLeftMargin(0.13);
 
-    hSampledEffTotal->SetTitle(";#varepsilon^{veto}_{diss} [-];Counts");
+    hSampledEffTotal->SetTitle(";#varepsilon^{veto}_{diss} (-);Counts");
     hSampledEffTotal->SetLineWidth(3);
     hSampledEffTotal->SetLineColor(kBlue);
     // Vertical axis

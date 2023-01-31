@@ -105,7 +105,7 @@ void CalculateFWHMAndFWTM(TH1D *h, Int_t iBin)
     h->GetYaxis()->SetLabelOffset(0.01);
     h->GetYaxis()->SetMaxDigits(3);
     // Horizontal axis
-    h->GetXaxis()->SetTitle("#it{p}_{T}^{rec} #minus #it{p}_{T}^{gen} [GeV/#it{c}]");
+    h->GetXaxis()->SetTitle("#it{p}_{T}^{rec} #minus #it{p}_{T}^{gen} (GeV/#it{c})");
     h->GetXaxis()->SetTitleSize(0.05);
     h->GetXaxis()->SetTitleOffset(1.2);
     h->GetXaxis()->SetLabelSize(0.05);

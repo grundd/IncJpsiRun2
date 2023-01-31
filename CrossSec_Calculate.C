@@ -125,7 +125,7 @@ void CalculateCrossSec_PtBins()
 
     // AxE_MC
     // total value + in pT bins
-    s_in = Form("Results/" + str_subfolder + "AxE_Dissociative/AxE_%ibins.txt",nPtBins);
+    s_in = Form("Results/" + str_subfolder + "AxE_PtBins/reweighted_AxE_%ibins.txt",nPtBins);
     ifs.open(s_in.Data());
     if(!ifs.fail()) for(Int_t iBin = 0; iBin < nPtBins+1; iBin++) ifs >> i_bin >> AxE_MC_val[iBin] >> AxE_MC_err[iBin];
     else {

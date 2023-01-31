@@ -8,7 +8,7 @@ declare -i iAnalysis=3
 # define if compile each macro
 declare -i compile=0
 # define which macros to run
-declare -a arr=("0" "1" "2" "3" "4" "5" "6" "7" "8" "9y" "10")
+declare -a arr=("0" "1" "2" "3" "4" "5" "6y" "7" "8y" "9y" "10")
 #declare -a arr=("0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "10")
 #declare -a arr=("0" "1y" "2y" "3y" "4y" "5y" "6y" "7y" "8y" "9y" "10y")
 
@@ -86,12 +86,14 @@ if [ "${arr[6]}" = "6y" ]
 then
     if [[ "$compile" -eq 0 ]]
     then 
-        root -q AxE_PtBins.C\($iAnalysis\)
-        root -q AxE_Dissociative.C\($iAnalysis\)
+        root -q AxE_Dissociative.cxx\($iAnalysis\)
+        root -q AxE_PtBins.cxx\($iAnalysis\)
+        root -q AxE_PtDep.cxx\($iAnalysis\)
         root -q VetoEfficiency.C\($iAnalysis\)
     else 
-        root -q AxE_PtBins.C+\($iAnalysis\)
-        root -q AxE_Dissociative.C+\($iAnalysis\)
+        root -q AxE_PtBins.cxx+\($iAnalysis\)
+        root -q AxE_Dissociative.cxx+\($iAnalysis\)
+        root -q AxE_PtDep.cxx+\($iAnalysis\)
         root -q VetoEfficiency.C+\($iAnalysis\)
     fi
 fi
@@ -182,12 +184,10 @@ then
         root -q MigrationPtRecGen.C\($iAnalysis\)
         root -q ElectronsMuonsPID.C\($iAnalysis\)
         root -q RaphaelleComments.C\($iAnalysis\)
-        #root -q AxE_PtDep.C\($iAnalysis\)
     else 
         root -q ResolutionPt.C+\($iAnalysis\)
         root -q MigrationPtRecGen.C+\($iAnalysis\)
         root -q ElectronsMuonsPID.C+\($iAnalysis\)
         root -q RaphaelleComments.C+\($iAnalysis\)
-        #root -q AxE_PtDep.C+\($iAnalysis\)
     fi
 fi

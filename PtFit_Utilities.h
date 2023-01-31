@@ -297,9 +297,17 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
         hCohP = (TH1D*)l_modRA->FindObject(hNames_modRA[2].Data());
         if(hCohP) Printf("Histogram %s loaded.", hCohP->GetName());
         // 4) kincohPsi2sToMuPi
-        hIncP = (TH1D*)l_modRA->FindObject(hNames_modRA[3].Data());
-        if(hIncP) Printf("Histogram %s loaded.", hIncP->GetName());
-
+        if(kTRUE) {
+            hIncP = (TH1D*)l_modRA->FindObject(hNames_modRA[3].Data());
+            if(hIncP) Printf("Histogram %s loaded.", hIncP->GetName());
+        } else {
+            TFile* fIncP = TFile::Open("Results/" + str_subfolder + "AxE_Dissociative/incPsi2s/incTemplate.root");
+            if(fIncP) Printf("Input file %s loaded.", fIncP->GetName()); 
+            TList *lIncP = (TList*) fIncP->Get("HistList");
+            if(lIncP) Printf("List %s loaded.", lIncP->GetName()); 
+            hIncP = (TH1D*)lIncP->FindObject("hRec_ptFit");
+            if(hIncP) Printf("Histogram %s loaded.", hIncP->GetName());
+        }
         f_modRA->Close();
     } 
     // 5) Dissociative

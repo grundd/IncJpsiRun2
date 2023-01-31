@@ -268,7 +268,7 @@ void LoadGraphs_MS(Bool_t print = kFALSE)
 }
 
 // the GSZ model
-void LoadGraphs_GSZ(Bool_t print = kTRUE)
+void LoadGraphs_GSZ(Bool_t print = kFALSE)
 {
     Double_t abs_t_val[100] = { 0 };
     Double_t sig_el_min[100] = { 0 };

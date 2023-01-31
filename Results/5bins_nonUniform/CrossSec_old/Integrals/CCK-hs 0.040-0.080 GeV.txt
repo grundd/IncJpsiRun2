@@ -1,4 +1,0 @@
-model CCK-hs
-range (0.040,0.080) GeV
-integral: 0.807
-avg |t| : 0.059

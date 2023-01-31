@@ -7,7 +7,6 @@
 #include "TFile.h"
 #include "TString.h"
 #include "TMath.h"
-#include "TH1D.h"
 #include "TGraphErrors.h"
 #include "TAxis.h"
 #include "TLine.h"
@@ -15,7 +14,7 @@
 #include "AnalysisManager.h"
 #include "AnalysisConfig.h"
 #include "SetPtBinning.h"
-#include "AxE_PtBins_Utilities.h"
+#include "AxE_Utilities.h"
 
 void NewCutZ_CompareCounts();
 void NewCutZ_FillHistograms(TTree *t, TH1D *h, Double_t fCutZ);
@@ -161,11 +160,11 @@ void NewCutZ_CompareCounts()
     Double_t nNRec15_val[6] = { 0 };
     Double_t nNRec15_err[6] = { 0 };
     TString str_AxE15 = "";
-    if(cut_fVertexZ == 15.0) str_AxE15 = "Results/" + str_subfolder + Form("AxE_PtBins/NRec_%ibins.txt", nPtBins);
-    else                     str_AxE15 = "Results/" + str_subfolder + Form("VertexZ_SystUncertainties/Zcut15.0_AxE_PtBins/NRec_%ibins.txt", nPtBins);
+    if(cut_fVertexZ == 15.0) str_AxE15 = "Results/" + str_subfolder + Form("AxE_PtBins/reweighted_NRec_%ibins.txt", nPtBins);
+    else                     str_AxE15 = "Results/" + str_subfolder + Form("VertexZ_SystUncertainties/Zcut15.0_AxE_PtBins/reweighted_NRec_%ibins.txt", nPtBins);
     TString str_AxE10 = "";
-    if(cut_fVertexZ == 10.0) str_AxE10 = "Results/" + str_subfolder + Form("AxE_PtBins/NRec_%ibins.txt", nPtBins);
-    else                     str_AxE10 = "Results/" + str_subfolder + Form("VertexZ_SystUncertainties/Zcut10.0_AxE_PtBins/NRec_%ibins.txt", nPtBins);
+    if(cut_fVertexZ == 10.0) str_AxE10 = "Results/" + str_subfolder + Form("AxE_PtBins/reweighted_NRec_%ibins.txt", nPtBins);
+    else                     str_AxE10 = "Results/" + str_subfolder + Form("VertexZ_SystUncertainties/Zcut10.0_AxE_PtBins/reweighted_NRec_%ibins.txt", nPtBins);
     // load the values of NRec
     ifstream ifs;
     Int_t bin; Float_t err;
@@ -250,6 +249,7 @@ void NewCutZ_CompareCounts()
         // set range on x-axis
         axis->SetLimits(0.925,1.005);
         TH1 *h = (TH1*) gr[i]->GetHistogram();
+        h->SetBit(TH1::kNoTitle);
         // set range on y-axis
         h->SetMinimum(0.925);
         h->SetMaximum(1.005);
@@ -285,8 +285,6 @@ void NewCutZ_CompareCounts()
         lg[i]->Draw();
     }
     c->Print("Results/" + str_subfolder + "VertexZ_SystUncertainties/ratios.pdf");
-    c->Print("Results/" + str_subfolder + "VertexZ_SystUncertainties/ratios.png");
-
     return;
 }
 
@@ -333,10 +331,8 @@ void NewCutZ_PrepareTree(Double_t fCutZ)
         // data
         TFile *f_in = TFile::Open((str_in_DT_fldr + "AnalysisResults.root").Data(), "read");
         if(f_in) Printf("Input data loaded.");
-
         TTree *t_in = dynamic_cast<TTree*> (f_in->Get(str_in_DT_tree.Data()));
         if(t_in) Printf("Input tree loaded.");
-
         ConnectTreeVariables(t_in);  
 
         // Create new data tree with applied cuts
@@ -373,7 +369,6 @@ void NewCutZ_PrepareTree(Double_t fCutZ)
         Printf("Restoring the original cut on vertex Z: %.1f", cut_fVertexZ);        
 
         file->Write("",TObject::kWriteDelete);
-
         return;
     }
 }
@@ -381,7 +376,7 @@ void NewCutZ_PrepareTree(Double_t fCutZ)
 void NewCutZ_AxE_PtBins(Double_t fCutZ)
 {
     gSystem->Exec("mkdir -p Results/" + str_subfolder + Form("VertexZ_SystUncertainties/Zcut%.1f_AxE_PtBins/", fCutZ));
-    AxE_PtBins_Calculate(fCutZ);
+    AxE_PtBins_Calculate(kTRUE,fCutZ);
 
     return;
 }

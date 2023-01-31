@@ -1,4 +1,0 @@
-model GSZ-el
-range (0.040,1.000) GeV
-integral: 2.334
-avg |t| : 0.236
