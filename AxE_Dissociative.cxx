@@ -29,12 +29,12 @@ void ReweightIncPtShape(TString process = "IncJ")
     TString sRec = "Trees/AnalysisDataMC_pass3/PIDCalibrated/";
     TString sOut = "Results/" + str_subfolder + "AxE_Dissociative/";
     if(process == "IncJ") {
-        perc_gen_H1 = 58.6;
+        perc_gen_H1 = 61.2;
         prefix = "incJpsi/";
         sGen += "AnalysisResults_MC_kIncohJpsiToMu.root";
         sRec += "AnalysisResults_MC_kIncohJpsiToMu.root";
     } else if(process == "IncP") {
-        perc_gen_H1 = 47.5;
+        perc_gen_H1 = 49.8;
         prefix = "incPsi2s/";
         sGen += "AnalysisResults_MC_kIncohPsi2sToMuPi.root";
         sRec += "AnalysisResults_MC_kIncohPsi2sToMuPi.root";

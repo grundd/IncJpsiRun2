@@ -546,8 +546,8 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
     RooAbsReal *fN_Diss_to1 = hPDFDiss.createIntegral(fPt,NormSet(fPt),Range("fPt_to1"));  
     RooAbsReal *fN_CohP_to1 = hPDFCohP.createIntegral(fPt,NormSet(fPt),Range("fPt_to1")); 
     RooAbsReal *fN_IncP_to1 = hPDFIncP.createIntegral(fPt,NormSet(fPt),Range("fPt_to1"));  
-    // integral within 0.0 < pT < 1.2 GeV/c (for AxE_Dissociative.C)
-    fPt.setRange("fPt_dis",0.0,1.2);
+    // integral within 0.0 < pT < 1.4 GeV/c (for AxE_Dissociative.C)
+    fPt.setRange("fPt_dis",0.0,1.4);
     RooAbsReal *fN_IncJ_dis = hPDFIncJ.createIntegral(fPt,NormSet(fPt),Range("fPt_dis"));
     RooAbsReal *fN_Diss_dis = hPDFDiss.createIntegral(fPt,NormSet(fPt),Range("fPt_dis"));
     // Number of events in the whole pT range
@@ -856,7 +856,7 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
     if(iRecShape == 4) {
         outfile.open("Results/" + str_subfolder + "AxE_Dissociative/fromPtFit.txt");
         outfile << std::fixed << std::setprecision(1);
-        outfile << "range 0.0 < pT < 1.2 GeV/c:\n"
+        outfile << "range 0.0 < pT < 1.4 GeV/c:\n"
                 << "inc\t" << N_IncJ_dis_val << "\t" << N_IncJ_dis_err << "\n"
                 << "diss\t" << N_Diss_dis_val << "\t" << N_Diss_dis_err << "\n";
         outfile.close();
