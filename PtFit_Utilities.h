@@ -881,17 +881,17 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
     RooPlot* PtFrame = fPt.frame(Title("pT fit"));
     DHisData.plotOn(PtFrame,Name("DHisData"),Binning(fPtBins_PtFit),MarkerStyle(kFullCircle),MarkerSize(1.),LineWidth(2));
     if(iRecShape == 0 || iRecShape == 1 || iRecShape == 4 || iRecShape > 1000){
-        Mod->plotOn(PtFrame,Name("hPDFCohJ"),Components(hPDFCohJ),     LineColor(222),LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
+        Mod->plotOn(PtFrame,Name("hPDFCohJ"),Components(hPDFCohJ),LineColor(kCyan+1),LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
     } else if(iRecShape == 2){
-        Mod->plotOn(PtFrame,Name("gPDFCohJ"),Components(*gPDFCohJ),    LineColor(222),LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
+        Mod->plotOn(PtFrame,Name("gPDFCohJ"),Components(*gPDFCohJ),LineColor(kCyan+1),LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
     } else if(iRecShape == 3){
-        Mod->plotOn(PtFrame,Name("sumPdfCohJ"),Components(*sumPdfCohJ),LineColor(222),LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
+        Mod->plotOn(PtFrame,Name("sumPdfCohJ"),Components(*sumPdfCohJ),LineColor(kCyan+1),LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
     }
     Mod->plotOn(PtFrame,Name("hPDFIncJ"),Components(hPDFIncJ),LineColor(kRed),LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
-    Mod->plotOn(PtFrame,Name("hPDFCohP"),Components(hPDFCohP),LineColor(222), LineStyle(7),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
+    Mod->plotOn(PtFrame,Name("hPDFCohP"),Components(hPDFCohP),LineColor(kCyan+1),LineStyle(7),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
     Mod->plotOn(PtFrame,Name("hPDFIncP"),Components(hPDFIncP),LineColor(kRed),LineStyle(7),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
-    Mod->plotOn(PtFrame,Name("hPDFDiss"),Components(hPDFDiss),LineColor(15),  LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
-    Mod->plotOn(PtFrame,Name("Mod"),                          LineColor(215), LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
+    Mod->plotOn(PtFrame,Name("hPDFDiss"),Components(hPDFDiss),LineColor(kGray+1),LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
+    Mod->plotOn(PtFrame,Name("Mod"),                          LineColor(kBlue),LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
 
     PtFrame->SetAxisRange(0,1,"X");
     // Set X axis
@@ -918,17 +918,17 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
     RooPlot* PtFrameLog = fPt.frame(Title("pT fit log scale"));
     DHisData.plotOn(PtFrameLog,Name("DHisData"),Binning(fPtBins_PtFit),MarkerStyle(kFullCircle),MarkerSize(1.),LineWidth(2));
     if(iRecShape == 0 || iRecShape == 1 || iRecShape == 4 || iRecShape > 1000){
-        Mod->plotOn(PtFrameLog,Name("hPDFCohJ"),Components(hPDFCohJ),     LineColor(222),LineStyle(1),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
+        Mod->plotOn(PtFrameLog,Name("hPDFCohJ"),Components(hPDFCohJ),LineColor(kGreen+1),LineStyle(1),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
     } else if(iRecShape == 2){
-        Mod->plotOn(PtFrameLog,Name("gPDFCohJ"),Components(*gPDFCohJ),    LineColor(222),LineStyle(1),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
+        Mod->plotOn(PtFrameLog,Name("gPDFCohJ"),Components(*gPDFCohJ),LineColor(kGreen+1),LineStyle(1),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
     } else if(iRecShape == 3){
-        Mod->plotOn(PtFrameLog,Name("sumPdfCohJ"),Components(*sumPdfCohJ),LineColor(222),LineStyle(1),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
+        Mod->plotOn(PtFrameLog,Name("sumPdfCohJ"),Components(*sumPdfCohJ),LineColor(kGreen+1),LineStyle(1),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
     }
     Mod->plotOn(PtFrameLog,Name("hPDFIncJ"),Components(hPDFIncJ),LineColor(kRed),LineStyle(1),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
-    Mod->plotOn(PtFrameLog,Name("hPDFCohP"),Components(hPDFCohP),LineColor(222), LineStyle(7),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
+    Mod->plotOn(PtFrameLog,Name("hPDFCohP"),Components(hPDFCohP),LineColor(kGreen+1),LineStyle(7),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
     Mod->plotOn(PtFrameLog,Name("hPDFIncP"),Components(hPDFIncP),LineColor(kRed),LineStyle(7),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
-    Mod->plotOn(PtFrameLog,Name("hPDFDiss"),Components(hPDFDiss),LineColor(15),  LineStyle(1),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
-    Mod->plotOn(PtFrameLog,Name("Mod"),                          LineColor(215), LineStyle(1),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
+    Mod->plotOn(PtFrameLog,Name("hPDFDiss"),Components(hPDFDiss),LineColor(kGray+1),LineStyle(1),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
+    Mod->plotOn(PtFrameLog,Name("Mod"),                          LineColor(kBlue),LineStyle(1),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
 
     PtFrameLog->SetAxisRange(0,2,"X");
     // Set X axis
@@ -1061,8 +1061,12 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
         //fFrameM->GetYaxis()->SetNdivisions(505);
         PtFrameLog->Draw();
 
-        TLegend *lx = new TLegend(0.26,0.90,0.90,0.96);
-        lx->AddEntry((TObject*)0,"ALICE, Pb#minusPb #sqrt{#it{s}_{NN}} = 5.02 TeV","");
+        Bool_t preliminary = kTRUE;
+        Double_t xMin = 0.26;
+        if(preliminary) xMin = 0.18;
+        TLegend *lx = new TLegend(xMin,0.90,0.90,0.96);
+        if(preliminary) lx->AddEntry((TObject*)0,"ALICE Preliminary, Pb#minusPb #sqrt{#it{s}_{NN}} = 5.02 TeV","");
+        else lx->AddEntry((TObject*)0,"ALICE, Pb#minusPb #sqrt{#it{s}_{NN}} = 5.02 TeV","");
         lx->SetMargin(0.);
         lx->SetTextSize(0.05);
         lx->SetBorderSize(0);
@@ -1080,8 +1084,8 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
 
         TLegend *lz = new TLegend(0.53,0.444,0.93,0.876);
         lz->AddEntry((TObject*)0,"J/#psi #rightarrow #mu^{+} #mu^{-}","");
-        lz->AddEntry((TObject*)0,"UPC, L_{int} = 232 #pm 6 #mub^{-1}","");
-        lz->AddEntry("DHisData","ALICE measurement", "EPL");
+        lz->AddEntry((TObject*)0,"UPC, L_{int} = 232 #pm 7 #mub^{-1}","");
+        lz->AddEntry("DHisData","data", "EPL");
         lz->AddEntry("hPDFCohJ","coherent J/#psi", "L");
         lz->AddEntry("hPDFIncJ","incoherent J/#psi", "L");
         lz->AddEntry("hPDFDiss","inc. J/#psi with nucleon diss.", "L");
@@ -1094,7 +1098,10 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
         lz->SetFillStyle(0);
         lz->Draw();
 
-        cPaper->Print("Results/" + str_subfolder + "_PaperFigures/ptFit.pdf");
+        if(preliminary) {
+            cPaper->Print("Results/" + str_subfolder + "_PreliminaryFigures/ptFit.pdf");
+            cPaper->Print("Results/" + str_subfolder + "_PreliminaryFigures/ptFit.eps");
+        } else cPaper->Print("Results/" + str_subfolder + "_PaperFigures/ptFit.pdf");
         delete cPaper;
     }
     // ****************************************************************

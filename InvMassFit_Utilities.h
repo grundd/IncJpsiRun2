@@ -317,7 +317,7 @@ void InvMassFit_DoFit(Int_t opt, Double_t fMCutLow, Double_t fMCutUpp, Double_t 
     fDataSet->plotOn(fFrameM,Name("fDataSet"),Binning(binM),MarkerStyle(kFullCircle),MarkerSize(1.),LineWidth(2));
     DSCBAndBkgPdf.plotOn(fFrameM,Name("DoubleSidedCB"),Components(DoubleSidedCB),LineColor(kBlack),LineStyle(kDashed),LineWidth(3));
     DSCBAndBkgPdf.plotOn(fFrameM,Name("BkgPdf"),Components(BkgPdf),LineColor(kRed),LineStyle(kDashed),LineWidth(3));
-    DSCBAndBkgPdf.plotOn(fFrameM,Name("DSCBAndBkgPdf"),LineColor(215),LineWidth(3));
+    DSCBAndBkgPdf.plotOn(fFrameM,Name("DSCBAndBkgPdf"),LineColor(kBlue),LineWidth(3));
     // Vertical axis
     fFrameM->GetYaxis()->SetTitle(Form("Counts per %i MeV/#it{c}^{2}", BinSize));
     fFrameM->GetYaxis()->SetTitleSize(0.05);
@@ -449,8 +449,12 @@ void InvMassFit_DoFit(Int_t opt, Double_t fMCutLow, Double_t fMCutUpp, Double_t 
         //fFrameM->GetYaxis()->SetNdivisions(505);
         fFrameM->Draw();
 
-        TLegend *lx = new TLegend(0.26,0.90,0.90,0.96);
-        lx->AddEntry((TObject*)0,"ALICE, Pb#minusPb #sqrt{#it{s}_{NN}} = 5.02 TeV","");
+        Bool_t preliminary = kTRUE;
+        Double_t xMin = 0.26;
+        if(preliminary) xMin = 0.18;
+        TLegend *lx = new TLegend(xMin,0.90,0.90,0.96);
+        if(preliminary) lx->AddEntry((TObject*)0,"ALICE Preliminary, Pb#minusPb #sqrt{#it{s}_{NN}} = 5.02 TeV","");
+        else lx->AddEntry((TObject*)0,"ALICE, Pb#minusPb #sqrt{#it{s}_{NN}} = 5.02 TeV","");
         lx->SetMargin(0.);
         lx->SetTextSize(0.05);
         lx->SetBorderSize(0);
@@ -459,7 +463,7 @@ void InvMassFit_DoFit(Int_t opt, Double_t fMCutLow, Double_t fMCutUpp, Double_t 
 
         TLegend *ly = new TLegend(0.56,0.57,0.92,0.85);
         ly->AddEntry((TObject*)0,"J/#psi #rightarrow #mu^{+} #mu^{-}","");
-        ly->AddEntry((TObject*)0,"UPC, L_{int} = 232 #pm 6 #mub^{-1}","");
+        ly->AddEntry((TObject*)0,"UPC, L_{int} = 232 #pm 7 #mub^{-1}","");
         ly->AddEntry((TObject*)0,"0.2 < #it{p}_{T} < 1.0 GeV/#it{c}","");
         ly->AddEntry((TObject*)0,"|#it{y}| < 0.8","");
         ly->AddEntry((TObject*)0,"#it{N}_{J/#psi} = 512 #pm 26","");
@@ -470,7 +474,10 @@ void InvMassFit_DoFit(Int_t opt, Double_t fMCutLow, Double_t fMCutUpp, Double_t 
         ly->SetFillStyle(0);
         ly->Draw();
 
-        c2->Print("Results/" + str_subfolder + "_PaperFigures/massFit.pdf");
+        if(preliminary) {
+            c2->Print("Results/" + str_subfolder + "_PreliminaryFigures/massFit.pdf");
+            c2->Print("Results/" + str_subfolder + "_PreliminaryFigures/massFit.eps");
+        } else c2->Print("Results/" + str_subfolder + "_PaperFigures/massFit.pdf");
         delete c2;
     }
     // ****************************************************************

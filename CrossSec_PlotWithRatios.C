@@ -68,7 +68,7 @@ void DrawLegend2(Double_t x1, Double_t y1, Double_t x2, Double_t y2, Double_t te
     l2->SetTextSize(textSize);
     l2->SetFillStyle(0);
     l2->SetMargin(0.12);
-    l2->AddEntry((TObject*)0,"ALICE incoherent J/#psi, |y| < 0.8", "");
+    l2->AddEntry((TObject*)0,"ALICE incoherent J/#psi, |#it{y}| < 0.8", "");
     l2->AddEntry(gr_data_uncr,"Uncorrelated stat. + syst.", "EPL");
     l2->AddEntry(gr_data_corr,"Correlated syst.", "F");
     l2->Draw();
@@ -155,7 +155,7 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
 
     // set properties of the data graph with uncorrelated uncertainties
     gr_data_uncr->SetMarkerStyle(kFullCircle);
-    gr_data_uncr->SetMarkerSize(0.7);
+    gr_data_uncr->SetMarkerSize(1.0);
     gr_data_uncr->SetLineColor(kBlack);
     gr_data_uncr->SetLineWidth(2);
     gr_data_uncr->SetMarkerColor(kBlack);
@@ -233,7 +233,7 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
     ltx->SetTextSize(textSize1*0.8);
     ltx->SetTextAlign(21);
     ltx->SetNDC();
-    ltx->DrawLatex(0.55,0.94,"ALICE Pb+Pb #rightarrow Pb+Pb+J/#psi   #sqrt{#it{s}_{NN}} = 5.02 TeV");
+    ltx->DrawLatex(0.55,0.94,"ALICE, Pb#minusPb UPC   #sqrt{#it{s}_{NN}} = 5.02 TeV");
 
     // draw the legend with the models
     DrawLegend1(0,0.17,0.15,0.40,0.40,textSize1*0.7,draw_leg);
@@ -280,6 +280,21 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
         gr_err_corr->SetPoint(iBin, x, 1.);
         gr_err_corr->SetPointError(iBin,err_x_low,err_x_upp,err_y_corr,err_y_corr);
     }
+    // error bars for GSZ in the ratio panel:
+    /*
+    LoadGraphs_GSZ();
+    for(Int_t i = 5; i < 7; i++) {
+        cout << str_models[i] << "\n"; 
+        for(Int_t iBin = 0; iBin < nPtBins; iBin++) {
+            cout << Form("bin %i: rat: %.2f, upp: %.2f, low: %.2f, diff low-upp: %.2f\n",
+                iBin+1,
+                gr_ratios[i]->GetPointY(iBin),
+                gr_ratios[i]->GetPointY(iBin)*GSZ_err_scale_upp[i-5],
+                gr_ratios[i]->GetPointY(iBin)*GSZ_err_scale_low[i-5],
+                gr_ratios[i]->GetPointY(iBin)*GSZ_err_scale_upp[i-5]-gr_ratios[i]->GetPointY(iBin)*GSZ_err_scale_low[i-5]);
+        }
+    }
+    */
 
     // STARlight
     SetLineMarkerProperties(gr_ratios[0],colors[0],1,kFullDiamond,1.8);
@@ -368,7 +383,9 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
 
     // draw latex label
     ltx->SetTextSize(textSize3*0.88);
-    ltx->DrawLatex(0.55,0.92,"ALICE Pb+Pb #rightarrow Pb+Pb+J/#psi   #sqrt{#it{s}_{NN}} = 5.02 TeV");
+    Bool_t preliminary = kTRUE;
+    if(preliminary) ltx->DrawLatex(0.55,0.92,"ALICE Preliminary, Pb#minusPb UPC   #sqrt{#it{s}_{NN}} = 5.02 TeV");
+    else ltx->DrawLatex(0.55,0.92,"ALICE, Pb#minusPb UPC   #sqrt{#it{s}_{NN}} = 5.02 TeV");
     // draw legends
     if(iModels == 0) DrawLegend1(iModels,0.17,0.04,0.42,0.34,textSize3*0.8,draw_leg);
     else             DrawLegend1(iModels,0.17,0.04,0.42,0.28,textSize3*0.8,draw_leg);
@@ -417,7 +434,12 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
     if(iModels == 3) append += "_onlyMSGSZ";
 
     c3->Print("Results/" + str_subfolder + "CrossSec/PlotWithRatios/" + bin_save + "plotWithRatios" + append + ".pdf");
-    if(iBinn == 0 && iModels == 3) c3->Print("Results/" + str_subfolder + "_PaperFigures/crossSection.pdf");
+    if(iBinn == 0 && iModels == 3) {
+        if(preliminary) {
+            c3->Print("Results/" + str_subfolder + "_PreliminaryFigures/crossSection.pdf");
+            c3->Print("Results/" + str_subfolder + "_PreliminaryFigures/crossSection.eps");
+        } else c3->Print("Results/" + str_subfolder + "_PaperFigures/crossSection.pdf");
+    }
 
     return;
 }

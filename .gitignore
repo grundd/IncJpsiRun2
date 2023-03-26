@@ -9,14 +9,13 @@ Trees/
 *.xml
 *.jdl
 
+# File with the obsolete token
 .token.txt
 
-# Ignore the STARlight folder
-STARlight_src/
-
-# Ignore the Documents folder
+# Ignore the following folders
 Documents/
+Feynman diagrams/
+STARlight_src/
+Results/
 
-# Ignore the Results/old folder
-Results/old
 

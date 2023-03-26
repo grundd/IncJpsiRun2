@@ -1,5 +1,5 @@
-// STARlight_tVsPt.C
-// David Grund, May 24, 2022
+// STARlight_tVsPt2.cxx
+// David Grund, March 2, 2023
 
 // cpp headers
 #include <fstream> // print output to txt file
@@ -21,18 +21,44 @@
 #include "SetPtBinning.h"
 
 Int_t nGenEv = 6e6;
-Int_t nBins = 1000;
+Int_t nBins = 200;
 
 void PlotResults(Double_t pT2_min, Double_t pT2_max); // pT2 in [GeV^2]
 void CalculateAvgTPerBin();
-void CorrectionPt2ToT(Int_t opt_err_bars);
+void CorrectionPt2ToT();
 
-void STARlight_tVsPt(Int_t iAnalysis)
+template <typename TH> // TH2D or TProfile
+void SetHisto(TH* h, TString xTitle, TString yTitle)
+{
+    // x-axis
+    h->GetXaxis()->SetTitle(yTitle.Data());
+    h->GetXaxis()->SetTitleSize(0.05);
+    h->GetXaxis()->SetTitleOffset(1.3);
+    h->GetXaxis()->SetLabelSize(0.05);
+    h->GetXaxis()->SetLabelOffset(0.02);
+    h->GetXaxis()->SetDecimals(1);
+    // y-axis
+    h->GetYaxis()->SetTitle(xTitle.Data());
+    h->GetYaxis()->SetTitleSize(0.05);
+    h->GetYaxis()->SetLabelSize(0.05);
+    h->GetYaxis()->SetTitleOffset(0.915);
+    h->GetYaxis()->SetDecimals(1);
+    // z-axis    
+    h->GetZaxis()->SetLabelSize(0.05);
+    return;
+}
+
+void STARlight_tVsPt2(Int_t iAnalysis)
 {
     InitAnalysis(iAnalysis);
     SetPtBinning();
 
-    gSystem->Exec("mkdir -p Results/" + str_subfolder + "STARlight_tVsPt/");
+    gStyle->SetOptTitle(0);
+    gStyle->SetOptStat(0);
+    //gStyle->SetPalette(1);
+    gStyle->SetPaintTextFormat("4.2f");
+
+    gSystem->Exec("mkdir -p Results/" + str_subfolder + "STARlight_tVsPt2/");
 
     PlotResults(0.00, 2.56);
 
@@ -40,9 +66,7 @@ void STARlight_tVsPt(Int_t iAnalysis)
 
     CalculateAvgTPerBin();
 
-    CorrectionPt2ToT(0);
-
-    CorrectionPt2ToT(1);
+    CorrectionPt2ToT();
 
     return;
 }
@@ -52,54 +76,64 @@ void PlotResults(Double_t pT2_min, Double_t pT2_max)
     TFile *f = TFile::Open("Trees/STARlight/IncJ_tVsPt/tree_tPtGammaVMPom.root", "read");
     if(f) Printf("File %s loaded.", f->GetName());
 
-    TTree *tPtGammaVMPom = dynamic_cast<TTree*> (f->Get("tPtGammaVMPom"));
-    if(tPtGammaVMPom) Printf("Input tree loaded.");
+    TTree *t = dynamic_cast<TTree*> (f->Get("tPtGammaVMPom"));
+    if(t) Printf("Input tree loaded.");
 
-    ConnectTreeVariables_tPtGammaVMPom(tPtGammaVMPom);
+    ConnectTreeVariables_tPtGammaVMPom(t);
 
-    TH2D *Hist = new TH2D("Hist", "#it{t} vs #it{p}_{T}^{2} of J/#psi", nBins, pT2_min, pT2_max, nBins, pT2_min, pT2_max);
+    TH2D* h = new TH2D("h","|#it{t}| vs #it{p}_{T}^{2} of J/#psi",nBins,pT2_min,pT2_max,nBins,pT2_min,pT2_max);
     // on a horizontal axis: J/psi transverse momentum squared
     // on a vertical axis: Mandelstam |t|
+    // new: (March 2, 2023)
+    Double_t maxDiff = +0.1;
+    Double_t minDiff = -0.1;
+    TH2D* hDisp = new TH2D("hDips","(#it{p}_{T}^{2}#minus|#it{t}|)/|#it{t}| vs |#it{t}|",nBins,pT2_min,pT2_max,nBins,minDiff,maxDiff);
+    TProfile* hMean = new TProfile("hMean","(#it{p}_{T}^{2}#minus|#it{t}|)/|#it{t}| vs |#it{t}|",nBins,pT2_min,pT2_max,minDiff,maxDiff);
 
     for(Int_t iEntry = 0; iEntry < nGenEv; iEntry++)
     {
-        tPtGammaVMPom->GetEntry(iEntry);
-        Hist->Fill(fPtVM*fPtVM, fPtPm*fPtPm);
+        t->GetEntry(iEntry);
+        Double_t pt2 = fPtVM*fPtVM;
+        Double_t abst = fPtPm*fPtPm;
+        Double_t relDiff = (pt2 - abst) / abst;
+        h->Fill(pt2, abst);
+        hDisp->Fill(abst, relDiff);
+        hMean->Fill(abst, relDiff);
     }
 
-    gStyle->SetOptTitle(0);
-    gStyle->SetOptStat(0);
-    gStyle->SetPalette(1);
-    gStyle->SetPaintTextFormat("4.2f");
-
-    TCanvas *c = new TCanvas("c", "c", 900, 600);
-    c->SetLogz();
-    c->SetTopMargin(0.03);
-    c->SetBottomMargin(0.145);
-    c->SetRightMargin(0.11);
-    c->SetLeftMargin(0.1);
-
-    // a vertical axis
-    Hist->GetYaxis()->SetTitle("|#it{t}| or #it{p}_{T, pom}^{2}#it{c}^{2} (GeV^{2})");
-    Hist->GetYaxis()->SetTitleSize(0.05);
-    Hist->GetYaxis()->SetLabelSize(0.05);
-    Hist->GetYaxis()->SetTitleOffset(0.915);
-    Hist->GetYaxis()->SetDecimals(1);
-    // a horizontal axis
-    Hist->GetXaxis()->SetTitle("#it{p}_{T, J/#psi}^{2}#it{c}^{2} (GeV^{2})");
-    Hist->GetXaxis()->SetTitleSize(0.05);
-    Hist->GetXaxis()->SetTitleOffset(1.3);
-    Hist->GetXaxis()->SetLabelSize(0.05);
-    Hist->GetXaxis()->SetLabelOffset(0.02);
-    Hist->GetXaxis()->SetDecimals(1);
-    // draw the histogram
-    Hist->GetZaxis()->SetLabelSize(0.05);
-    Hist->Draw("COLZ");
-
-    TString path_out = "Results/" + str_subfolder + "STARlight_tVsPt/" + Form("2dhist_%.2f-%.2f", pT2_min, pT2_max);
-
-    c->Print((path_out + ".pdf").Data());
-    c->Print((path_out + ".png").Data());
+    TCanvas *c1 = new TCanvas("c1","",900,600);
+    c1->SetLogz();
+    c1->SetTopMargin(0.03);
+    c1->SetBottomMargin(0.145);
+    c1->SetRightMargin(0.11);
+    c1->SetLeftMargin(0.1);
+    SetHisto(h,"#it{p}_{T, J/#psi}^{2}#it{c}^{2} (GeV^{2})","|#it{t}| or #it{p}_{T, pom}^{2}#it{c}^{2} (GeV^{2})");
+    h->Draw("COLZ");
+    TString sOut = "Results/" + str_subfolder + "STARlight_tVsPt2/" + Form("2dh_%.2f-%.2f", pT2_min, pT2_max);
+    c1->Print((sOut + ".pdf").Data());
+    c1->Print((sOut + ".png").Data());
+    
+    TCanvas *c2 = new TCanvas("c2","",900,600);
+    c2->SetLogz();
+    c2->SetTopMargin(0.03);
+    c2->SetBottomMargin(0.145);
+    c2->SetRightMargin(0.11);
+    c2->SetLeftMargin(0.1);
+    SetHisto(hDisp,"(#it{p}_{T}^{2} #minus |#it{t}|) / |#it{t}| (-)","|#it{t}| (GeV^{2})");
+    hDisp->Draw("COLZ");
+    hMean->SetLineColor(kBlack);
+    hMean->SetLineWidth(2);
+    hMean->Draw("E0 SAME");
+    TLegend l(0.70,0.90,0.90,0.95);
+    l.AddEntry(hMean,"mean value","ELP");
+    l.SetTextSize(0.045);
+    l.SetBorderSize(0);
+    l.SetFillStyle(0);
+    l.SetMargin(0.2);
+    l.Draw();
+    sOut = "Results/" + str_subfolder + "STARlight_tVsPt2/" + + Form("disp_%.2f-%.2f", pT2_min, pT2_max);
+    c2->Print((sOut + ".pdf").Data());
+    c2->Print((sOut + ".png").Data());
 
     return;
 }
@@ -110,10 +144,10 @@ void CalculateAvgTPerBin()
     TFile *f = TFile::Open("Trees/STARlight/IncJ_tVsPt/tree_tPtGammaVMPom.root", "read");
     if(f) Printf("File %s loaded.", f->GetName());
 
-    TTree *tPtGammaVMPom = dynamic_cast<TTree*> (f->Get("tPtGammaVMPom"));
-    if(tPtGammaVMPom) Printf("Input tree loaded.");
+    TTree *t = dynamic_cast<TTree*> (f->Get("tPtGammaVMPom"));
+    if(t) Printf("Input tree loaded.");
 
-    ConnectTreeVariables_tPtGammaVMPom(tPtGammaVMPom);
+    ConnectTreeVariables_tPtGammaVMPom(t);
 
     Double_t nPt2VMPerBin[5] = { 0 };
     // to calculate average |t|:
@@ -125,7 +159,7 @@ void CalculateAvgTPerBin()
 
     for(Int_t iEntry = 0; iEntry < nGenEv; iEntry++)
     {
-        tPtGammaVMPom->GetEntry(iEntry);
+        t->GetEntry(iEntry);
         for(Int_t iBin = 0; iBin < nPtBins; iBin++)
         {
             if(fPtVM > ptBoundaries[iBin] && fPtVM <= ptBoundaries[iBin + 1])
@@ -137,10 +171,10 @@ void CalculateAvgTPerBin()
         }
     }
 
-    TString str_1 = Form("Results/%sSTARlight_tVsPt/AvgTPerBin.txt", str_subfolder.Data());
+    TString str_1 = Form("Results/%sSTARlight_tVsPt2/AvgTPerBin.txt", str_subfolder.Data());
     ofstream outfile_1(str_1.Data());
     outfile_1 << std::fixed << std::setprecision(6);
-    TString str_2 = Form("Results/%sSTARlight_tVsPt/AvgPt2VMPerBin.txt", str_subfolder.Data());
+    TString str_2 = Form("Results/%sSTARlight_tVsPt2/AvgPt2VMPerBin.txt", str_subfolder.Data());
     ofstream outfile_2(str_2.Data());
     outfile_2 << std::fixed << std::setprecision(6);
 
@@ -165,15 +199,15 @@ void CalculateAvgTPerBin()
     return;
 }
 
-void CorrectionPt2ToT(Int_t opt_err_bars)
+void CorrectionPt2ToT()
 {
     TFile *f = TFile::Open("Trees/STARlight/IncJ_tVsPt/tree_tPtGammaVMPom.root", "read");
     if(f) Printf("File %s loaded.", f->GetName());
 
-    TTree *tPtGammaVMPom = dynamic_cast<TTree*> (f->Get("tPtGammaVMPom"));
-    if(tPtGammaVMPom) Printf("Input tree loaded.");
+    TTree *t = dynamic_cast<TTree*> (f->Get("tPtGammaVMPom"));
+    if(t) Printf("Input tree loaded.");
 
-    ConnectTreeVariables_tPtGammaVMPom(tPtGammaVMPom);
+    ConnectTreeVariables_tPtGammaVMPom(t);
 
     Double_t* tBoundaries = NULL;
     Double_t tBoundaries_4bins[5] = { 0 };
@@ -190,7 +224,7 @@ void CorrectionPt2ToT(Int_t opt_err_bars)
 
     for(Int_t iEntry = 0; iEntry < nGenEv; iEntry++)
     {
-        tPtGammaVMPom->GetEntry(iEntry);
+        t->GetEntry(iEntry);
         hEventsInT->Fill(fPtPm * fPtPm);
         hEventsInPt2->Fill(fPtVM * fPtVM);
     } 
@@ -205,11 +239,6 @@ void CorrectionPt2ToT(Int_t opt_err_bars)
     hCorrection->SetMarkerSize(1.0);
     hCorrection->SetLineColor(kBlue);
     hCorrection->SetLineWidth(2.0);
-
-    gStyle->SetOptTitle(0);
-    gStyle->SetOptStat(0);
-    gStyle->SetPalette(1);
-    gStyle->SetPaintTextFormat("4.2f");
 
     TCanvas *c = new TCanvas("c", "c", 900, 600);
     c->SetLogz();
@@ -230,20 +259,9 @@ void CorrectionPt2ToT(Int_t opt_err_bars)
     hCorrection->GetXaxis()->SetTitleOffset(1.3);
     hCorrection->GetXaxis()->SetLabelSize(0.05);
     hCorrection->GetXaxis()->SetDecimals(1);
-    // draw the histogram
-    TString path_out = "";
-    if(opt_err_bars == 0)
-    {
-        path_out = "Results/" + str_subfolder + "STARlight_tVsPt/CorrectionPt2ToT_errbars0";
-        hCorrection->Draw("P");
-    } 
-    else if(opt_err_bars == 1)
-    {
-        path_out = "Results/" + str_subfolder + "STARlight_tVsPt/CorrectionPt2ToT_errbars1";
-        hCorrection->SetFillColor(kBlack);
-        hCorrection->SetFillStyle(3001);
-        hCorrection->Draw("P E2");
-    }
+    // draw the hogram
+    TString sOut = "Results/" + str_subfolder + "STARlight_tVsPt2/correctionPt2ToT";
+    hCorrection->Draw("P");
     // Legend
     TLegend *leg = new TLegend(0.12,0.76,0.40,0.96);
     leg->AddEntry((TObject*)0,Form("STARlight Simulation"),""); 
@@ -254,8 +272,7 @@ void CorrectionPt2ToT(Int_t opt_err_bars)
     leg->SetFillStyle(0);  // legend is transparent
     leg->Draw();
  
-    c->Print((path_out + ".pdf").Data());
-    c->Print((path_out + ".png").Data());
+    c->Print((sOut + ".pdf").Data());
 
     return;
 }
