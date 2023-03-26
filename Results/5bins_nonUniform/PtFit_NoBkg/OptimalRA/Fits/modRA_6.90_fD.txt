@@ -1,8 +1,0 @@
-bin index 0 corresponds to the 'allbins' range
-Bin 	fD [%]	err 
-0 	25.530	1.700
-1	83.750	6.544
-2	37.277	2.665
-3	9.480	0.742
-4	4.758	0.561
-5	2.453	0.310

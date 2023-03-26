@@ -1,4 +1,0 @@
-model GSZ-el+diss
-range (0.040,0.071) GeV
-integral: 0.432
-avg |t| : 0.055

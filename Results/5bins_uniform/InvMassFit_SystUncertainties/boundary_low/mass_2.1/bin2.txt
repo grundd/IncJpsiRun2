@@ -1,5 +1,0 @@
-Signal in whole mass region 2.2 < m < 4.5 GeV:
-N_J/psi:	101.999 pm 11.1052
-Mass region 3.0 < m < 3.2 GeV:
-N_J/psi:	101.613 pm 11.0632
-N_bkg:  	25.0016 pm 1.14326
