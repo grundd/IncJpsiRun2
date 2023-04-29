@@ -272,9 +272,9 @@ void SetLumiHisto(TH1D* h, Int_t period, Color_t color)
     h->GetYaxis()->SetLabelSize(28);
     h->GetYaxis()->SetTickLength(0.01);
     if(period == 0){
-        h->GetYaxis()->SetTitleOffset(0.45);
+        h->GetYaxis()->SetTitleOffset(1.50);
     } else if(period == 1){
-        h->GetYaxis()->SetTitleOffset(0.3);
+        h->GetYaxis()->SetTitleOffset(1.00);
     }
     h->GetYaxis()->SetDecimals(1);
     h->SetMarkerColor(color);

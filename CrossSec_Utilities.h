@@ -94,10 +94,14 @@ void InitObjects()
     for(Int_t i = 0; i <= nPtBins; i++) tBoundaries[i] = ptBoundaries[i] * ptBoundaries[i];
 }
 
-void LoadGraphs_data(Bool_t print = kFALSE, Int_t iModelForAvgT = 1)
-// iModelForAvgT == 0 => SL ... original approach
-// iModelForAvgT == 1 => GSZ-el+diss
-// iModelForAvgT == 2 => MS-hs
+void LoadGraphs_data(Bool_t abstFromModel = kFALSE, Int_t abstModel = 1, Bool_t print = kFALSE)
+// abstFromModel:
+// = false => bin centers
+// = true => use a model
+// abstModel:
+// = 0 => SL ... original approach
+// = 1 => GSZ-el+diss
+// = 2 => MS-hs
 {
     Double_t abs_t_val[5] = { 0 };
     Double_t sig_val[5] = { 0 };
@@ -122,18 +126,26 @@ void LoadGraphs_data(Bool_t print = kFALSE, Int_t iModelForAvgT = 1)
     }
     ifs.close();
     TString str_avgt;
-    if(iModelForAvgT == 0)      str_avgt = "Results/" + str_subfolder + "STARlight_tVsPt/AvgTPerBin.txt";
-    else if(iModelForAvgT == 1) str_avgt = "Results/" + str_subfolder + "CrossSec/PrepareHistosAndGraphs/AverageT/" + str_models[5] + ".txt";
-    else if(iModelForAvgT == 2) str_avgt = "Results/" + str_subfolder + "CrossSec/PrepareHistosAndGraphs/AverageT/" + str_models[3] + ".txt";
-    else return;
-    ifs.open(str_avgt.Data());
-    for(Int_t i = 0; i < nPtBins; i++)
-    {
-        Int_t bin; Double_t tlow, tupp;
-        if(iModelForAvgT == 0) ifs >> bin >> abs_t_val[i];
-        else                   ifs >> tlow >> tupp >> abs_t_val[i];
+    if(!abstFromModel) {
+        for(Int_t i = 0; i < nPtBins; i++) {
+            abs_t_val[i] = (tBoundaries[i+1] + tBoundaries[i]) / 2.;
+            //cout << abs_t_val[i] << endl;
+        }
+    } else {
+        if(abstModel == 0)      str_avgt = "Results/" + str_subfolder + "STARlight_tVsPt/AvgTPerBin.txt";
+        else if(abstModel == 1) str_avgt = "Results/" + str_subfolder + "CrossSec/PrepareHistosAndGraphs/AverageT/" + str_models[5] + ".txt";
+        else if(abstModel == 2) str_avgt = "Results/" + str_subfolder + "CrossSec/PrepareHistosAndGraphs/AverageT/" + str_models[3] + ".txt";
+        else return;
+        ifs.open(str_avgt.Data());
+        for(Int_t i = 0; i < nPtBins; i++)
+        {
+            Int_t bin; Double_t tlow, tupp;
+            if(abstModel == 0) ifs >> bin >> abs_t_val[i];
+            else               ifs >> tlow >> tupp >> abs_t_val[i];
+            //cout << abs_t_val[i] << endl;
+        }
+        ifs.close();
     }
-    ifs.close();
     for(Int_t i = 0; i < nPtBins; i++)
     {
         // from mub to mb

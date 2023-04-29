@@ -1061,7 +1061,7 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
         //fFrameM->GetYaxis()->SetNdivisions(505);
         PtFrameLog->Draw();
 
-        Bool_t preliminary = kTRUE;
+        Bool_t preliminary = kFALSE;
         Double_t xMin = 0.26;
         if(preliminary) xMin = 0.18;
         TLegend *lx = new TLegend(xMin,0.90,0.90,0.96);

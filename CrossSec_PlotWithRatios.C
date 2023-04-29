@@ -383,7 +383,7 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
 
     // draw latex label
     ltx->SetTextSize(textSize3*0.88);
-    Bool_t preliminary = kTRUE;
+    Bool_t preliminary = kFALSE;
     if(preliminary) ltx->DrawLatex(0.55,0.92,"ALICE Preliminary, Pb#minusPb UPC   #sqrt{#it{s}_{NN}} = 5.02 TeV");
     else ltx->DrawLatex(0.55,0.92,"ALICE, Pb#minusPb UPC   #sqrt{#it{s}_{NN}} = 5.02 TeV");
     // draw legends
