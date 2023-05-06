@@ -107,10 +107,10 @@ void CrossSec_PlotWithRatios(Int_t iAnalysis)
     PlotWithRatios(0,2);
     PlotWithRatios(0,3);
     // binning from the measurement (5 bins)
-    PlotWithRatios(1,0);
-    PlotWithRatios(1,1);
-    PlotWithRatios(1,2);
-    PlotWithRatios(1,3);
+    //PlotWithRatios(1,0);
+    //PlotWithRatios(1,1);
+    //PlotWithRatios(1,2);
+    //PlotWithRatios(1,3);
 
     return;
 }
@@ -358,11 +358,11 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
     pUpp->SetLogy();
     pUpp->Draw();
     pUpp->cd();
-    // x-axis
+    // y-axis    
     frPlot->GetYaxis()->SetTitleOffset(1.25);
     frPlot->GetYaxis()->SetTitleSize(textSize3);
     frPlot->GetYaxis()->SetLabelSize(textSize3);
-    // y-axis
+    // x-axis
     frPlot->GetXaxis()->SetLabelSize(0);
     frPlot->GetXaxis()->SetTitleSize(0);
     frPlot->GetXaxis()->SetTitle("");
