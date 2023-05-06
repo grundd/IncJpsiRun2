@@ -881,14 +881,14 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
     RooPlot* PtFrame = fPt.frame(Title("pT fit"));
     DHisData.plotOn(PtFrame,Name("DHisData"),Binning(fPtBins_PtFit),MarkerStyle(kFullCircle),MarkerSize(1.),LineWidth(2));
     if(iRecShape == 0 || iRecShape == 1 || iRecShape == 4 || iRecShape > 1000){
-        Mod->plotOn(PtFrame,Name("hPDFCohJ"),Components(hPDFCohJ),LineColor(kCyan+1),LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
+        Mod->plotOn(PtFrame,Name("hPDFCohJ"),Components(hPDFCohJ),LineColor(kGreen+1),LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
     } else if(iRecShape == 2){
-        Mod->plotOn(PtFrame,Name("gPDFCohJ"),Components(*gPDFCohJ),LineColor(kCyan+1),LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
+        Mod->plotOn(PtFrame,Name("gPDFCohJ"),Components(*gPDFCohJ),LineColor(kGreen+1),LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
     } else if(iRecShape == 3){
-        Mod->plotOn(PtFrame,Name("sumPdfCohJ"),Components(*sumPdfCohJ),LineColor(kCyan+1),LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
+        Mod->plotOn(PtFrame,Name("sumPdfCohJ"),Components(*sumPdfCohJ),LineColor(kGreen+1),LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
     }
     Mod->plotOn(PtFrame,Name("hPDFIncJ"),Components(hPDFIncJ),LineColor(kRed),LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
-    Mod->plotOn(PtFrame,Name("hPDFCohP"),Components(hPDFCohP),LineColor(kCyan+1),LineStyle(7),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
+    Mod->plotOn(PtFrame,Name("hPDFCohP"),Components(hPDFCohP),LineColor(kGreen+1),LineStyle(7),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
     Mod->plotOn(PtFrame,Name("hPDFIncP"),Components(hPDFIncP),LineColor(kRed),LineStyle(7),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
     Mod->plotOn(PtFrame,Name("hPDFDiss"),Components(hPDFDiss),LineColor(kGray+1),LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
     Mod->plotOn(PtFrame,Name("Mod"),                          LineColor(kBlue),LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));

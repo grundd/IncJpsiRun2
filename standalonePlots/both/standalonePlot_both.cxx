@@ -28,7 +28,7 @@ float cd_coh_err_syst_phot[6] = { 0.20, 0.16, 0.11, 0.08, 0.04, 0.03 };
 // incoh
 float limits_inc[6] = { 0.04, 0.08, 0.152, 0.258, 0.477, 1. }; // mub
 float abst_inc[5] = {};
-float cs_inc_val[5] = { 21.9, 19.1, 13.1, 8.1, 4.6 };
+float cs_inc_val[5] = { 21.8, 19.1, 13.1, 8.1, 4.6 };
 float cs_inc_err_stat[5] = { 2.1, 1.9, 1.6, 1.1, 0.6 };
 float cs_inc_err_syst_uncr[5] = { 0.3, 0.3, 0.4, 0.1, 0.1 };
 float cs_inc_err_syst_corr[5] = { 2.1, 1.5, 0.9, 0.6, 0.3 };
