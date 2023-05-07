@@ -158,7 +158,7 @@ then
         root -q CrossSec_Plot.C\($iAnalysis\)
         root -q CrossSec_PlotWithRatios.C\($iAnalysis\)
         root -q CrossSec_Fiducial.C\($iAnalysis\)
-        root -q CrossSec_ExpFits.C\($iAnalysis\)
+        root -q CrossSec_ExpFits.cxx\($iAnalysis\)
     else 
         root -q STARlight_tVsPt.C+\($iAnalysis\)
         root -q CrossSec_Calculate.C+\($iAnalysis\)
@@ -166,7 +166,7 @@ then
         root -q CrossSec_Plot.C+\($iAnalysis\)
         root -q CrossSec_PlotWithRatios.C+\($iAnalysis\)
         root -q CrossSec_Fiducial.C+\($iAnalysis\)
-        root -q CrossSec_ExpFits.C+\($iAnalysis\)
+        root -q CrossSec_ExpFits.cxx+\($iAnalysis\)
     fi
 fi
 

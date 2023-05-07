@@ -31,6 +31,12 @@ Color_t colors[7] = {
     kGreen+2, // GSZ-el+diss
     kOrange+2 // GSZ-el
 };
+Double_t scales[4] = {
+    0.80, // MS-hs
+    0.82, // MS-p
+    1.78, // GSZ-el+diss
+    2.45  // GSZ-el
+};
 Float_t sizeUpp = 0.050; // text size for the plot
 Float_t sizeLow = 0.140; // text size for the bottom panel (ratios)
 
@@ -88,7 +94,7 @@ TLegend *SetLegend(Double_t x_leftdown, Double_t y_leftdown, Double_t x_rightup,
     return l;
 }
 
-void PlotWithRatios(string config = "")
+void PlotWithRatios(string config = "", bool scaled = false)
 // "a" -> no data, only models without fluctuations
 // "b" -> no data, all four models
 // "c" -> only data
@@ -112,6 +118,11 @@ void PlotWithRatios(string config = "")
     gr_GSZ_err[0] = (TGraph*)l->FindObject("gr_err_GSZ-el+diss");
     gr_GSZ_err[1] = (TGraph*)l->FindObject("gr_err_GSZ-el");
 
+    // scale the models?
+    if(scaled) {
+        for(Int_t i = 0; i < 4; i++) for(Int_t j = 0; j < gr_models[i]->GetN(); j++) gr_models[i]->GetY()[j] *= scales[i];
+        for(Int_t i = 0; i < 2; i++) for(Int_t j = 0; j < gr_GSZ_err[i]->GetN(); j++) gr_GSZ_err[i]->GetY()[j] *= scales[i+2];
+    }
     // create boxes with correlated syst. uncertainties
     SetupSysErrorBox(gr_data_corr,kGray+3);
 
@@ -292,6 +303,7 @@ void PlotWithRatios(string config = "")
     if(config == "b") append += "_modelsAll";
     if(config == "c") append += "_dataOnly";
     if(config == "d") append += "_all";
+    if(scaled) append += "_scaled";
     c->Print("crossSection" + append + ".pdf");
 
     delete c;
@@ -300,9 +312,12 @@ void PlotWithRatios(string config = "")
 
 void standalonePlot_incoh()
 {
+    /*
     PlotWithRatios("a");
     PlotWithRatios("b");
     PlotWithRatios("c");
     PlotWithRatios("d");
+    */
+    PlotWithRatios("d",true);
     return;
 }
