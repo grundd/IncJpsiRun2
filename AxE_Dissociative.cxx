@@ -56,9 +56,9 @@ void ReweightIncPtShape(TString process = "IncJ")
         TTree *tGen = dynamic_cast<TTree*> (fGen->Get("AnalysisOutput/fTreeJpsiMCGen"));
         if(tGen) Printf("MC gen tree loaded.");
         ConnectTreeVariablesMCGen(tGen);
-        TH1F* hGenOld = new TH1F("hGenOld","#it{N}_{gen}",nBins,fPtLow,fPtUpp);
-        TH1F* hGenNew = new TH1F("hGenNew","#it{N}_{gen}",nBins,fPtLow,fPtUpp);
-        TH1F* hH1_fit = new TH1F("hH1_fit","#it{N}_{rec}^{H1}",60,fPtLow,fPtUpp);
+        TH1F* hGenOld = new TH1F("hGenOld","#it{N}^{gen}_{MC}",nBins,fPtLow,fPtUpp);
+        TH1F* hGenNew = new TH1F("hGenNew","#it{N}^{gen}_{MC}",nBins,fPtLow,fPtUpp);
+        TH1F* hH1_fit = new TH1F("hH1_fit","#it{N}^{rec}_{H1}",60,fPtLow,fPtUpp);
 
         // go over generated events
         Float_t NGen_tot = tGen->GetEntries();
@@ -87,14 +87,19 @@ void ReweightIncPtShape(TString process = "IncJ")
     
         // calculate the ratios
         TH1F* hRatios = (TH1F*)hGenNew->Clone("hRatios");
-        hRatios->SetTitle("#it{R} = #it{N}_{gen}^{new}/#it{N}_{gen}^{old}");
+        hRatios->SetTitle("#it{R} = (#it{N}^{gen}_{MC})_{new}/(#it{N}^{gen}_{MC})_{old}");
         hRatios->Sumw2();
         hRatios->Divide(hGenOld);
         TAxis *xAxis = hRatios->GetXaxis();
         // plot everything
-        TLegend lGen(0.55,0.80,0.95,0.90);
-        lGen.AddEntry(hGenOld,Form("#it{N}_{gen}^{old} (%.0f events)",hGenOld->Integral()),"L");
-        lGen.AddEntry(hGenNew,Form("#it{N}_{gen}^{new} (%.0f events)",hGenNew->Integral()),"L");
+        int nRowsLeg = 2;
+        bool tw = false;
+        if(tw) nRowsLeg++;
+        TLegend lGen(0.47,0.95-nRowsLeg*0.05,0.95,0.95);
+        lGen.AddEntry(hGenOld,Form("original dist.: %.0f ev.",hGenOld->Integral()),"L"); // (#it{N}^{gen}_{MC})_{old}
+        lGen.AddEntry(hGenNew,Form("re-weighted dist.: %.0f ev.",hGenNew->Integral()),"L"); // (#it{N}^{gen}_{MC})_{new}
+        if(tw) lGen.AddEntry((TObject*)0,"#bf{This work}","");
+        lGen.SetMargin(0.175);
         lGen.SetTextSize(0.040);
         lGen.SetBorderSize(0);
         lGen.SetFillStyle(0);
@@ -116,10 +121,10 @@ void ReweightIncPtShape(TString process = "IncJ")
         TTree *tRec = dynamic_cast<TTree*> (fRec->Get("AnalysisOutput/fTreeJpsi"));
         if(tRec) Printf("MC rec tree loaded.");
         ConnectTreeVariablesMCRec(tRec);
-        TH1F* hRecOld = new TH1F("hRecOld","#it{N}_{rec}",nBins,fPtLow,fPtUpp);
-        TH1F* hRecNew = new TH1F("hRecNew","#it{N}_{rec}",nBins,fPtLow,fPtUpp);
-        TH1F* hRecOld_fit = new TH1F("hRecOld_fit","#it{N}_{rec}",60,fPtLow,fPtUpp);
-        TH1F* hRecNew_fit = new TH1F("hRecNew_fit","#it{N}_{rec}",60,fPtLow,fPtUpp);
+        TH1F* hRecOld = new TH1F("hRecOld","#it{N}^{rec}_{MC}",nBins,fPtLow,fPtUpp);
+        TH1F* hRecNew = new TH1F("hRecNew","#it{N}^{rec}_{MC}",nBins,fPtLow,fPtUpp);
+        TH1F* hRecOld_fit = new TH1F("hRecOld_fit","#it{N}^{rec}_{MC}",60,fPtLow,fPtUpp);
+        TH1F* hRecNew_fit = new TH1F("hRecNew_fit","#it{N}^{rec}_{MC}",60,fPtLow,fPtUpp);
         TH1D* hRec_ptFit = new TH1D("hRec_ptFit","",nPtBins_PtFit,ptBoundaries_PtFit);
 
         // go over reconstructed events and apply ratios
@@ -140,15 +145,22 @@ void ReweightIncPtShape(TString process = "IncJ")
                 hRec_ptFit->Fill(fPt,weight);
             }
         }
-        TLegend lRec(0.55,0.80,0.95,0.90);
-        lRec.AddEntry(hRecOld,Form("#it{N}_{rec}^{old} (%.0f events)",hRecOld->Integral()),"L");
-        lRec.AddEntry(hRecNew,Form("#it{N}_{rec}^{new} (%.0f events)",hRecNew->Integral()),"L");
+        TLegend lRec(0.47,0.95-nRowsLeg*0.05,0.95,0.95);
+        lRec.AddEntry(hRecOld,Form("original dist.: %.0f ev.",hRecOld->Integral()),"L"); // (#it{N}^{rec}_{MC})_{old}
+        lRec.AddEntry(hRecNew,Form("re-weighted dist.: %.0f ev.",hRecNew->Integral()),"L"); // (#it{N}^{rec}_{MC})_{new}
+        if(tw) lRec.AddEntry((TObject*)0,"#bf{This work}","");
+        lRec.SetMargin(0.175);
         lRec.SetTextSize(0.040);
         lRec.SetBorderSize(0);
         lRec.SetFillStyle(0);
         lRec.Draw();
+
         PlotHistos("AxE_Dissociative/",prefix+"hRec_oldNew","E0",kFALSE,0.,hRecOld,hRecNew,&lRec);
         PlotHistos("AxE_Dissociative/",prefix+"hRec_oldNew_fit","E0",kFALSE,0.,hRecOld_fit,hRecNew_fit);
+        // rozprava:
+        PlotHistos("_rozprava/","hGen_oldNew","E0",kFALSE,0.,hGenOld,hGenNew,&lGen);
+        PlotHistos("_rozprava/","hRec_oldNew","E0",kFALSE,0.,hRecOld,hRecNew,&lRec);
+
         // save the new template for the pT fit
         if(process == "IncJ") {
             TFile* f = new TFile("Results/" + str_subfolder + "AxE_Dissociative/" + prefix + "incTemplate.root","RECREATE");

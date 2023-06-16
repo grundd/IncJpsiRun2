@@ -347,41 +347,52 @@ void VetoEff_SystUncertainty()
     fGauss->SetLineWidth(3);
     fGauss->SetLineColor(kRed);
     // plot the results
-    TCanvas *cTotal = new TCanvas("cTotal","cTotal",900,600);
+    TCanvas *cTotal = new TCanvas("cTotal","cTotal",900,800);
     cTotal->cd();
-    cTotal->SetTopMargin(0.03);
-    cTotal->SetBottomMargin(0.14);
-    cTotal->SetRightMargin(0.04);
-    cTotal->SetLeftMargin(0.13);
+    cTotal->SetTopMargin(0.06);
+    cTotal->SetBottomMargin(0.12);
+    cTotal->SetRightMargin(0.045);
+    cTotal->SetLeftMargin(0.14);
 
     hSampledEffTotal->SetTitle(";#varepsilon^{veto}_{diss} (-);Counts");
     hSampledEffTotal->SetLineWidth(3);
     hSampledEffTotal->SetLineColor(kBlue);
     // Vertical axis
-    hSampledEffTotal->GetYaxis()->SetTitleSize(0.06);
-    hSampledEffTotal->GetYaxis()->SetTitleOffset(1.12);
-    hSampledEffTotal->GetYaxis()->SetLabelSize(0.06);
+    hSampledEffTotal->GetYaxis()->SetTitleSize(0.05);
+    hSampledEffTotal->GetYaxis()->SetTitleOffset(1.3);
+    hSampledEffTotal->GetYaxis()->SetLabelSize(0.05);
+    hSampledEffTotal->GetYaxis()->SetMaxDigits(3);
     hSampledEffTotal->GetYaxis()->SetDecimals(1);
     // Horizontal axis
-    hSampledEffTotal->GetXaxis()->SetTitleSize(0.06);
+    hSampledEffTotal->GetXaxis()->SetTitleSize(0.05);
     hSampledEffTotal->GetXaxis()->SetTitleOffset(1.1);
     hSampledEffTotal->GetXaxis()->SetLabelOffset(0.01);
-    hSampledEffTotal->GetXaxis()->SetLabelSize(0.06);
+    hSampledEffTotal->GetXaxis()->SetLabelSize(0.05);
     hSampledEffTotal->GetXaxis()->SetRangeUser(0.5,0.8);
     hSampledEffTotal->GetXaxis()->SetDecimals(2);
     hSampledEffTotal->Draw();
     fGauss->Draw("SAME");
 
-    TLegend *l = new TLegend(0.49,0.78,0.95,0.96);
+    TLegend *l = new TLegend(0.51,0.74,0.95,0.92);
     l->AddEntry((TObject*)0,"gaussian fit:","");
-    l->AddEntry((TObject*)0,Form("mean = (%.2f #pm %.2f)%%", fGauss->GetParameter(1) * 1e2, fGauss->GetParError(1) * 1e2),"");
-    l->AddEntry((TObject*)0,Form("std. dev. = (%.2f #pm %.2f)%%", fGauss->GetParameter(2) * 1e2, fGauss->GetParError(2) * 1e2),"");
-    l->SetTextSize(0.05);
+    l->AddEntry((TObject*)0,Form("#mu = (%.2f #pm %.2f)%%", fGauss->GetParameter(1) * 1e2, fGauss->GetParError(1) * 1e2),"");
+    l->AddEntry((TObject*)0,Form("#sigma = (%.2f #pm %.2f)%%", fGauss->GetParameter(2) * 1e2, fGauss->GetParError(2) * 1e2),"");
+    l->SetTextSize(0.045);
     l->SetBorderSize(0);
     l->SetFillStyle(0);
     l->Draw();
 
     cTotal->Print("Results/" + str_subfolder + "VetoEfficiency/SystUncertainty/hSampledEffTotal.pdf");
+
+    TLegend *ltw = new TLegend(0.22,0.83,0.38,0.92);
+    ltw->AddEntry((TObject*)0,"#bf{This work}","");
+    ltw->SetMargin(0.);
+    ltw->SetTextSize(0.05);
+    ltw->SetBorderSize(0);
+    ltw->SetFillStyle(0);
+    ltw->Draw();
+
+    cTotal->Print("Results/" + str_subfolder + "_rozprava/eff_veto_syst.pdf");
 
     return;
 }

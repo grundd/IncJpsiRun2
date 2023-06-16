@@ -198,6 +198,7 @@ void InvMassFit_DoFit(Int_t opt, Double_t fMCutLow, Double_t fMCutUpp, Double_t 
 
     // Binning:
     Int_t nBins = 115; // so that each bin between 2.2 and 4.5 GeV is 20 MeV wide
+    if(opt > 3) nBins = 92;
     RooBinning binM(nBins,fMCutLow,fMCutUpp);
     Double_t BinSizeDouble = (fMCutUpp - fMCutLow) * 1000 / nBins; // in MeV
     BinSizeDouble = BinSizeDouble + 0.5;
@@ -436,23 +437,26 @@ void InvMassFit_DoFit(Int_t opt, Double_t fMCutLow, Double_t fMCutUpp, Double_t 
 
     // ****************************************************************
     // Draw the result: paper figure
-    if(opt == 3)
+    if(opt >= 2)
     {
         TCanvas *c2 = new TCanvas("c2","c2",900,800);
         c2->SetTopMargin(0.03);
+        if(opt == 2) c2->SetTopMargin(0.06);
         c2->SetBottomMargin(0.12);
         c2->SetRightMargin(0.03);
         c2->SetLeftMargin(0.14);
         c2->cd();
         fFrameM->GetYaxis()->SetTitleOffset(1.35);
-        fFrameM->GetYaxis()->SetRangeUser(0.,235.);
+        double maxima[7] = {1680., 235.,68.,77.,56.,55.,54.};
+        fFrameM->GetYaxis()->SetRangeUser(0.,maxima[opt-2]);
         //fFrameM->GetYaxis()->SetNdivisions(505);
         fFrameM->Draw();
 
-        Bool_t preliminary = kTRUE;
-        Double_t xMin = 0.26;
+        Bool_t preliminary = kFALSE;
+        Double_t xMin = 0.26; Double_t yMin = 0.90;
         if(preliminary) xMin = 0.18;
-        TLegend *lx = new TLegend(xMin,0.90,0.90,0.96);
+        if(opt == 2) yMin = 0.87;
+        TLegend *lx = new TLegend(xMin,yMin,0.90,yMin+0.06);
         if(preliminary) lx->AddEntry((TObject*)0,"ALICE Preliminary, Pb#minusPb #sqrt{#it{s}_{NN}} = 5.02 TeV","");
         else lx->AddEntry((TObject*)0,"ALICE, Pb#minusPb #sqrt{#it{s}_{NN}} = 5.02 TeV","");
         lx->SetMargin(0.);
@@ -464,9 +468,13 @@ void InvMassFit_DoFit(Int_t opt, Double_t fMCutLow, Double_t fMCutUpp, Double_t 
         TLegend *ly = new TLegend(0.56,0.57,0.92,0.85);
         ly->AddEntry((TObject*)0,"J/#psi #rightarrow #mu^{+} #mu^{-}","");
         ly->AddEntry((TObject*)0,"UPC, L_{int} = 232 #pm 7 #mub^{-1}","");
-        ly->AddEntry((TObject*)0,"0.2 < #it{p}_{T} < 1.0 GeV/#it{c}","");
+        if(opt > 3) ly->AddEntry((TObject*)0,Form("%.2f < #it{p}_{T} < %.2f GeV/#it{c}", fPtCutLow,fPtCutUpp),"");
+        else if(opt == 2) ly->AddEntry((TObject*)0,"#it{p}_{T} < 2 GeV/#it{c}","");
+        else if(opt == 3) ly->AddEntry((TObject*)0,"0.2 < #it{p}_{T} < 1.0 GeV/#it{c}","");
+        //ly->AddEntry((TObject*)0,"0.2 < #it{p}_{T} < 1.0 GeV/#it{c}","");
         ly->AddEntry((TObject*)0,"|#it{y}| < 0.8","");
-        ly->AddEntry((TObject*)0,"#it{N}_{J/#psi} = 512 #pm 26","");
+        //ly->AddEntry((TObject*)0,"#it{N}_{J/#psi} = 512 #pm 26","");
+        ly->AddEntry((TObject*)0,Form("#it{N}_{J/#psi} = %.0f #pm %.0f",N_Jpsi_all[0],N_Jpsi_all[1]),"");
         //ly->AddEntry((TObject*)0,Form("#chi^{2}/dof = %.2f", chi2),"");
         ly->SetMargin(0.);
         ly->SetTextSize(0.042);
@@ -474,10 +482,25 @@ void InvMassFit_DoFit(Int_t opt, Double_t fMCutLow, Double_t fMCutUpp, Double_t 
         ly->SetFillStyle(0);
         ly->Draw();
 
-        if(preliminary) {
+        TLegend *ltw = new TLegend(0.56,0.45,0.92,0.51);
+        ltw->AddEntry((TObject*)0,"#bf{This work}","");
+        ltw->SetMargin(0.);
+        ltw->SetTextSize(0.042);
+        ltw->SetBorderSize(0);
+        ltw->SetFillStyle(0);
+        if(opt == 2 || opt > 3) ltw->Draw();
+
+        if(preliminary == kTRUE && opt == 3) {
             c2->Print("Results/" + str_subfolder + "_PreliminaryFigures/massFit.pdf");
             c2->Print("Results/" + str_subfolder + "_PreliminaryFigures/massFit.eps");
-        } else c2->Print("Results/" + str_subfolder + "_PaperFigures/massFit.pdf");
+        } else if(preliminary == kFALSE && opt == 2) {
+            c2->Print("Results/" + str_subfolder + "_rozprava/massFit_all.pdf");
+        } else if(preliminary == kFALSE && opt == 3) {
+            c2->Print("Results/" + str_subfolder + "_PaperFigures/massFit.pdf");
+            c2->Print("Results/" + str_subfolder + "_rozprava/massFit_allbins.pdf");
+        } else if(preliminary == kFALSE && opt > 3) {
+            c2->Print("Results/" + str_subfolder + Form("_rozprava/massFit_%02i.pdf",opt-3));
+        }
         delete c2;
     }
     // ****************************************************************

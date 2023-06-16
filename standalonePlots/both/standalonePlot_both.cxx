@@ -146,10 +146,12 @@ void SetStyleUncr (TGraphAsymmErrors* g, Marker_t m)
     return;
 }
 
-void SetupSysErrorBox(TGraph* g, Color_t color, float transparency)
+void SetupSysErrorBox(TGraph* g, Color_t color, float transparency, bool zeroWidth = true)
 {
-    g->SetLineWidth(0);
-    g->SetMarkerSize(0);
+    if(zeroWidth) {
+        g->SetLineWidth(0);
+        g->SetMarkerSize(0);
+    }
     g->SetFillStyle(1001);
     g->SetFillColorAlpha(color,transparency);
     return;
@@ -179,20 +181,20 @@ void standalonePlot_both ()
     // coh
     TGraphAsymmErrors* gr_coh_uncr = new TGraphAsymmErrors(6);
     TGraphAsymmErrors* gr_coh_corr = new TGraphAsymmErrors(6);
-    TGraphAsymmErrors* gr_coh_phot = new TGraphAsymmErrors(6);
+    //TGraphAsymmErrors* gr_coh_phot = new TGraphAsymmErrors(6);
     for(int i = 0; i < 6; i++) {
         abst_coh[i] = (limits_coh[i+1] + limits_coh[i]) / 2.;
         float abst_err_low = abst_coh[i] - limits_coh[i];
         float abst_err_upp = limits_coh[i+1] - abst_coh[i];
         float cs_err_uncr = TMath::Sqrt(TMath::Power(cs_coh_err_stat[i],2) + TMath::Power(cs_coh_err_syst_uncr[i],2));
-        float cs_err_corr = cs_coh_err_syst_corr[i];
-        float cs_err_phot = cd_coh_err_syst_phot[i];
+        float cs_err_corr = TMath::Sqrt(TMath::Power(cs_coh_err_syst_corr[i],2) + TMath::Power(cd_coh_err_syst_phot[i],2));
+        //float cs_err_phot = cd_coh_err_syst_phot[i];
         gr_coh_uncr->SetPoint(i,abst_coh[i],cs_coh_val[i]);
         gr_coh_uncr->SetPointError(i,abst_err_low,abst_err_upp,cs_err_uncr,cs_err_uncr);
         gr_coh_corr->SetPoint(i,abst_coh[i],cs_coh_val[i]);
         gr_coh_corr->SetPointError(i,abst_err_low,abst_err_upp,cs_err_corr,cs_err_corr);
-        gr_coh_phot->SetPoint(i,abst_coh[i],cs_coh_val[i]);
-        gr_coh_phot->SetPointError(i,abst_err_low,abst_err_upp,cs_err_phot,cs_err_phot);
+        //gr_coh_phot->SetPoint(i,abst_coh[i],cs_coh_val[i]);
+        //gr_coh_phot->SetPointError(i,abst_err_low,abst_err_upp,cs_err_phot,cs_err_phot);
     }
     // inc
     TGraphAsymmErrors* gr_inc_uncr = new TGraphAsymmErrors(5);
@@ -208,10 +210,10 @@ void standalonePlot_both ()
         gr_inc_corr->SetPoint(i,abst_inc[i],cs_inc_val[i] / 1e3);
         gr_inc_corr->SetPointError(i,abst_err_low,abst_err_upp,cs_err_corr,cs_err_corr);
     }
-    SetStyleUncr(gr_coh_uncr, kFullSquare);
-    SetStyleUncr(gr_inc_uncr, kFullCircle);
+    SetStyleUncr(gr_coh_uncr,53); // kOpenCircle
+    SetStyleUncr(gr_inc_uncr,kFullCircle);
     SetupSysErrorBox(gr_coh_corr,kGray+3,0.35);
-    SetupSysErrorBox(gr_coh_phot,kYellow,0.35);
+    //SetupSysErrorBox(gr_coh_phot,kCyan,0.70);
     SetupSysErrorBox(gr_inc_corr,kGray+3,0.35);
     
     TCanvas *c = new TCanvas ("c","Cross section dependence on |t|",800,700);
@@ -243,20 +245,22 @@ void standalonePlot_both ()
     SetLineMarkerProperties(gr_MS[1],kBlue,8);
     SetLineMarkerProperties(gr_GSZ[0],kGreen+2,9);
     SetLineMarkerProperties(gr_GSZ[1],kOrange+2,4);
+    SetupSysErrorBox(gr_GSZ[0],kGreen,0.35,false);
+    SetupSysErrorBox(gr_GSZ[1],kOrange,0.35,false);
     SetupSysErrorBox(gr_GSZ_err[0],kGreen,0.35);
     SetupSysErrorBox(gr_GSZ_err[1],kOrange,0.35);
 
     c->cd();
     fr->Draw("AXIS");
     gr_GSZ_err[1]->Draw("F SAME");
-    gr_GSZ[1]->Draw("L SAME");
     gr_GSZ_err[0]->Draw("F SAME");
+    gr_coh_corr->Draw("5 SAME");
+    //gr_coh_phot->Draw("5 SAME");
+    gr_inc_corr->Draw("5 SAME");
+    gr_GSZ[1]->Draw("L SAME");
     gr_GSZ[0]->Draw("L SAME");
     gr_LTA->Draw("L SAME");
     gr_BKA->Draw("L SAME");
-    gr_coh_corr->Draw("5 SAME");
-    gr_coh_phot->Draw("2 SAME");
-    gr_inc_corr->Draw("5 SAME");
     gr_MS[1]->Draw("L SAME");
     gr_MS[0]->Draw("L SAME");
     gr_coh_uncr->Draw("PZ SAME");
@@ -269,20 +273,21 @@ void standalonePlot_both ()
     ltx->SetNDC();
     ltx->DrawLatex(0.55,0.925,"ALICE, Pb#minusPb UPC   #sqrt{#it{s}_{NN}} = 5.02 TeV");
     // legend
-    TLegend *l = new TLegend(0.56,0.50,0.93,0.88);
+    TLegend *l = new TLegend(0.49,0.50,0.92,0.88);
     l->SetFillColor(0);
     l->SetBorderSize(0);
-    l->SetTextSize(0.038);
+    l->SetTextSize(0.034);
     l->SetFillStyle(0);
-    l->SetMargin(0.20);
-    l->AddEntry(gr_coh_uncr,"Coherent J/#psi, |#it{y}| < 0.8", "LEP");
-    l->AddEntry(gr_LTA,"LTA (nuclear shadowing)", "L");
-    l->AddEntry(gr_BKA,"b-BK (gluon saturation)", "L");
-    l->AddEntry(gr_inc_uncr,"Incoherent J/#psi, |#it{y}| < 0.8", "LEP");
+    l->SetMargin(0.17);
+    l->AddEntry((TObject*)0,"J/#psi photoproduction, |#it{y}| < 0.8","");
+    l->AddEntry(gr_coh_uncr,"Coherent: PLB 817 (2021) 136280", "EP");
+    l->AddEntry(gr_LTA,"GSZ-LTA", "L");
+    l->AddEntry(gr_BKA,"b-BK", "L");
+    l->AddEntry(gr_inc_uncr,"Incoherent: arXiv:2305.06169", "EP");
     l->AddEntry(gr_MS[0],"MS-hs", "L");
     l->AddEntry(gr_MS[1],"MS-p", "L");
-    l->AddEntry(gr_GSZ[0],"GSZ-el+diss", "L");
-    l->AddEntry(gr_GSZ[1],"GSZ-el", "L");
+    l->AddEntry(gr_GSZ[0],"GSZ-el+diss", "FL");
+    l->AddEntry(gr_GSZ[1],"GSZ-el", "FL");
     l->Draw();
     // save the canvas
     c->Print("plot.pdf");

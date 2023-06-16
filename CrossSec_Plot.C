@@ -140,7 +140,7 @@ void Plot()
     latex->SetTextSize(0.045);
     latex->SetTextAlign(21);
     latex->SetNDC();
-    latex->DrawLatex(0.56,0.92,"ALICE Pb+Pb #rightarrow Pb+Pb+J/#psi   #sqrt{#it{s}_{NN}} = 5.02 TeV");
+    latex->DrawLatex(0.56,0.92,"ALICE Pb#minusPb UPC   #sqrt{#it{s}_{NN}} = 5.02 TeV");
     // draw legend with data+unc. description
     gStyle->SetLegendBorderSize(0);
     TLegend *l2 = SetLegend(0.44,0.70,0.76,0.88);
@@ -152,6 +152,16 @@ void Plot()
     l2->Draw();
 
     c2->Print("Results/" + str_subfolder + "CrossSec/Plot/measurement.pdf");
+
+    TLegend *ltw = new TLegend(0.22,0.25,0.38,0.31);
+    ltw->AddEntry((TObject*)0,"#bf{This work}","");
+    ltw->SetMargin(0.);
+    ltw->SetTextSize(0.05);
+    ltw->SetBorderSize(0);
+    ltw->SetFillStyle(0);
+    ltw->Draw();
+
+    c2->Print("Results/" + str_subfolder + "_rozprava/measurement.pdf");
 
     return;
 }

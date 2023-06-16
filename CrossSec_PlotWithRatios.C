@@ -159,6 +159,7 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
     gr_data_uncr->SetLineColor(kBlack);
     gr_data_uncr->SetLineWidth(2);
     gr_data_uncr->SetMarkerColor(kBlack);
+    gr_data_uncr->Print();
 
     // set up properties of the graphs
     // STARlight

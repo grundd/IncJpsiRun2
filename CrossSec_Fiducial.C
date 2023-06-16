@@ -7,7 +7,7 @@
 // my headers
 #include "CrossSec_Utilities.h"
 
-void PlotFiducialCrossSection();
+void PlotFiducialCrossSection(bool onlyPaperModels);
 
 void CrossSec_Fiducial(Int_t iAnalysis)
 {
@@ -23,12 +23,13 @@ void CrossSec_Fiducial(Int_t iAnalysis)
 
     gSystem->Exec("mkdir -p Results/" + str_subfolder + "CrossSec/Fiducial/");
 
-    PlotFiducialCrossSection();
+    PlotFiducialCrossSection(kFALSE);
+    PlotFiducialCrossSection(kTRUE);
 
     return;
 }
 
-void PlotFiducialCrossSection()
+void PlotFiducialCrossSection(bool onlyPaperModels)
 {
     // load the value of the fiducial cross section calculated directly:
     Double_t val, err_stat, err_syst_uncr, err_syst_corr;
@@ -82,6 +83,7 @@ void PlotFiducialCrossSection()
     Double_t err_uncr = TMath::Sqrt(TMath::Power(err_stat, 2) + TMath::Power(err_syst_uncr, 2));
     Double_t err_corr = err_syst_corr;
     Double_t err_tot_dir = TMath::Sqrt(TMath::Power(err_uncr, 2) + TMath::Power(err_corr, 2));
+    Double_t err_syst = TMath::Sqrt(TMath::Power(err_syst_uncr, 2) + TMath::Power(err_syst_corr, 2));
     // print the results
     cout << " +++++++++++++++++++++++++++++++++++++++ \n"
          << " errors from the integration: [mub] \n"
@@ -98,6 +100,8 @@ void PlotFiducialCrossSection()
          << " results - errors from the direct calculation: \n"
          << Form(" sigma_gPb = (%.3f pm %.3f (stat.) pm %.3f (uncr. syst.) pm %.3f (corr. syst.)) mub \n", 
                 int_data * 1e3, err_stat, err_syst_uncr, err_syst_corr)
+         << Form(" sigma_gPb = (%.3f pm %.3f (stat.) pm %.3f (syst.)) mub \n", 
+                int_data * 1e3, err_stat, err_syst)
          << Form(" sigma_gPb = (%.3f pm %.3f (uncr.) pm %.3f (corr.)) mub \n", int_data * 1e3, err_uncr, err_corr)
          << Form(" sigma_gPb = (%.3f pm %.3f) mub (uncertainties added in quadrature) \n", int_data * 1e3, err_tot_dir)
          << " +++++++++++++++++++++++++++++++++++++++ \n";
@@ -105,18 +109,18 @@ void PlotFiducialCrossSection()
     // graph with the data point and uncorrelated uncertainty (blue bar)
     TGraphErrors *gr_data = new TGraphErrors(); 
     gr_data->SetPoint(0, int_data * 1e3, 8.);
-    gr_data->SetPointError(0, err_uncr, 0.);
+    gr_data->SetPointError(0, err_stat, 0.);
     gr_data->SetMarkerStyle(kFullSquare);
     gr_data->SetMarkerColor(215);
     gr_data->SetMarkerSize(MarkerSize);
     gr_data->SetLineColor(215);
     gr_data->SetLineWidth(3);
-    // graph with the correlated uncertainty (blue colored box)
-    Double_t arr_err_corr_x[4] = {int_data * 1e3 - err_corr, int_data * 1e3 - err_corr, int_data * 1e3 + err_corr, int_data * 1e3 + err_corr};
+    // graph with the systematic uncertainty (blue colored box)
+    Double_t arr_err_corr_x[4] = {int_data * 1e3 - err_syst, int_data * 1e3 - err_syst, int_data * 1e3 + err_syst, int_data * 1e3 + err_syst};
     Double_t arr_err_corr_y[4] = {0., 9., 9., 0.};
-    TGraph *gr_err_corr = new TGraph(4,arr_err_corr_x,arr_err_corr_y);
-    gr_err_corr->SetFillStyle(3345);
-    gr_err_corr->SetFillColor(215);
+    TGraph *gr_err_syst = new TGraph(4,arr_err_corr_x,arr_err_corr_y);
+    gr_err_syst->SetFillStyle(3345);
+    gr_err_syst->SetFillColor(215);
     // graph with the total uncertainty (gray colored box)
     Double_t arr_err_tot_x[4] = {int_data * 1e3 - err_tot_dir, int_data * 1e3 - err_tot_dir, int_data * 1e3 + err_tot_dir, int_data * 1e3 + err_tot_dir};
     Double_t arr_err_tot_y[4] = {0., 9., 9., 0.};
@@ -137,6 +141,7 @@ void PlotFiducialCrossSection()
     Double_t y = 7.;
     for(Int_t i = 0; i < 7; i++)
     {
+        if(onlyPaperModels) if(i < 3) continue;
         gr_models->SetPoint(i,integrals[i],y);
         if(i == 5 || i == 6) gr_models->SetPointError(i,integrals[i]*(1 - GSZ_err_scale_low[i-5]),0.);
         else                 gr_models->SetPointError(i,0.,0.);
@@ -159,7 +164,13 @@ void PlotFiducialCrossSection()
     Double_t x_max = 19.;
     axis->SetLimits(x_min,x_max);
     // make the plot 
-    TCanvas *c = new TCanvas("c","c",700,600);
+    int ySize = 600;
+    double textSize = 0.05;
+    if(onlyPaperModels) {
+        ySize = 400;
+        textSize = 0.07;
+    }
+    TCanvas *c = new TCanvas("c","c",700,ySize);
     TPad *pL = new TPad("pL","pL",0.0,0.0,0.03,1.0);
     pL->Draw();
     TPad *pR = new TPad("pR","pR",0.03,0.0,1.0,1.0);
@@ -168,19 +179,27 @@ void PlotFiducialCrossSection()
     // Margins
     pR->SetTopMargin(0.03);
     pR->SetBottomMargin(0.14);
+    if(onlyPaperModels) {
+        pR->SetBottomMargin(0.18);
+        gr_err_tot->GetXaxis()->SetTitleSize(textSize+0.01);
+        gr_err_tot->GetXaxis()->SetLabelSize(textSize+0.01);
+    }
     pR->SetRightMargin(0.03);
-    pR->SetLeftMargin(0.0);   
+    pR->SetLeftMargin(0.0); 
     // Draw points
+    if(onlyPaperModels) gr_err_tot->GetYaxis()->SetRangeUser(3.,9.);
     gr_err_tot->Draw("AF");
-    gr_err_corr->Draw("F SAME");
+    gr_err_syst->Draw("F SAME");
     gr_models->Draw("PZ SAME");
     gr_data->Draw("PZ SAME");
 
-    Double_t y_line[4] = {7.5, 6.5, 4.5, 2.5};
+    Double_t y_line_1[4] = {7.5, 6.5, 4.5, 2.5};
+    Double_t y_line_2[4] = {7.5, 5.5, 0., 0.};
     TLine *line[4] = { NULL };
     for(Int_t i = 0; i < 4; i++)
     {
-        line[i] = new TLine(x_min,y_line[i],x_max,y_line[i]);
+        if(onlyPaperModels) line[i] = new TLine(x_min,y_line_2[i],x_max,y_line_2[i]);
+        else line[i] = new TLine(x_min,y_line_1[i],x_max,y_line_1[i]);
         line[i]->SetLineColor(kBlack);
         line[i]->SetLineWidth(1);
         line[i]->SetLineStyle(7);
@@ -188,20 +207,37 @@ void PlotFiducialCrossSection()
     }
 
     TLatex *latex[8] = { NULL };
-    Double_t y_step = 0.08;
+    y = 8.0;
     for(Int_t i = 0; i < 8; i++){
+        if(onlyPaperModels) if(i < 4 && i != 0) continue;
         latex[i] = new TLatex(); 
-        latex[i]->SetTextSize(0.055);
+        latex[i]->SetTextSize(textSize+0.01);
         // https://root-forum.cern.ch/t/settextalign/7458
         latex[i]->SetTextAlign(12);
-        if(i == 0) latex[i]->DrawLatex(14.2,8.0-i,Form("#bf{#color[215]{%s}}", "ALICE"));
-        else latex[i]->DrawLatex(14.2,8.0-i,Form("#bf{%s}", str_models[i-1].Data()));
+        if(i == 0) latex[i]->DrawLatex(14.2,y,Form("#bf{#color[215]{%s}}", "ALICE"));
+        else latex[i]->DrawLatex(14.2,y,Form("#bf{%s}", str_models[i-1].Data()));
+        y = y - 1;
     }  
 
-    TString path = "Results/" + str_subfolder + "CrossSec/Fiducial/fiducial";
-    c->Print((path + ".pdf").Data());
+    TString path = "Results/" + str_subfolder + "CrossSec/Fiducial/";
+    if(onlyPaperModels) path += "fiducial_paperModels.pdf";
+    else path += "fiducial_all.pdf";
+    c->Print(path.Data());
 
-    gr_err_corr->Print();
+    if(onlyPaperModels) {
+        TLegend *ltw = new TLegend(0.02,0.87,0.20,0.93);
+        ltw->AddEntry((TObject*)0,"#bf{This work}","");
+        ltw->SetMargin(0.);
+        ltw->SetTextSize(textSize);
+        ltw->SetBorderSize(0);
+        ltw->SetFillStyle(0);
+        ltw->Draw();
+
+        path = "Results/" + str_subfolder + "_rozprava/fiducial.pdf";
+        c->Print(path.Data());
+    }
+
+    gr_err_syst->Print();
 
     path = "Results/" + str_subfolder + "CrossSec/CrossSec_fiducial_int.txt";
     ofstream outfile(path.Data());

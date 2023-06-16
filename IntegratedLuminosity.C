@@ -249,6 +249,15 @@ void SumLumi(Int_t period)
     legLumi->SetFillStyle(0);
     legLumi->Draw();
 
+    /*    TLegend *ltw = new TLegend(0.75,0.88,0.85,0.94);
+    ltw->AddEntry((TObject*)0,"#bf{This work}","");
+    ltw->SetMargin(0.);
+    ltw->SetTextSize(0.055);
+    ltw->SetBorderSize(0);
+    ltw->SetFillStyle(0);
+    ltw->Draw();
+    */
+
     cLumi->SaveAs("Results/" + str_subfolder + "Lumi/lumi_ccup31_" + PeriodName[period] + ".pdf");
     cLumi->SaveAs("Results/" + str_subfolder + "Lumi/lumi_ccup31_" + PeriodName[period] + ".png");
 }

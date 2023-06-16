@@ -817,7 +817,9 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
                 //<< N_CohJ_bins_val[i] << R"( \pm )" << N_CohJ_bins_err[i] << "$ \t& $"
                 << N_IncJ_bins_val[i] << R"( \pm )" << N_IncJ_bins_err[i] << "$\t& $"
                 << N_Diss_bins_val[i] << R"( \pm )" << N_Diss_bins_err[i] << "$\t& $"
+                << std::fixed << std::setprecision(3)
                 << N_CohP_bins_val[i] << R"( \pm )" << N_CohP_bins_err[i] << "$\t& $"
+                << std::fixed << std::setprecision(1)
                 << N_IncP_bins_val[i] << R"( \pm )" << N_IncP_bins_err[i] << "$\t& $"
                 << std::fixed << std::setprecision(3)
                 << fDCoh_bins_val[i] << R"( \pm )" << fDCoh_bins_err[i] << "$\t& $"
@@ -898,6 +900,7 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
     PtFrame->GetXaxis()->SetTitle("#it{p}_{T} (GeV/#it{c})");
     PtFrame->GetXaxis()->SetTitleSize(0.05);
     PtFrame->GetXaxis()->SetLabelSize(0.05);
+    //PtFrame->GetXaxis()->SetDecimals(1);
     // Set Y axis
     //PtFrame->GetYaxis()->SetTitle(Form("Counts per bin"));
     PtFrame->GetYaxis()->SetTitle(Form("d#it{N}/d#it{p}_{T}"));
@@ -1048,23 +1051,36 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
 
     // ****************************************************************
     // Draw the result: paper figure
-    if(iRecShape == 4 && ifD == 0)
+    bool fitOld = (iRecShape == 0 && ifD == 0);
+    bool fitNew = (iRecShape == 4 && ifD == 0);
+    if(fitOld == true || fitNew == true)
     {
+        bool logScale = true;
+        bool showChi2 = true;
+        bool preliminary = false;
+
         TCanvas *cPaper = new TCanvas("cPaper","cPaper",900,800);
-        cPaper->SetTopMargin(0.03);
         cPaper->SetBottomMargin(0.12);
         cPaper->SetRightMargin(0.03);
         cPaper->SetLeftMargin(0.14);
-        cPaper->SetLogy();
         cPaper->cd();
-        PtFrameLog->GetYaxis()->SetTitleOffset(1.3);
-        //fFrameM->GetYaxis()->SetNdivisions(505);
-        PtFrameLog->Draw();
+        if(logScale) {
+            cPaper->SetTopMargin(0.03);
+            cPaper->SetLogy();
+            PtFrameLog->GetYaxis()->SetTitleOffset(1.3);
+            //fFrameM->GetYaxis()->SetNdivisions(505);
+            PtFrameLog->Draw();
+        } else {
+            cPaper->SetTopMargin(0.06);
+            PtFrame->GetYaxis()->SetTitleOffset(1.3);
+            PtFrame->Draw();
+        }
 
-        Bool_t preliminary = kFALSE;
-        Double_t xMin = 0.26;
+        double xMin = 0.26;
+        double yMin = 0.90;
         if(preliminary) xMin = 0.18;
-        TLegend *lx = new TLegend(xMin,0.90,0.90,0.96);
+        if(!logScale) yMin = 0.87;
+        TLegend *lx = new TLegend(xMin,yMin,0.90,yMin+0.06);
         if(preliminary) lx->AddEntry((TObject*)0,"ALICE Preliminary, Pb#minusPb #sqrt{#it{s}_{NN}} = 5.02 TeV","");
         else lx->AddEntry((TObject*)0,"ALICE, Pb#minusPb #sqrt{#it{s}_{NN}} = 5.02 TeV","");
         lx->SetMargin(0.);
@@ -1073,16 +1089,21 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
         lx->SetFillStyle(0);
         lx->Draw();
 
-        TLegend *ly = new TLegend(0.24,0.780,0.64,0.876);
+        int nRows = 2;
+        double yMax = 0.876;
+        if(!logScale) yMax = 0.846;
+        if(showChi2) nRows = 3;
+        TLegend *ly = new TLegend(0.24,yMax-nRows*0.048,0.64,yMax);
         ly->AddEntry((TObject*)0,"3.0 < #it{m}_{#mu#mu} < 3.2 GeV/#it{c}^{2}","");
         ly->AddEntry((TObject*)0,"|#it{y}| < 0.8","");
+        if(showChi2) ly->AddEntry((TObject*)0,Form("#chi^{2}/NDF = %.3f/%i",chi2*ResFit->floatParsFinal().getSize(), ResFit->floatParsFinal().getSize()),"");
         ly->SetMargin(0.);
         ly->SetTextSize(0.038);
         ly->SetBorderSize(0);
         ly->SetFillStyle(0);
         ly->Draw();
 
-        TLegend *lz = new TLegend(0.53,0.444,0.93,0.876);
+        TLegend *lz = new TLegend(0.53,yMax-0.432,0.93,yMax);
         lz->AddEntry((TObject*)0,"J/#psi #rightarrow #mu^{+} #mu^{-}","");
         lz->AddEntry((TObject*)0,"UPC, L_{int} = 232 #pm 7 #mub^{-1}","");
         lz->AddEntry("DHisData","data", "EPL");
@@ -1098,10 +1119,29 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
         lz->SetFillStyle(0);
         lz->Draw();
 
+        TLegend *ltw = new TLegend(0.30,yMax-0.25,0.64,yMax-0.19);
+        ltw->AddEntry((TObject*)0,"#bf{This work}","");
+        ltw->SetMargin(0.);
+        ltw->SetTextSize(0.038);
+        ltw->SetBorderSize(0);
+        ltw->SetFillStyle(0);
+        if(showChi2) ltw->Draw();
+
         if(preliminary) {
             cPaper->Print("Results/" + str_subfolder + "_PreliminaryFigures/ptFit.pdf");
             cPaper->Print("Results/" + str_subfolder + "_PreliminaryFigures/ptFit.eps");
-        } else cPaper->Print("Results/" + str_subfolder + "_PaperFigures/ptFit.pdf");
+        } else if(fitNew == true && showChi2 == false) {
+            cPaper->Print("Results/" + str_subfolder + "_PaperFigures/ptFit.pdf");
+        } else if(showChi2 == true) {
+            if(fitOld) {
+                if(logScale) cPaper->Print("Results/" + str_subfolder + "_rozprava/ptFit_old_log.pdf");
+                else         cPaper->Print("Results/" + str_subfolder + "_rozprava/ptFit_old.pdf");
+            }
+            if(fitNew) {
+                if(logScale) cPaper->Print("Results/" + str_subfolder + "_rozprava/ptFit_new_log.pdf");
+                else         cPaper->Print("Results/" + str_subfolder + "_rozprava/ptFit_new.pdf");
+            }
+        }
         delete cPaper;
     }
     // ****************************************************************

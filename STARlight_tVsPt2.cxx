@@ -33,15 +33,15 @@ void SetHisto(TH* h, TString xTitle, TString yTitle)
     // x-axis
     h->GetXaxis()->SetTitle(yTitle.Data());
     h->GetXaxis()->SetTitleSize(0.05);
-    h->GetXaxis()->SetTitleOffset(1.3);
+    h->GetXaxis()->SetTitleOffset(1.2);
     h->GetXaxis()->SetLabelSize(0.05);
-    h->GetXaxis()->SetLabelOffset(0.02);
+    h->GetXaxis()->SetLabelOffset(0.012);
     h->GetXaxis()->SetDecimals(1);
     // y-axis
     h->GetYaxis()->SetTitle(xTitle.Data());
     h->GetYaxis()->SetTitleSize(0.05);
     h->GetYaxis()->SetLabelSize(0.05);
-    h->GetYaxis()->SetTitleOffset(0.915);
+    h->GetYaxis()->SetTitleOffset(1.25);
     h->GetYaxis()->SetDecimals(1);
     // z-axis    
     h->GetZaxis()->SetLabelSize(0.05);
@@ -87,7 +87,7 @@ void PlotResults(Double_t pT2_min, Double_t pT2_max)
     // new: (March 2, 2023)
     Double_t maxDiff = +0.1;
     Double_t minDiff = -0.1;
-    TH2D* hDisp = new TH2D("hDips","(#it{p}_{T}^{2}#minus|#it{t}|)/|#it{t}| vs |#it{t}|",nBins,pT2_min,pT2_max,nBins,minDiff,maxDiff);
+    TH2D* hDisp = new TH2D("hDisp","(#it{p}_{T}^{2}#minus|#it{t}|)/|#it{t}| vs |#it{t}|",nBins,pT2_min,pT2_max,nBins,minDiff,maxDiff);
     TProfile* hMean = new TProfile("hMean","(#it{p}_{T}^{2}#minus|#it{t}|)/|#it{t}| vs |#it{t}|",nBins,pT2_min,pT2_max,minDiff,maxDiff);
 
     for(Int_t iEntry = 0; iEntry < nGenEv; iEntry++)
@@ -101,24 +101,35 @@ void PlotResults(Double_t pT2_min, Double_t pT2_max)
         hMean->Fill(abst, relDiff);
     }
 
-    TCanvas *c1 = new TCanvas("c1","",900,600);
+    TCanvas *c1 = new TCanvas("c1","",900,800);
     c1->SetLogz();
     c1->SetTopMargin(0.03);
-    c1->SetBottomMargin(0.145);
-    c1->SetRightMargin(0.11);
-    c1->SetLeftMargin(0.1);
-    SetHisto(h,"#it{p}_{T, J/#psi}^{2}#it{c}^{2} (GeV^{2})","|#it{t}| or #it{p}_{T, pom}^{2}#it{c}^{2} (GeV^{2})");
+    c1->SetBottomMargin(0.14);
+    c1->SetRightMargin(0.13);
+    c1->SetLeftMargin(0.14);
+    SetHisto(h,"#it{p}_{T,J/#psi}^{2} (GeV^{2}/#it{c}^{2})","|#it{t}|/#it{c}^{2} or #it{p}_{T,pom}^{2} (GeV^{2}/#it{c}^{2})");
     h->Draw("COLZ");
     TString sOut = "Results/" + str_subfolder + "STARlight_tVsPt2/" + Form("2dh_%.2f-%.2f", pT2_min, pT2_max);
     c1->Print((sOut + ".pdf").Data());
     c1->Print((sOut + ".png").Data());
+
+    TLegend *ltw = new TLegend(0.20,0.88,0.35,0.94);
+    ltw->AddEntry((TObject*)0,"#bf{This work}","");
+    ltw->SetMargin(0.);
+    ltw->SetTextSize(0.05);
+    ltw->SetBorderSize(0);
+    ltw->SetFillStyle(0);
+    ltw->Draw();
+
+    sOut = "Results/" + str_subfolder + "_rozprava/t_vs_pt_hist.pdf";
+    c1->Print(sOut.Data());
     
-    TCanvas *c2 = new TCanvas("c2","",900,600);
+    TCanvas *c2 = new TCanvas("c2","",900,800);
     c2->SetLogz();
     c2->SetTopMargin(0.03);
-    c2->SetBottomMargin(0.145);
-    c2->SetRightMargin(0.11);
-    c2->SetLeftMargin(0.1);
+    c2->SetBottomMargin(0.14);
+    c2->SetRightMargin(0.13);
+    c2->SetLeftMargin(0.14);
     SetHisto(hDisp,"(#it{p}_{T}^{2} #minus |#it{t}|) / |#it{t}| (-)","|#it{t}| (GeV^{2})");
     hDisp->Draw("COLZ");
     hMean->SetLineColor(kBlack);
@@ -240,38 +251,50 @@ void CorrectionPt2ToT()
     hCorrection->SetLineColor(kBlue);
     hCorrection->SetLineWidth(2.0);
 
-    TCanvas *c = new TCanvas("c", "c", 900, 600);
-    c->SetLogz();
+    TCanvas *c = new TCanvas("c","c",900,800);
     c->SetTopMargin(0.03);
-    c->SetBottomMargin(0.145);
-    c->SetRightMargin(0.02);
-    c->SetLeftMargin(0.14);
+    c->SetBottomMargin(0.14);
+    c->SetRightMargin(0.04);
+    c->SetLeftMargin(0.18);
 
     // a vertical axis
     hCorrection->GetYaxis()->SetTitle("#it{N}[#it{p}_{T,J/#psi}^{2} #in (|#it{t}|_{min}, |#it{t}|_{max})]/#it{N}[#it{p}_{T,pom}^{2} #in (|#it{t}|_{min}, |#it{t}|_{max})]");
-    hCorrection->GetYaxis()->SetTitleSize(0.048);
+    hCorrection->GetYaxis()->SetTitleSize(0.042);
     hCorrection->GetYaxis()->SetLabelSize(0.05);
-    hCorrection->GetYaxis()->SetTitleOffset(1.4);
+    hCorrection->GetYaxis()->SetTitleOffset(2.05);
     hCorrection->GetYaxis()->SetDecimals(3);
     // a horizontal axis
-    hCorrection->GetXaxis()->SetTitle("|#it{t}| or #it{p}_{T, pom}^{2}#it{c}^{2} (GeV^{2})");
+    hCorrection->GetXaxis()->SetTitle("|#it{t}|/#it{c}^{2} or #it{p}_{T,pom}^{2} (GeV^{2}/#it{c}^{2})");
     hCorrection->GetXaxis()->SetTitleSize(0.05);
-    hCorrection->GetXaxis()->SetTitleOffset(1.3);
+    hCorrection->GetXaxis()->SetTitleOffset(1.2);
     hCorrection->GetXaxis()->SetLabelSize(0.05);
     hCorrection->GetXaxis()->SetDecimals(1);
     // draw the hogram
     TString sOut = "Results/" + str_subfolder + "STARlight_tVsPt2/correctionPt2ToT";
     hCorrection->Draw("P");
     // Legend
-    TLegend *leg = new TLegend(0.12,0.76,0.40,0.96);
-    leg->AddEntry((TObject*)0,Form("STARlight Simulation"),""); 
+    /*
+    TLegend *leg = new TLegend(0.18,0.78,0.40,0.96);
+    leg->AddEntry((TObject*)0,Form("ALICE Simulation"),""); 
     leg->AddEntry((TObject*)0,Form("Pb#minusPb #sqrt{#it{s}_{NN}} = 5.02 TeV"),"");
     leg->AddEntry((TObject*)0,Form("inc J/#psi #rightarrow #mu^{+}#mu^{-}"),"");
     leg->SetTextSize(0.05);
     leg->SetBorderSize(0); // no border
     leg->SetFillStyle(0);  // legend is transparent
     leg->Draw();
+    */
  
+    c->Print((sOut + ".pdf").Data());
+
+    TLegend *ltw = new TLegend(0.25,0.88,0.40,0.94);
+    ltw->AddEntry((TObject*)0,"#bf{This work}","");
+    ltw->SetMargin(0.);
+    ltw->SetTextSize(0.05);
+    ltw->SetBorderSize(0);
+    ltw->SetFillStyle(0);
+    ltw->Draw();
+
+    sOut = "Results/" + str_subfolder + "_rozprava/t_vs_pt_ratio.pdf";
     c->Print((sOut + ".pdf").Data());
 
     return;

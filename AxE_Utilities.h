@@ -21,6 +21,7 @@ TH1F* hGen = NULL;
 TH1F* hAxE = NULL;
 Float_t NRec_tot_val, NRec_tot_err;
 Float_t NGen_tot_val, NGen_tot_err;
+bool tw = true;
 
 void SaveToFile(TString path, TH1F* h, Int_t prec = 0, Float_t N_tot_val = -1, Float_t N_tot_err = -1, Float_t fact = 1.) 
 {
@@ -90,12 +91,15 @@ TCanvas* CreateCanvas(TString name, bool log = kFALSE)
 
 TLegend* CreateLegendAxE()
 {
-    TLegend *l = new TLegend(0.50,0.69,0.90,0.94);
+    int nRows = 5;
+    if(tw) nRows++;
+    TLegend *l = new TLegend(0.50,0.94-nRows*0.05,0.90,0.94);
     l->AddEntry((TObject*)0,Form("ALICE Simulation"),"");
     l->AddEntry((TObject*)0,Form("Pb#minusPb #sqrt{#it{s}_{NN}} = 5.02 TeV"),"");
     l->AddEntry((TObject*)0,Form("inc J/#psi #rightarrow #mu^{+}#mu^{-}"),"");
     l->AddEntry((TObject*)0,Form("|#it{y}| < 0.8"),"");
     l->AddEntry((TObject*)0,Form("2.2 < #it{m} < 4.5 GeV/#it{c}^{2}"),"");
+    if(tw) l->AddEntry((TObject*)0,"#bf{This work}","");
     l->SetTextSize(0.045);
     l->SetBorderSize(0);
     l->SetFillStyle(0);
@@ -291,7 +295,7 @@ void AxE_PtBins_Calculate(Bool_t reWeight, Float_t fCutZ)
     AxE_PtBins_FillHistNGen(reWeight);
 
     hAxE = (TH1F*)hRec->Clone("hAxE");
-    hAxE->SetTitle("#it{N}_{rec}^{MC}/#it{N}_{gen}^{MC}");
+    hAxE->SetTitle("(Acc#times#varepsilon)_{MC} = #it{N}^{rec}_{MC}/#it{N}^{gen}_{MC}");
     hAxE->Sumw2();
     hAxE->Divide(hGen);
     hAxE->SetBit(TH1::kNoTitle);
@@ -304,8 +308,9 @@ void AxE_PtBins_Calculate(Bool_t reWeight, Float_t fCutZ)
     else                      folder = Form("VertexZ_SystUncertainties/Zcut%.1f_AxE_PtBins/",fCutZ);
     if(reWeight) name += "reweighted_";
     name += Form("AxE_%ibins",nPtBins);
-    PlotHistos(folder,name,"E0",kFALSE,0.8,hAxE,NULL,l);
-
+    if(tw) PlotHistos("_rozprava/",name,"E0",kFALSE,0.8,hAxE,NULL,l);
+    else PlotHistos(folder,name,"E0",kFALSE,0.8,hAxE,NULL,l);
+    
     // compare errors that Root gives with CalculateErrorBayes
     Bool_t DebugErrors = kTRUE;
     if(DebugErrors){
