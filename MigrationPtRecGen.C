@@ -45,28 +45,12 @@ void PlotHistBins(Bool_t inPercent)
     // Create 2D histogram
     // pT gen on the horizontal axis, pT rec on the vertical axis
     Double_t* boundaries_pT;
-    Double_t* boundaries_pT2;
     Double_t boundaries_pT_4[7] = { 0. };
     Double_t boundaries_pT_5[8] = { 0. };
-    Double_t boundaries_pT2_4[7] = { 0. };
-    Double_t boundaries_pT2_5[8] = { 0. };
-    if(nPtBins == 4)
-    {
-        boundaries_pT = &boundaries_pT_4[0];
-        boundaries_pT2 = &boundaries_pT2_4[0];
-    } 
-    else if(nPtBins == 5) 
-    {
-        boundaries_pT = &boundaries_pT_5[0];
-        boundaries_pT2 = &boundaries_pT2_5[0];
-    }
-    for(Int_t iBin = 1; iBin <= nPtBins+1; iBin++)
-    {
-        boundaries_pT[iBin] = ptBoundaries[iBin-1];
-        boundaries_pT2[iBin] = ptBoundaries[iBin-1]*ptBoundaries[iBin-1];
-    }
+    if(nPtBins == 4) boundaries_pT = &boundaries_pT_4[0];
+    else if(nPtBins == 5) boundaries_pT = &boundaries_pT_5[0];
+    for(Int_t iBin = 1; iBin <= nPtBins+1; iBin++) boundaries_pT[iBin] = ptBoundaries[iBin-1];
     boundaries_pT[nPtBins+2] = 1.2;
-    boundaries_pT2[nPtBins+2] = 1.2;
 
     // 2d histograms with pT bins
     TH2D *hMigration = new TH2D("hMigration", "pt gen vs pt rec", nPtBins+2, boundaries_pT, nPtBins+2, boundaries_pT);
@@ -187,12 +171,12 @@ void PlotHistBins(Bool_t inPercent)
     hPtGenVsRec->GetZaxis()->SetLabelSize(0.05);
     hPtGenVsRec->Draw("COLZ");
 
-    TString path_out2 = "Results/" + str_subfolder + "MigrationPtRecGen/migr_hist.pdf";
+    TString path_out2 = "Results/" + str_subfolder + "MigrationPtRecGen/migr_2d_dist.pdf";
     c2->Print(path_out2.Data());
 
     ltw->SetTextSize(0.05);
     ltw->Draw();
-    path_out2 = "Results/" + str_subfolder + "_rozprava/migr_hist.pdf";
+    path_out2 = "Results/" + str_subfolder + "_rozprava/migr_2d_dist.pdf";
     c2->Print(path_out2.Data());
     delete ltw;
 
@@ -239,7 +223,7 @@ void PlotHistBins(Bool_t inPercent)
     leg->SetFillStyle(0);
     leg->Draw();
 
-    TString path_out3 = "Results/" + str_subfolder + "MigrationPtRecGen/migr_dist.pdf";
+    TString path_out3 = "Results/" + str_subfolder + "MigrationPtRecGen/migr_1d_dists.pdf";
     c3->Print(path_out3.Data());
 
     ltw = new TLegend(0.67,0.69,0.93,0.76);
@@ -249,7 +233,7 @@ void PlotHistBins(Bool_t inPercent)
     ltw->SetBorderSize(0);
     ltw->SetFillStyle(0);
     ltw->Draw();
-    path_out3 = "Results/" + str_subfolder + "_rozprava/migr_dist.pdf";
+    path_out3 = "Results/" + str_subfolder + "_rozprava/migr_1d_dists.pdf";
     c3->Print(path_out3.Data());
 
     return;

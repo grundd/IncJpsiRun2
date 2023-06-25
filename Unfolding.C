@@ -20,6 +20,7 @@
 #include "AnalysisManager.h"
 #include "AnalysisConfig.h"
 #include "SetPtBinning.h"
+//#include "_STARlight_Utilities.h"
 
 const Int_t nIter = 6;
 Bool_t scale = kFALSE;
@@ -265,10 +266,13 @@ void Unfolding(Int_t iAnalysis)
 
     // MC tree: kIncohJpsiToMu
     TFile *f = TFile::Open((str_in_MC_fldr_rec + "AnalysisResults_MC_kIncohJpsiToMu.root").Data(), "read");
+    //TFile *f = TFile::Open("Trees/STARlight/IncJ_tVsPt/tree_tPtGammaVMPom.root", "read");
     if(f) Printf("Input file %s loaded.", f->GetName());
     TTree *t = dynamic_cast<TTree*> (f->Get(str_in_MC_tree_rec.Data()));
+    //TTree *t = dynamic_cast<TTree*> (f->Get("tPtGammaVMPom"));
     if(t) Printf("Input tree %s loaded.", t->GetName());
     ConnectTreeVariablesMCRec(t);
+    //ConnectTreeVariables_tPtGammaVMPom(t);
 
     // go over the events and fill the RM
     Int_t nEn = t->GetEntries();
@@ -283,14 +287,20 @@ void Unfolding(Int_t iAnalysis)
     for(Int_t iEn = 0; iEn < nTrain; iEn++)
     {
         t->GetEntry(iEn);
+        //-->
+        //Double_t pt2 = fPtVM*fPtVM;
+        //Double_t abst = fPtPm*fPtPm;
+        //<--
         // update the progress bar
         if((iEn+1) % (Int_t)(nTrain/10.) == 0) {
             progress += 10.;
             cout << "[" << progress << "%] done." << endl;
         }
         // event passes all the selection criteria
-        if(EventPassedMCRec(0,-1)) {
+        if(EventPassedMCRec(0,-1)) 
+        {
             response.Fill(fPt*fPt,fPtGen*fPtGen);
+            //response.Fill(pt2,abst);
         } 
         /*
         else {
@@ -334,9 +344,16 @@ void Unfolding(Int_t iAnalysis)
             progress += 10.;
             cout << "[" << progress << "%] done." << endl;
         }
-        if(EventPassedMCRec(0,-1)) { 
+        if(EventPassedMCRec(0,-1)) 
+        { 
+            //-->
+            //Double_t pt2 = fPtVM*fPtVM;
+            //Double_t abst = fPtPm*fPtPm;
+            //<--
             hTestGen->Fill(fPtGen*fPtGen);
             hTestRec->Fill(fPt*fPt);
+            //hTestGen->Fill(abst);
+            //hTestRec->Fill(pt2);
         }
     }
     // unfold hTestRec:
@@ -421,13 +438,15 @@ void Unfolding(Int_t iAnalysis)
     // import the cross section
     TH1F* hToUnfoldCS = new TH1F("hToUnfoldCS","",nPtBins,tBoundaries);
     ifs.open("Results/" + str_subfolder + "CrossSec/CrossSec_photo.txt");
-    for(Int_t i = 0; i < nPtBins; i++)
+    for(Int_t i = 0; i < nPtBins+1; i++)
     {
         // cross section values in mub
         Int_t bin; Float_t tLow, tUpp, sig_val, sig_err_stat, sig_err_syst_uncr, sig_err_syst_corr;
         ifs >> bin >> tLow >> tUpp >> sig_val >> sig_err_stat >> sig_err_syst_uncr >> sig_err_syst_corr;
-        hToUnfoldCS->SetBinContent(i+1, sig_val * (tUpp - tLow));
-        hToUnfoldCS->SetBinError(i+1, sig_err_stat * (tUpp - tLow));
+        if(i >= 1) {
+            hToUnfoldCS->SetBinContent(i, sig_val);
+            hToUnfoldCS->SetBinError(i, sig_err_stat);
+        }
     }
     ifs.close();
     // print the values
