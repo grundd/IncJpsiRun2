@@ -431,7 +431,8 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
     if(hData_vsT) Printf("Histogram %s loaded.", hData_vsT->GetName());
     */
 
-    RooDataHist DHisData("DHisData","DHisData",fPt,hData);
+    //hData->Scale(1.,"width");
+    RooDataHist DHisData("DHisData","DHisData",fPt,Import(*hData,false)); // hData
     Printf("Binned data with subtracted background loaded.");
     /*
     RooDataHist DHisData_vsT("DHisData_vsT","DHisData_vsT",fPt2,hData_vsT);
@@ -881,12 +882,12 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
     // Draw the pT fit
     // Without log scale
     RooPlot* PtFrame = fPt.frame(Title("pT fit"));
-    DHisData.plotOn(PtFrame,Name("DHisData"),Binning(fPtBins_PtFit),MarkerStyle(kFullCircle),MarkerSize(1.),LineWidth(2));
-    if(iRecShape == 0 || iRecShape == 1 || iRecShape == 4 || iRecShape > 1000){
+    DHisData.plotOn(PtFrame,Name("DHisData"),DataError(RooAbsData::SumW2),MarkerStyle(kFullCircle),MarkerSize(1.),LineWidth(2)); // Binning(fPtBins_PtFit)
+    if(iRecShape == 0 || iRecShape == 1 || iRecShape == 4 || iRecShape > 1000) {
         Mod->plotOn(PtFrame,Name("hPDFCohJ"),Components(hPDFCohJ),LineColor(kGreen+1),LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
-    } else if(iRecShape == 2){
+    } else if(iRecShape == 2) {
         Mod->plotOn(PtFrame,Name("gPDFCohJ"),Components(*gPDFCohJ),LineColor(kGreen+1),LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
-    } else if(iRecShape == 3){
+    } else if(iRecShape == 3) {
         Mod->plotOn(PtFrame,Name("sumPdfCohJ"),Components(*sumPdfCohJ),LineColor(kGreen+1),LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
     }
     Mod->plotOn(PtFrame,Name("hPDFIncJ"),Components(hPDFIncJ),LineColor(kRed),LineStyle(1),LineWidth(3),Range(""),Normalization(sum_all_val,RooAbsReal::NumEvent));
@@ -919,7 +920,7 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
 
     // With log scale
     RooPlot* PtFrameLog = fPt.frame(Title("pT fit log scale"));
-    DHisData.plotOn(PtFrameLog,Name("DHisData"),Binning(fPtBins_PtFit),MarkerStyle(kFullCircle),MarkerSize(1.),LineWidth(2));
+    DHisData.plotOn(PtFrameLog,Name("DHisData"),DataError(RooAbsData::SumW2),MarkerStyle(kFullCircle),MarkerSize(1.),LineWidth(2));
     if(iRecShape == 0 || iRecShape == 1 || iRecShape == 4 || iRecShape > 1000){
         Mod->plotOn(PtFrameLog,Name("hPDFCohJ"),Components(hPDFCohJ),LineColor(kGreen+1),LineStyle(1),LineWidth(3),Normalization(sum_all_val,RooAbsReal::NumEvent));
     } else if(iRecShape == 2){
@@ -1049,16 +1050,20 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
     delete cPtLog;
     //delete cPt2Log;
 
+    TLegend *lx = NULL;
+    TLegend *ly = NULL;
+    TLegend *lz = NULL;
+    TLegend *ltw = NULL;
+
     // ****************************************************************
     // Draw the result: paper figure
     bool fitOld = (iRecShape == 0 && ifD == 0);
     bool fitNew = (iRecShape == 4 && ifD == 0);
+    bool logScale = true;
+    bool showChi2 = true;
+    bool preliminary = false;
     if(fitOld == true || fitNew == true)
     {
-        bool logScale = true;
-        bool showChi2 = true;
-        bool preliminary = false;
-
         TCanvas *cPaper = new TCanvas("cPaper","cPaper",900,800);
         cPaper->SetBottomMargin(0.12);
         cPaper->SetRightMargin(0.03);
@@ -1080,7 +1085,7 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
         double yMin = 0.90;
         if(preliminary) xMin = 0.18;
         if(!logScale) yMin = 0.87;
-        TLegend *lx = new TLegend(xMin,yMin,0.90,yMin+0.06);
+        lx = new TLegend(xMin,yMin,0.90,yMin+0.06);
         if(preliminary) lx->AddEntry((TObject*)0,"ALICE Preliminary, Pb#minusPb #sqrt{#it{s}_{NN}} = 5.02 TeV","");
         else lx->AddEntry((TObject*)0,"ALICE, Pb#minusPb #sqrt{#it{s}_{NN}} = 5.02 TeV","");
         lx->SetMargin(0.);
@@ -1093,17 +1098,18 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
         double yMax = 0.876;
         if(!logScale) yMax = 0.846;
         if(showChi2) nRows = 3;
-        TLegend *ly = new TLegend(0.24,yMax-nRows*0.048,0.64,yMax);
+        ly = new TLegend(0.24,yMax-nRows*0.048,0.64,yMax);
         ly->AddEntry((TObject*)0,"3.0 < #it{m}_{#mu#mu} < 3.2 GeV/#it{c}^{2}","");
         ly->AddEntry((TObject*)0,"|#it{y}| < 0.8","");
-        if(showChi2) ly->AddEntry((TObject*)0,Form("#chi^{2}/NDF = %.3f/%i",chi2*ResFit->floatParsFinal().getSize(), ResFit->floatParsFinal().getSize()),"");
+        //if(showChi2) ly->AddEntry((TObject*)0,Form("#chi^{2}/NDF = %.3f/%i",chi2*ResFit->floatParsFinal().getSize(), ResFit->floatParsFinal().getSize()),"");
+        if(showChi2) ly->AddEntry((TObject*)0,Form("#chi^{2}/NDF = %.3f",chi2),"");
         ly->SetMargin(0.);
         ly->SetTextSize(0.038);
         ly->SetBorderSize(0);
         ly->SetFillStyle(0);
         ly->Draw();
 
-        TLegend *lz = new TLegend(0.53,yMax-0.432,0.93,yMax);
+        lz = new TLegend(0.53,yMax-0.432,0.93,yMax);
         lz->AddEntry((TObject*)0,"J/#psi #rightarrow #mu^{+} #mu^{-}","");
         lz->AddEntry((TObject*)0,"UPC, L_{int} = 232 #pm 7 #mub^{-1}","");
         lz->AddEntry("DHisData","data", "EPL");
@@ -1119,7 +1125,7 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
         lz->SetFillStyle(0);
         lz->Draw();
 
-        TLegend *ltw = new TLegend(0.30,yMax-0.25,0.64,yMax-0.19);
+        ltw = new TLegend(0.30,yMax-0.25,0.64,yMax-0.19);
         ltw->AddEntry((TObject*)0,"#bf{This work}","");
         ltw->SetMargin(0.);
         ltw->SetTextSize(0.038);
@@ -1144,7 +1150,162 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
         }
         delete cPaper;
     }
+
     // ****************************************************************
+    // Plot with the ratio panel
+    if(fitOld == true || fitNew == true)
+    {
+        // data: scale to bin width
+        hData->Scale(1.,"width"); 
+        hData->SetMarkerStyle(kFullCircle);
+        hData->SetMarkerSize(1.);
+        hData->SetLineWidth(2);
+        // axis settings
+        // x-axis
+        hData->GetXaxis()->SetTitle("#it{p}_{T} (GeV/#it{c})");
+        hData->GetXaxis()->SetTitleSize(0.05);
+        hData->GetXaxis()->SetLabelSize(0.05);
+        hData->GetXaxis()->SetDecimals(1);
+        // y-axis
+        hData->GetYaxis()->SetTitle(Form("d#it{N}/d#it{p}_{T} (GeV/#it{c})^{-1}"));
+        hData->GetYaxis()->SetTitleSize(0.05);
+        hData->GetYaxis()->SetTitleOffset(0.95);
+        hData->GetYaxis()->SetLabelSize(0.05);
+        hData->GetYaxis()->SetLabelOffset(0.01);
+        hData->GetYaxis()->SetMaxDigits(2);
+        hData->GetYaxis()->SetDecimals(1);
+        float lowLimit = 25.;
+        hData->GetYaxis()->SetRangeUser(lowLimit,5e4);
+        // models
+        TH1F* hModel = (TH1F*)Mod->createHistogram("hModel",fPt,IntrinsicBinning());
+        hModel->Scale(sum_all_val/hModel->Integral("width"));
+        hModel->SetLineColor(kBlue);
+        hModel->SetLineStyle(1);
+        hModel->SetLineWidth(3);
+        TH1F* hCohJp = (TH1F*)hPDFCohJ.createHistogram("hCohJp",fPt,IntrinsicBinning());
+        hCohJp->Scale(N_CohJ_all_val/hCohJp->Integral("width"));
+        hCohJp->SetLineColor(kGreen+1);
+        hCohJp->SetLineStyle(1);
+        hCohJp->SetLineWidth(3);
+        TH1F* hIncJp = (TH1F*)hPDFIncJ.createHistogram("hIncJp",fPt,IntrinsicBinning());
+        hIncJp->Scale(N_IncJ_all_val/hIncJp->Integral("width"));
+        hIncJp->SetLineColor(kRed);
+        hIncJp->SetLineStyle(1);
+        hIncJp->SetLineWidth(3);
+        TH1F* hCohFd = (TH1F*)hPDFCohP.createHistogram("hCohFd",fPt,IntrinsicBinning());
+        hCohFd->Scale(N_CohP_all_val/hCohFd->Integral("width"));
+        hCohFd->SetLineColor(kGreen+1);
+        hCohFd->SetLineStyle(7);
+        hCohFd->SetLineWidth(3);
+        TH1F* hIncFd = (TH1F*)hPDFIncP.createHistogram("hIncFd",fPt,IntrinsicBinning());
+        hIncFd->Scale(N_IncP_all_val/hIncFd->Integral("width"));
+        hIncFd->SetLineColor(kRed);
+        hIncFd->SetLineStyle(7);
+        hIncFd->SetLineWidth(3);
+        TH1F* hIncDs = (TH1F*)hPDFDiss.createHistogram("hIncDs",fPt,IntrinsicBinning());
+        hIncDs->Scale(N_Diss_all_val/hIncDs->Integral("width"));
+        hIncDs->SetLineColor(kGray+1);
+        hIncDs->SetLineStyle(1);
+        hIncDs->SetLineWidth(3);
+        // ratio model/data
+        TH1F* hRatio = (TH1F*)hModel->Clone("hRatio");
+        hRatio->Sumw2();
+        hRatio->Divide(hData);
+        // canvas
+        TCanvas *cRoot = new TCanvas("cRoot","",900,800);
+        cRoot->SetBottomMargin(0.12);
+        cRoot->SetRightMargin(0.03);
+        cRoot->SetLeftMargin(0.14);
+        cRoot->cd();
+        if(logScale) {
+            cRoot->SetTopMargin(0.03);
+            cRoot->SetLogy();
+            hData->GetYaxis()->SetTitleOffset(1.3);
+        } else {
+            cRoot->SetTopMargin(0.06);
+            hData->GetYaxis()->SetTitleOffset(1.3);
+        }
+        hData->Draw();
+        float range_low[5] = { 0. };
+        float range_upp[5] = { 2. };
+        if(true) for(int i = 1; i <= hCohJp->GetNbinsX(); i++) {
+            float edge_low = hCohJp->GetBinLowEdge(i);
+            float edge_upp = hCohJp->GetBinLowEdge(i+1);
+            if(i < 15) {
+                if(hCohJp->GetBinContent(i) < lowLimit) range_low[0] = edge_upp;
+                if(hIncJp->GetBinContent(i) < lowLimit) range_low[1] = edge_upp;
+                if(hCohFd->GetBinContent(i) < lowLimit) range_low[2] = edge_upp;
+                if(hIncFd->GetBinContent(i) < lowLimit) range_low[3] = edge_upp;
+                if(hIncDs->GetBinContent(i) < lowLimit) range_low[4] = edge_upp;
+            } else {
+                if(hCohJp->GetBinContent(i) > lowLimit) range_upp[0] = edge_upp;
+                if(hIncJp->GetBinContent(i) > lowLimit) range_upp[1] = edge_upp;
+                if(hCohFd->GetBinContent(i) > lowLimit) range_upp[2] = edge_upp;
+                if(hIncFd->GetBinContent(i) > lowLimit) range_upp[3] = edge_upp;
+                if(hIncDs->GetBinContent(i) > lowLimit) range_upp[4] = edge_upp;
+            }
+        }
+        hCohJp->GetXaxis()->SetRangeUser(range_low[0],range_upp[0]);
+        hCohJp->Draw("HIST SAME");
+        hIncJp->GetXaxis()->SetRangeUser(range_low[1],range_upp[1]);
+        hIncJp->Draw("HIST SAME");
+        hCohFd->GetXaxis()->SetRangeUser(range_low[2],range_upp[2]);
+        hCohFd->Draw("HIST SAME");
+        hIncFd->GetXaxis()->SetRangeUser(range_low[3],range_upp[3]);
+        hIncFd->Draw("HIST SAME");
+        hIncDs->GetXaxis()->SetRangeUser(range_low[4],range_upp[4]);
+        hIncDs->Draw("HIST SAME");
+        hModel->Draw("HIST SAME");
+        lx->Draw();
+        ly->Draw();
+        lz->Draw();
+        // ratio canvas
+        TCanvas *cRat = new TCanvas("cRat","",900,300);
+        cRat->SetTopMargin(0.06);
+        cRat->SetBottomMargin(0.25);
+        cRat->SetRightMargin(0.03);
+        cRat->SetLeftMargin(0.14);
+        cRat->cd();
+        TH1F* hOne = (TH1F*)hRatio->Clone("hOne");
+        for(int i = 1; i <= hOne->GetNbinsX(); i++) hOne->SetBinContent(i,1.0);
+        hOne->SetLineColor(kOrange+1);
+        hOne->SetLineStyle(7);
+        hOne->SetLineWidth(2);
+        // axis settings
+        // x-axis
+        hOne->GetXaxis()->SetTitle("#it{p}_{T} (GeV/#it{c})");
+        hOne->GetXaxis()->SetTitleSize(0.11);
+        hOne->GetXaxis()->SetLabelSize(0.11);
+        //hOne->GetXaxis()->SetDecimals(1);
+        // y-axis
+        hOne->GetYaxis()->SetTitle(Form("Model / Data"));
+        hOne->GetYaxis()->SetTitleSize(0.11);
+        hOne->GetYaxis()->SetTitleOffset(0.6);
+        hOne->GetYaxis()->SetLabelSize(0.11);
+        hOne->GetYaxis()->SetLabelOffset(0.01);
+        hOne->GetYaxis()->SetMaxDigits(2);
+        //hOne->GetYaxis()->SetDecimals(1);
+        hOne->GetYaxis()->SetRangeUser(0.,2.1);
+        hOne->GetYaxis()->SetNdivisions(505);
+        hOne->Draw("HIST");
+        hRatio->SetMarkerStyle(kFullCircle);
+        hRatio->SetMarkerSize(0.9);
+        hRatio->SetLineWidth(2);
+        hRatio->SetLineColor(kBlack);
+        hRatio->Draw("SAME");
+        // print the results
+        if(fitOld) {
+            if(logScale) cRoot->Print("Results/" + str_subfolder + "_PaperFigures/ptFit_old_root_log.pdf");
+            else         cRoot->Print("Results/" + str_subfolder + "_PaperFigures/ptFit_old_root.pdf");
+            cRat->Print("Results/" + str_subfolder + "_PaperFigures/ptFit_old_ratios.pdf");
+        }
+        if(fitNew) {
+            if(logScale) cRoot->Print("Results/" + str_subfolder + "_PaperFigures/ptFit_new_root_log.pdf");
+            else         cRoot->Print("Results/" + str_subfolder + "_PaperFigures/ptFit_new_root.pdf");
+            cRat->Print("Results/" + str_subfolder + "_PaperFigures/ptFit_new_ratios.pdf");
+        }
+        delete cRoot;
+    }
 
     return;
 }

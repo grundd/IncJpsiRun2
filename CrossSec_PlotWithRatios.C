@@ -4,8 +4,8 @@
 // my headers
 #include "CrossSec_Utilities.h"
 
-TGraphErrors *gr_ratios[7] = { NULL };
-TGraph *gr_binned[7] = { NULL };
+TGraphErrors *gr_ratios[9] = { NULL };
+TGraph *gr_binned[9] = { NULL };
 Double_t textSize1 = 0.044; // for plot only
 Double_t textSize2 = 0.100; // for ratios only
 Double_t textSize3 = 0.050; // for plot in plot with ratios
@@ -57,6 +57,8 @@ void DrawLegend1(Int_t iModels, Double_t x1, Double_t y1, Double_t x2, Double_t 
     if(iModels != 1) l1->AddEntry(gr_models[4],str_models[4],draw_leg.Data());
     if(iModels != 2) l1->AddEntry(gr_models[5],str_models[5],draw_leg.Data());
     if(iModels != 1) l1->AddEntry(gr_models[6],str_models[6],draw_leg.Data());
+    if(iModels != 2) l1->AddEntry(gr_models[7],str_models[7],draw_leg.Data());
+    if(iModels != 1) l1->AddEntry(gr_models[8],str_models[8],draw_leg.Data());
     l1->Draw();
 
     return;
@@ -90,6 +92,8 @@ void DrawLegend3(Int_t iModels, Double_t x1, Double_t y1, Double_t x2, Double_t 
     if(iModels != 1) l3->AddEntry(gr_ratios[4],str_models[4],"P");
     if(iModels != 2) l3->AddEntry(gr_ratios[5],str_models[5],"P");
     if(iModels != 1) l3->AddEntry(gr_ratios[6],str_models[6],"P");
+    if(iModels != 2) l3->AddEntry(gr_ratios[7],str_models[7],"P");
+    if(iModels != 1) l3->AddEntry(gr_ratios[8],str_models[8],"P");
     l3->Draw();
 
     return;
@@ -179,6 +183,10 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
     // GSZ error bands:
     SetupSysErrorBox(gr_GSZ_err[0],kGreen);
     SetupSysErrorBox(gr_GSZ_err[1],kOrange);
+    // MSS-CGC-fl
+    SetLineMarkerProperties(gr_models[7],colors[7],1,kOpenDiamond,1.8); //(!)
+    // MSS-CGC
+    SetLineMarkerProperties(gr_models[8],colors[8],1,kFullDiamond,1.8); //(!)
 
     // global style settings:
     gStyle->SetTextFont(42); // so that latex text is not bold
@@ -246,7 +254,7 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
 
     // ********************************************************************************
     // calculate and plot the ratios
-    for(Int_t i = 0; i < 7; i++) {
+    for(Int_t i = 0; i < 9; i++) {
         gr_ratios[i] = new TGraphErrors(nPtBins);
         gr_binned[i] = (TGraph*)lg->FindObject("grBinned_" + str_models[i]);
     } 
@@ -270,7 +278,7 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
         err_x_upp = gr_data_uncr->GetErrorXhigh(iBin);
         err_x_low = gr_data_uncr->GetErrorXlow(iBin);
         
-        for(Int_t i = 0; i < 7; i++) gr_ratios[i]->SetPoint(iBin, x, gr_binned[i]->GetPointY(iBin) / gr_data_uncr->GetPointY(iBin));
+        for(Int_t i = 0; i < 9; i++) gr_ratios[i]->SetPoint(iBin, x, gr_binned[i]->GetPointY(iBin) / gr_data_uncr->GetPointY(iBin));
 
         Double_t ratio_correction = 1/y;
         err_y_uncr *= ratio_correction;
@@ -311,6 +319,10 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
     SetLineMarkerProperties(gr_ratios[5],colors[5],1,kOpenCircle,1.2);
     // GSZ-el
     SetLineMarkerProperties(gr_ratios[6],colors[6],1,kFullCircle,1.2);
+    // MSS-CGC-fl
+    SetLineMarkerProperties(gr_ratios[7],colors[7],1,kOpenDiamond,1.8); //(!)
+    // MSS-CGC
+    SetLineMarkerProperties(gr_ratios[8],colors[8],1,kFullDiamond,1.8); //(!)
 
     // ********************************************************************************
     // draw the canvas with "ratios"
@@ -380,6 +392,8 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
     if(iModels != 1 && iModels != 3) gr_models[2]->Draw(draw_opt.Data());
     if(iModels != 2) gr_models[3]->Draw(draw_opt.Data());
     if(iModels != 1) gr_models[4]->Draw(draw_opt.Data());
+    if(iModels != 2) gr_models[7]->Draw(draw_opt.Data());
+    if(iModels != 1) gr_models[8]->Draw(draw_opt.Data());
     gr_data_uncr->Draw("PZ SAME");
 
     // draw latex label
@@ -420,6 +434,8 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
     if(iModels != 1) gr_ratios[4]->Draw("P SAME");
     if(iModels != 2) gr_ratios[5]->Draw("P SAME");
     if(iModels != 1) gr_ratios[6]->Draw("P SAME");
+    if(iModels != 2) gr_ratios[7]->Draw("P SAME");
+    if(iModels != 1) gr_ratios[8]->Draw("P SAME");
     gr_err_uncr->Draw("SAME PZ");
     line->Draw("SAME");
     /*

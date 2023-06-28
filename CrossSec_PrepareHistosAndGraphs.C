@@ -17,12 +17,13 @@ void CrossSec_PrepareHistosAndGraphs(Int_t iAnalysis)
     LoadGraphs_CCK();
     LoadGraphs_MS();
     LoadGraphs_GSZ();
+    LoadGraphs_MSS();
 
     // create histograms from the graphs and save them to a file
     TList *lh = new TList(); // list of histograms
     TList *lg = new TList(); // list of graphs
 
-    for(Int_t i = 0; i < 7; i++)
+    for(Int_t i = 0; i < 9; i++)
     {
         CreateHistogramFromGraph(i);
         lh->Add(h_models[i]);
@@ -35,7 +36,7 @@ void CrossSec_PrepareHistosAndGraphs(Int_t iAnalysis)
     gSystem->Exec("mkdir -p Results/" + str_subfolder + "CrossSec/PrepareHistosAndGraphs/");
     gSystem->Exec("mkdir -p Results/" + str_subfolder + "CrossSec/PrepareHistosAndGraphs/AverageT/");
 
-    for(Int_t i = 0; i < 7; i++)
+    for(Int_t i = 0; i < 9; i++)
     {
         // prepare the output file for the average values of |t|
         ofstream os;

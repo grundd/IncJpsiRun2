@@ -34,31 +34,35 @@ TGraphAsymmErrors* gr_data_stat = NULL;
 TGraphAsymmErrors* gr_data_syst_uncr = NULL;
 TGraphAsymmErrors* gr_data_syst_corr = NULL;
 // order of the models within the analysis: STARlight, CCK-hs, CCK-n, MS-hs, MS-p, GSZ-el+diss, GSZ-el
-TString str_models[7] = {"STARlight",
+TString str_models[9] = {"STARlight",
                          "CCK-hs",
                          "CCK-n",
                          "MS-hs",
                          "MS-p",
                          "GSZ-el+diss",
-                         "GSZ-el"};
-TGraph* gr_models[7] = { NULL };
+                         "GSZ-el",
+                         "MSS-CGC+fl",
+                         "MSS-CGC"};
+TGraph* gr_models[9] = { NULL };
 TGraph* gr_GSZ_err[2] = { NULL };
 Double_t GSZ_err_scale_upp[2] = { 0 };
 Double_t GSZ_err_scale_low[2] = { 0 };
-TH1D* h_models[7] = { NULL };
-Int_t n_models[7] = {125, 75, 75, 183, 183, 100, 100};
+TH1D* h_models[9] = { NULL };
+Int_t n_models[9] = {125, 75, 75, 183, 183, 100, 100, 696, 696};
 Double_t *tBoundaries = NULL;
 Double_t tBoundaries_4bins[5] = { 0 };
 Double_t tBoundaries_5bins[6] = { 0 };
 Int_t lineWidth = 3;
-Color_t colors[7] = {
+Color_t colors[9] = {
     kYellow+2, // STARlight
     kRed+1, // CCK-hs
     kCyan+2, // CCK-n
     kViolet-1, // MS-hs
     kBlue, // MS-p
     kGreen+2, // GSZ-el+diss
-    kOrange+2 // GSZ-el
+    kOrange+2, // GSZ-el
+    kRed+1, // MSS-CGC+fl (!)
+    kYellow+2, // MSS-CGC (!)
 };
 
 void InitObjects()
@@ -78,7 +82,7 @@ void InitObjects()
     gr_data_syst_uncr->SetName("gr_data_syst_uncr");
     gr_data_syst_corr->SetName("gr_data_syst_corr");
     
-    for(Int_t i = 0; i < 7; i++)
+    for(Int_t i = 0; i < 9; i++)
     {
         gr_models[i] = new TGraph(n_models[i]);
         gr_models[i]->SetName("gr_" + str_models[i]);
@@ -341,6 +345,37 @@ void LoadGraphs_GSZ(Bool_t print = kFALSE)
         Printf(" el+diss: %.5f", GSZ_err_scale_low[0]);
         Printf(" el     : %.5f", GSZ_err_scale_low[1]);
         Printf(" +++++++++++++++++++++++++++++++");
+    }
+
+    return;
+}
+
+// the MSS (CGC) model
+void LoadGraphs_MSS(Bool_t print = kFALSE)
+{
+    ifstream ifs;
+    ifs.open("Trees/PhotoCrossSec/Heikki_new/cgc_with_shapefluct.txt"); 
+    for(Int_t i = 0; i < 696; i++)
+    {
+        // cross section values in mb
+        Double_t abs_t_val(0.), sigma_val(0.);
+        ifs >> abs_t_val >> sigma_val;
+        gr_models[7]->SetPoint(i,abs_t_val,sigma_val); // MSS-CGC+fluct
+    }
+    ifs.close();
+    ifs.open("Trees/PhotoCrossSec/Heikki_new/cgc_no_shapefluct.txt"); 
+    for(Int_t i = 0; i < 696; i++)
+    {
+        Double_t abs_t_val(0.), sigma_val(0.);
+        ifs >> abs_t_val >> sigma_val;
+        gr_models[8]->SetPoint(i,abs_t_val,sigma_val); // MSS-CGC
+    }
+    ifs.close();
+    Printf("TGraphs for MSS created.");
+    if(print)
+    {
+        gr_models[7]->Print();
+        gr_models[8]->Print();
     }
 
     return;
