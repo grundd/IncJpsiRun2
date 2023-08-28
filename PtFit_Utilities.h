@@ -171,6 +171,8 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
 //     = -1 => R = 0.17
 //     = 1 => R = 0.19
 //     = 2 => R = 0.20
+//     = 10 => test for Guillermo (July 2023): R_coh = 0.18; R_inc = 0.21
+//     = 11 => test for Guillermo (July 2023): R_coh = 0.18; R_inc = 0.23
 {
     Printf("###########################################");
     // ratio of the coherent psi(2S) and J/psi cross sections
@@ -182,7 +184,9 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
     // Load the values of fD coefficients
     Double_t fDCoh, fDInc;
     ifstream ifs;
-    ifs.open(Form("Results/%sPtFit_FeedDownNormalization/fD_only_R_coh%.3f_R_inc%.3f.txt", str_subfolder.Data(), R, R));
+    if(ifD < 10) ifs.open(Form("Results/%sPtFit_FeedDownNormalization/fD_only_R_coh%.3f_R_inc%.3f.txt", str_subfolder.Data(), R, R));
+    else if(ifD == 10) ifs.open(Form("Results/%sPtFit_FeedDownNormalization/fD_only_R_coh0.180_R_inc0.210.txt", str_subfolder.Data()));
+    else if(ifD == 11) ifs.open(Form("Results/%sPtFit_FeedDownNormalization/fD_only_R_coh0.180_R_inc0.230.txt", str_subfolder.Data()));
     if(!ifs.fail())
     {
         // Read data from the file
@@ -498,16 +502,16 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
        iRecShape == 3) name += Form("PtFit_NoBkg/CohJ%i", iRecShape);
     // if RecShape == 4
     // if iDiss == 5 and ifD == 0 => optimal pT fit
-    else if(iRecShape == 4 && iDiss == 5 && ifD == 0){
+    else if(iRecShape == 4 && iDiss == 5 && ifD == 0) {
         name += Form("PtFit_NoBkg/RecSh%i_fD%i", iRecShape, ifD);
     } 
     // if ifD != 0 => systematic uncertainties
-    else if(iRecShape == 4 && ifD != 0){
+    else if(iRecShape == 4 && iDiss == 5 && ifD != 0) {
         gSystem->Exec("mkdir -p Results/" + str_subfolder + "PtFit_SystUncertainties/");
         name += Form("PtFit_SystUncertainties/RecSh%i_fD%i", iRecShape, ifD);
     }
     // if iDiss > 5 => systematic uncertainties
-    else if(iRecShape == 4 && iDiss > 5){
+    else if(iRecShape == 4 && iDiss > 5) {
         gSystem->Exec("mkdir -p Results/" + str_subfolder + "PtFit_SystUncertainties/");
         name += Form("PtFit_SystUncertainties/RecSh%i_Diss%i", iRecShape, iDiss);
     }
@@ -1062,6 +1066,7 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
     bool logScale = true;
     bool showChi2 = true;
     bool preliminary = false;
+    
     if(fitOld == true || fitNew == true)
     {
         TCanvas *cPaper = new TCanvas("cPaper","cPaper",900,800);
@@ -1102,7 +1107,7 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
         ly->AddEntry((TObject*)0,"3.0 < #it{m}_{#mu#mu} < 3.2 GeV/#it{c}^{2}","");
         ly->AddEntry((TObject*)0,"|#it{y}| < 0.8","");
         //if(showChi2) ly->AddEntry((TObject*)0,Form("#chi^{2}/NDF = %.3f/%i",chi2*ResFit->floatParsFinal().getSize(), ResFit->floatParsFinal().getSize()),"");
-        if(showChi2) ly->AddEntry((TObject*)0,Form("#chi^{2}/NDF = %.3f",chi2),"");
+        if(showChi2) ly->AddEntry((TObject*)0,Form("#chi^{2}/NDF = %.2f",chi2),"");
         ly->SetMargin(0.);
         ly->SetTextSize(0.038);
         ly->SetBorderSize(0);
@@ -1160,6 +1165,7 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
         hData->SetMarkerStyle(kFullCircle);
         hData->SetMarkerSize(1.);
         hData->SetLineWidth(2);
+        hData->SetLineColor(kBlack);
         // axis settings
         // x-axis
         hData->GetXaxis()->SetTitle("#it{p}_{T} (GeV/#it{c})");
@@ -1177,36 +1183,42 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
         float lowLimit = 25.;
         hData->GetYaxis()->SetRangeUser(lowLimit,5e4);
         // models
-        TH1F* hModel = (TH1F*)Mod->createHistogram("hModel",fPt,IntrinsicBinning());
-        hModel->Scale(sum_all_val/hModel->Integral("width"));
-        hModel->SetLineColor(kBlue);
-        hModel->SetLineStyle(1);
-        hModel->SetLineWidth(3);
-        TH1F* hCohJp = (TH1F*)hPDFCohJ.createHistogram("hCohJp",fPt,IntrinsicBinning());
-        hCohJp->Scale(N_CohJ_all_val/hCohJp->Integral("width"));
+        TH1F* hCohJp = (TH1F*)hCohJ->Clone("hCohJp"); //(TH1F*)hPDFCohJ.createHistogram("hCohJp",fPt,IntrinsicBinning());
+        hCohJp->Scale(N_CohJ_all_val/hCohJp->Integral(),"width");
         hCohJp->SetLineColor(kGreen+1);
         hCohJp->SetLineStyle(1);
         hCohJp->SetLineWidth(3);
-        TH1F* hIncJp = (TH1F*)hPDFIncJ.createHistogram("hIncJp",fPt,IntrinsicBinning());
-        hIncJp->Scale(N_IncJ_all_val/hIncJp->Integral("width"));
+        TH1F* hIncJp = (TH1F*)hIncJ->Clone("hIncJp"); //(TH1F*)hPDFIncJ.createHistogram("hIncJp",fPt,IntrinsicBinning());
+        hIncJp->Scale(N_IncJ_all_val/hIncJp->Integral(),"width");
         hIncJp->SetLineColor(kRed);
         hIncJp->SetLineStyle(1);
         hIncJp->SetLineWidth(3);
-        TH1F* hCohFd = (TH1F*)hPDFCohP.createHistogram("hCohFd",fPt,IntrinsicBinning());
-        hCohFd->Scale(N_CohP_all_val/hCohFd->Integral("width"));
+        TH1F* hCohFd = (TH1F*)hCohP->Clone("hCohFd"); //(TH1F*)hPDFCohP.createHistogram("hCohFd",fPt,IntrinsicBinning());
+        hCohFd->Scale(N_CohP_all_val/hCohFd->Integral(),"width");
         hCohFd->SetLineColor(kGreen+1);
         hCohFd->SetLineStyle(7);
         hCohFd->SetLineWidth(3);
-        TH1F* hIncFd = (TH1F*)hPDFIncP.createHistogram("hIncFd",fPt,IntrinsicBinning());
-        hIncFd->Scale(N_IncP_all_val/hIncFd->Integral("width"));
+        TH1F* hIncFd = (TH1F*)hIncP->Clone("hIncFd"); //(TH1F*)hPDFIncP.createHistogram("hIncFd",fPt,IntrinsicBinning());
+        hIncFd->Scale(N_IncP_all_val/hIncFd->Integral(),"width");
         hIncFd->SetLineColor(kRed);
         hIncFd->SetLineStyle(7);
         hIncFd->SetLineWidth(3);
-        TH1F* hIncDs = (TH1F*)hPDFDiss.createHistogram("hIncDs",fPt,IntrinsicBinning());
-        hIncDs->Scale(N_Diss_all_val/hIncDs->Integral("width"));
+        TH1F* hIncDs = (TH1F*)hDiss->Clone("hIncDs"); //(TH1F*)hPDFDiss.createHistogram("hIncDs",fPt,IntrinsicBinning());
+        hIncDs->Scale(N_Diss_all_val/hIncDs->Integral(),"width");
         hIncDs->SetLineColor(kGray+1);
         hIncDs->SetLineStyle(1);
         hIncDs->SetLineWidth(3);
+        //TH1F* hModel = (TH1F*)Mod->createHistogram("hModel",fPt,IntrinsicBinning());
+        TH1F* hModel = new TH1F("hModel","",nPtBins_PtFit,ptBoundaries_PtFit);
+        hModel->Add(hCohJp,1.);
+        hModel->Add(hIncJp,1.);
+        hModel->Add(hCohFd,1.);
+        hModel->Add(hIncFd,1.);
+        hModel->Add(hIncDs,1.);
+        //hModel->Scale(sum_all_val/hModel->Integral(),"width");
+        hModel->SetLineColor(kBlue);
+        hModel->SetLineStyle(1);
+        hModel->SetLineWidth(3);
         // ratio model/data
         TH1F* hRatio = (TH1F*)hModel->Clone("hRatio");
         hRatio->Sumw2();
@@ -1224,10 +1236,13 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
         } else {
             cRoot->SetTopMargin(0.06);
             hData->GetYaxis()->SetTitleOffset(1.3);
-        }
-        hData->Draw();
+            hData->GetYaxis()->SetMaxDigits(3);
+            hData->GetXaxis()->SetRangeUser(0.,0.7);
+        } 
+        hData->Draw("AXIS");
         float range_low[5] = { 0. };
-        float range_upp[5] = { 2. };
+        float range_upp[5] = { 2.1 };
+        ///*
         if(true) for(int i = 1; i <= hCohJp->GetNbinsX(); i++) {
             float edge_low = hCohJp->GetBinLowEdge(i);
             float edge_upp = hCohJp->GetBinLowEdge(i+1);
@@ -1245,6 +1260,7 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
                 if(hIncDs->GetBinContent(i) > lowLimit) range_upp[4] = edge_upp;
             }
         }
+        //*/
         hCohJp->GetXaxis()->SetRangeUser(range_low[0],range_upp[0]);
         hCohJp->Draw("HIST SAME");
         hIncJp->GetXaxis()->SetRangeUser(range_low[1],range_upp[1]);
@@ -1256,9 +1272,11 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
         hIncDs->GetXaxis()->SetRangeUser(range_low[4],range_upp[4]);
         hIncDs->Draw("HIST SAME");
         hModel->Draw("HIST SAME");
+        hData->Draw("SAME");
         lx->Draw();
         ly->Draw();
         lz->Draw();
+        //ltw->Draw();
         // ratio canvas
         TCanvas *cRat = new TCanvas("cRat","",900,300);
         cRat->SetTopMargin(0.06);
@@ -1293,18 +1311,30 @@ void PtFit_NoBkg_DoFit(Int_t iRecShape, Int_t iDiss = 5, Int_t ifD = 0)
         hRatio->SetLineWidth(2);
         hRatio->SetLineColor(kBlack);
         hRatio->Draw("SAME");
+
         // print the results
         if(fitOld) {
-            if(logScale) cRoot->Print("Results/" + str_subfolder + "_PaperFigures/ptFit_old_root_log.pdf");
-            else         cRoot->Print("Results/" + str_subfolder + "_PaperFigures/ptFit_old_root.pdf");
+            if(logScale) { 
+                cRoot->Print("Results/" + str_subfolder + "_PaperFigures/ptFit_old_root_log.pdf");
+                cRoot->Print("Results/" + str_subfolder + "_PaperFigures/ptFit_old_root_log.C");
+            } else {
+                cRoot->Print("Results/" + str_subfolder + "_PaperFigures/ptFit_old_root.pdf");
+                cRoot->Print("Results/" + str_subfolder + "_PaperFigures/ptFit_old_root.C");
+            }        
             cRat->Print("Results/" + str_subfolder + "_PaperFigures/ptFit_old_ratios.pdf");
         }
         if(fitNew) {
-            if(logScale) cRoot->Print("Results/" + str_subfolder + "_PaperFigures/ptFit_new_root_log.pdf");
-            else         cRoot->Print("Results/" + str_subfolder + "_PaperFigures/ptFit_new_root.pdf");
+            if(logScale) {
+                cRoot->Print("Results/" + str_subfolder + "_PaperFigures/ptFit_new_root_log.pdf");
+                cRoot->Print("Results/" + str_subfolder + "_PaperFigures/ptFit_new_root_log.C");
+            } else {
+                cRoot->Print("Results/" + str_subfolder + "_PaperFigures/ptFit_new_root.pdf");
+                cRoot->Print("Results/" + str_subfolder + "_PaperFigures/ptFit_new_root.C");
+            }         
             cRat->Print("Results/" + str_subfolder + "_PaperFigures/ptFit_new_ratios.pdf");
         }
         delete cRoot;
+        delete cRat;
     }
 
     return;

@@ -58,7 +58,7 @@ void VetoEfficiency(Int_t iAnalysis)
     VetoEff_Calculate(1,kFALSE);
     VetoEff_Calculate(2,kFALSE);
     // calculate systematic uncertainties
-    if(kTRUE) VetoEff_SystUncertainty();
+    if(kFALSE) VetoEff_SystUncertainty();
 
     return;
 }
@@ -253,9 +253,9 @@ void VetoEff_SubtractBkg()
         nEv_sig_bins[i]->SubtractMatrix(nEv_bkg_bins[i]);
         nEv_sig_bins[i]->PrintToConsole();
         Printf("Remaining number of events: %.2f", nEv_sig_bins[i]->CountEvents_tot());
-        //nEv_bkg_bins[i]->PrintToFile("Results/" + str_subfolder + Form("VetoEfficiency/bkg_subtracted/PtBins/nEv_bkg_bin%i.txt",i+1),1);
+        nEv_bkg_bins[i]->PrintToFile("Results/" + str_subfolder + Form("VetoEfficiency/bkg_subtracted/PtBins/nEv_bkg_bin%i.txt",i+1),1);
         nEv_bkg_bins[i]->Plot("Results/" + str_subfolder + Form("VetoEfficiency/bkg_subtracted/PtBins/nEv_bkg_bin%i.pdf",i+1));
-        //nEv_sig_bins[i]->PrintToFile("Results/" + str_subfolder + Form("VetoEfficiency/bkg_subtracted/PtBins/nEv_sig_bin%i.txt",i+1),1);
+        nEv_sig_bins[i]->PrintToFile("Results/" + str_subfolder + Form("VetoEfficiency/bkg_subtracted/PtBins/nEv_sig_bin%i.txt",i+1),1);
         nEv_sig_bins[i]->Plot("Results/" + str_subfolder + Form("VetoEfficiency/bkg_subtracted/PtBins/nEv_sig_bin%i.pdf",i+1));
     }
 

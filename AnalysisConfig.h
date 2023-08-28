@@ -54,6 +54,16 @@ void InitAnalysis(Int_t iAnalysis){
         isNParInDSCBFixed = kTRUE;
         areBinYieldsUniform = kFALSE;
     }
+    // test 2023, with different bins in the pT fit
+    if(iAnalysis == 4)
+    {
+        str_subfolder = "5bins_test2023/";
+        nPtBins = 5;
+        isPass3 = kTRUE;
+        isPIDCalibrated = kTRUE;
+        isNParInDSCBFixed = kTRUE;
+        areBinYieldsUniform = kFALSE;
+    }
     // set reduced run lists for the given pass
     SetReducedRunList(isPass3);
     // set the path to the input data

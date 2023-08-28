@@ -20,6 +20,7 @@ void CrossSec_Fiducial(Int_t iAnalysis)
     LoadGraphs_CCK();
     LoadGraphs_MS();
     LoadGraphs_GSZ();
+    LoadGraphs_MSS();
 
     gSystem->Exec("mkdir -p Results/" + str_subfolder + "CrossSec/Fiducial/");
 
@@ -128,8 +129,8 @@ void PlotFiducialCrossSection(bool onlyPaperModels)
     gr_err_tot->SetFillStyle(1001);
     gr_err_tot->SetFillColorAlpha(kGray+2,0.35);
     // models
-    Double_t integrals[7] = { 0 };
-    for(Int_t i = 0; i < 7; i++)
+    Double_t integrals[9] = { 0 };
+    for(Int_t i = 0; i < 9; i++)
     {
         CreateHistogramFromGraph(i);
         Double_t integral(0.), avgt(0.);

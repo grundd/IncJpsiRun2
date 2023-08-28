@@ -6,20 +6,27 @@
 
 TGraphErrors *gr_ratios[9] = { NULL };
 TGraph *gr_binned[9] = { NULL };
-Double_t textSize1 = 0.044; // for plot only
-Double_t textSize2 = 0.100; // for ratios only
-Double_t textSize3 = 0.050; // for plot in plot with ratios
-Double_t textSize4 = 0.140; // for ratios in plot with ratios
+float textSize1 = 0.044; // for plot only
+float textSize2 = 0.100; // for ratios only
+float textSize3 = 0.050; // for plot in plot with ratios
+float textSize4 = 0.140; // for ratios in plot with ratios
+// horizontal range of the plots
+float t_low = 0.04; // GeV^2
+float t_upp = 1.2; // Gev^2
 
-void PlotWithRatios(Int_t iBinn, Int_t iModels = 0);
-// iBinn == 0 => original binning of the models
-//       == 1 => everything in 5 bins as the data
-// iModels == 0 => all the models plotted in c3
-//         == 1 => only the models with fluctuations (CCK-hs, MS-hs, GSZ-el+diss)
-//         == 2 => only those without (SL, CCK-n, MS-p, GSZ-el)
-//         == 3 => only MS and GSZ (both versions of them)
+string SelectModels(int sel) {
+    string mods = ""; // which models to plot
+    if(sel == 0) mods = "012345678"; // all models
+    else if(sel == 1) mods = "1357"; // models with fluctuations (CCK-hs,MS-hs,GSZ-el+diss,MSS-CGC+fl)
+    else if(sel == 2) mods = "02468"; // models without flu. (CCK-n,MS-p,GSZ-el,MSS-CGC)
+    else if(sel == 3) mods = "3456"; // MS and GSZ
+    else if(sel == 4) mods = "345678"; // MS, GSZ and MSS
+    else if(sel == 5) mods = "5678"; // GSZ and MSS
+    else if(sel == 6) mods = "12"; // only CCK
+    return mods;
+}
 
-void SetPadMarginsLTRB(TVirtualPad* pad, Double_t l, Double_t t, Double_t r, Double_t b)
+void SetPadMarginsLTRB(TVirtualPad* pad, float l, float t, float r, float b)
 {
     pad->SetLeftMargin(l);
     pad->SetTopMargin(t);
@@ -27,7 +34,7 @@ void SetPadMarginsLTRB(TVirtualPad* pad, Double_t l, Double_t t, Double_t r, Dou
     pad->SetBottomMargin(b);
 }
 
-void SetFrame(TH1* fr, Double_t textSize)
+void SetFrame(TH1* fr, float textSize)
 {
     // title and label sizes
     fr->GetXaxis()->SetTitleSize(textSize);
@@ -40,31 +47,25 @@ void SetFrame(TH1* fr, Double_t textSize)
     fr->GetXaxis()->SetLabelFont(42);
     fr->GetYaxis()->SetLabelFont(42);
     // divisions on the x-axis
-    fr->GetXaxis()->SetNdivisions(505);
+    //fr->GetXaxis()->SetNdivisions(505);
 }
 
-void DrawLegend1(Int_t iModels, Double_t x1, Double_t y1, Double_t x2, Double_t y2, Double_t textSize, TString draw_leg)
+void DrawLegend1(int modSel, float x1, float y1, float x2, float y2, float textSize, TString draw_leg)
 {
+    string mods = SelectModels(modSel);
     TLegend *l1 = SetLegend(x1,y1,x2,y2);
     l1->SetTextSize(textSize);
     l1->SetFillStyle(0);
     l1->SetMargin(0.30);
-    //for(Int_t i = 0; i < 7; i++) l1->AddEntry(gr_models[i],str_models[i],"L");
-    if(iModels != 1 && iModels != 3) l1->AddEntry(gr_models[0],str_models[0],draw_leg.Data());
-    if(iModels != 2 && iModels != 3) l1->AddEntry(gr_models[1],str_models[1],draw_leg.Data());
-    if(iModels != 1 && iModels != 3) l1->AddEntry(gr_models[2],str_models[2],draw_leg.Data());
-    if(iModels != 2) l1->AddEntry(gr_models[3],str_models[3],draw_leg.Data());
-    if(iModels != 1) l1->AddEntry(gr_models[4],str_models[4],draw_leg.Data());
-    if(iModels != 2) l1->AddEntry(gr_models[5],str_models[5],draw_leg.Data());
-    if(iModels != 1) l1->AddEntry(gr_models[6],str_models[6],draw_leg.Data());
-    if(iModels != 2) l1->AddEntry(gr_models[7],str_models[7],draw_leg.Data());
-    if(iModels != 1) l1->AddEntry(gr_models[8],str_models[8],draw_leg.Data());
+    for(int i = 0; i < 5; i++) if(mods.find(std::to_string(i)) != string::npos) l1->AddEntry(gr_models[i],str_models[i],draw_leg.Data());
+    for(int i = 7; i < 9; i++) if(mods.find(std::to_string(i)) != string::npos) l1->AddEntry(gr_models[i],str_models[i],draw_leg.Data());
+    for(int i = 5; i < 7; i++) if(mods.find(std::to_string(i)) != string::npos) l1->AddEntry(gr_models[i],str_models[i],draw_leg.Data());
     l1->Draw();
 
     return;
 }
 
-void DrawLegend2(Double_t x1, Double_t y1, Double_t x2, Double_t y2, Double_t textSize)
+void DrawLegend2(float x1, float y1, float x2, float y2, float textSize)
 {
     TLegend *l2 = SetLegend(x1,y1,x2,y2);
     l2->SetTextSize(textSize);
@@ -78,49 +79,22 @@ void DrawLegend2(Double_t x1, Double_t y1, Double_t x2, Double_t y2, Double_t te
     return;
 }
 
-void DrawLegend3(Int_t iModels, Double_t x1, Double_t y1, Double_t x2, Double_t y2, Double_t textSize)
+void DrawLegend3(int modSel, float x1, float y1, float x2, float y2, float textSize)
 {
+    string mods = SelectModels(modSel);
     TLegend *l3 = SetLegend(x1,y1,x2,y2);
     l3->SetTextSize(textSize);
     // here we do not want the legend to be transparent
     l3->SetMargin(0.20);
-    //for(Int_t i = 0; i < 7; i++) l3->AddEntry(gr_ratios[i],str_models[i],"P");
-    if(iModels != 1 && iModels != 3) l3->AddEntry(gr_ratios[0],str_models[0],"P");
-    if(iModels != 2 && iModels != 3) l3->AddEntry(gr_ratios[1],str_models[1],"P");
-    if(iModels != 1 && iModels != 3) l3->AddEntry(gr_ratios[2],str_models[2],"P");
-    if(iModels != 2) l3->AddEntry(gr_ratios[3],str_models[3],"P");
-    if(iModels != 1) l3->AddEntry(gr_ratios[4],str_models[4],"P");
-    if(iModels != 2) l3->AddEntry(gr_ratios[5],str_models[5],"P");
-    if(iModels != 1) l3->AddEntry(gr_ratios[6],str_models[6],"P");
-    if(iModels != 2) l3->AddEntry(gr_ratios[7],str_models[7],"P");
-    if(iModels != 1) l3->AddEntry(gr_ratios[8],str_models[8],"P");
+    for(int i = 0; i < 9; i++) if(mods.find(std::to_string(i)) != string::npos) l3->AddEntry(gr_ratios[i],str_models[i],"P");
     l3->Draw();
 
     return;
 }
 
-void CrossSec_PlotWithRatios(Int_t iAnalysis)
+void PlotWithRatios(int modSel, bool binned = false)
 {
-    InitAnalysis(iAnalysis);
-
-    gSystem->Exec("mkdir -p Results/" + str_subfolder + "CrossSec/PlotWithRatios/");
-
-    // original binning of the models ("continuous")
-    PlotWithRatios(0,0);
-    PlotWithRatios(0,1);
-    PlotWithRatios(0,2);
-    PlotWithRatios(0,3);
-    // binning from the measurement (5 bins)
-    //PlotWithRatios(1,0);
-    //PlotWithRatios(1,1);
-    //PlotWithRatios(1,2);
-    //PlotWithRatios(1,3);
-
-    return;
-}
-
-void PlotWithRatios(Int_t iBinn, Int_t iModels)
-{
+    string mods = SelectModels(modSel);
     // open the file with histograms and graphs
     TFile *f = TFile::Open("Results/" + str_subfolder + "CrossSec/PrepareHistosAndGraphs/histograms_and_graphs.root","read");
     if(f) Printf("Input file %s loaded.", f->GetName()); 
@@ -135,22 +109,18 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
     TString bin_save = "";
     TString draw_opt = "";
     TString draw_leg = "";
-    if(iBinn == 0)
-    {
+    if(!binned) {
         bin_load = "gr_";
         bin_save = "";
         draw_opt = "L SAME";
         draw_leg = "LP";
-    }    
-    else if(iBinn == 1)
-    {
+    } else {
         bin_load = "grBinned_";
         bin_save = "binned_";
         draw_opt = "P SAME";
         draw_leg = "P";
-    } 
-    else return;
-    for(Int_t i = 0; i < 9; i++) gr_models[i] = (TGraph*)lg->FindObject(bin_load + str_models[i]);
+    }
+    for(int i = 0; i < 9; i++) gr_models[i] = (TGraph*)lg->FindObject(bin_load + str_models[i]);
     gr_GSZ_err[0] = (TGraph*)lg->FindObject(bin_load + "err_GSZ-el+diss");
     gr_GSZ_err[1] = (TGraph*)lg->FindObject(bin_load + "err_GSZ-el");
 
@@ -186,7 +156,7 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
     // MSS-CGC-fl
     SetLineMarkerProperties(gr_models[7],colors[7],1,kOpenDiamond,1.8); //(!)
     // MSS-CGC
-    SetLineMarkerProperties(gr_models[8],colors[8],1,kFullDiamond,1.8); //(!)
+    SetLineMarkerProperties(gr_models[8],colors[8],2,kFullDiamond,1.8); //(!)
 
     // global style settings:
     gStyle->SetTextFont(42); // so that latex text is not bold
@@ -214,8 +184,8 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
 
     // draw frame
     TH1F* frPlot;
-    if(iModels == 3) frPlot = gPad->DrawFrame(0.04, 0.0004, 1.0, 0.04);
-    else             frPlot = gPad->DrawFrame(0.04, 0.0002, 1.0, 0.04);
+    if(modSel >= 3) frPlot = gPad->DrawFrame(t_low, 0.0004, t_upp, 0.04);
+    else            frPlot = gPad->DrawFrame(t_low, 0.0002, t_upp, 0.04);
     SetFrame(frPlot,textSize1);
     frPlot->SetTitle("Cross section dependence on |#it{t}|;|#it{t}| (GeV^{2});d#sigma_{#gammaPb}/d|#it{t}| (mb GeV^{-2})");
     // y-axis
@@ -228,13 +198,12 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
 
     c1->cd();
     frPlot->Draw("AXIS");
-
     gr_GSZ_err[1]->Draw("F SAME");
     gr_models[6]->Draw(draw_opt.Data());
     gr_GSZ_err[0]->Draw("F SAME");
     gr_models[5]->Draw(draw_opt.Data());
     gr_data_corr->Draw("5 SAME");
-    for(Int_t i = 0; i < 5; i++) gr_models[i]->Draw(draw_opt.Data());
+    for(int i = 3; i < 9; i++) if(i != 5 && i != 6) gr_models[i]->Draw(draw_opt.Data());
     gr_data_uncr->Draw("PZ SAME");
 
     // ALICE PbPb label
@@ -245,7 +214,8 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
     ltx->DrawLatex(0.55,0.94,"ALICE, Pb#minusPb UPC   #sqrt{#it{s}_{NN}} = 5.02 TeV");
 
     // draw the legend with the models
-    DrawLegend1(0,0.17,0.15,0.40,0.40,textSize1*0.7,draw_leg);
+    DrawLegend1(0,0.17,0.15,0.40,0.44,textSize1*0.7,draw_leg);
+    //DrawLegend1(modSel,0.70,0.65,0.90,0.90,textSize1*0.7,draw_leg);
 
     // draw the legend with the data + uncertainties
     DrawLegend2(0.54,0.80,0.92,0.92,textSize1*0.7);
@@ -254,7 +224,7 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
 
     // ********************************************************************************
     // calculate and plot the ratios
-    for(Int_t i = 0; i < 9; i++) {
+    for(int i = 0; i < 9; i++) {
         gr_ratios[i] = new TGraphErrors(nPtBins);
         gr_binned[i] = (TGraph*)lg->FindObject("grBinned_" + str_models[i]);
     } 
@@ -269,7 +239,7 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
     gr_err_uncr->SetLineWidth(2);
     gr_err_uncr->SetMarkerColor(kBlack);
 
-    for(Int_t iBin = 0; iBin < nPtBins; iBin++) 
+    for(int iBin = 0; iBin < nPtBins; iBin++) 
     {
         Double_t x, y, err_y_uncr, err_y_corr, err_x_low, err_x_upp;
         gr_data_uncr->GetPoint(iBin, x, y);
@@ -278,7 +248,7 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
         err_x_upp = gr_data_uncr->GetErrorXhigh(iBin);
         err_x_low = gr_data_uncr->GetErrorXlow(iBin);
         
-        for(Int_t i = 0; i < 9; i++) gr_ratios[i]->SetPoint(iBin, x, gr_binned[i]->GetPointY(iBin) / gr_data_uncr->GetPointY(iBin));
+        for(int i = 0; i < 9; i++) gr_ratios[i]->SetPoint(iBin, x, gr_binned[i]->GetPointY(iBin) / gr_data_uncr->GetPointY(iBin));
 
         Double_t ratio_correction = 1/y;
         err_y_uncr *= ratio_correction;
@@ -292,9 +262,9 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
     // error bars for GSZ in the ratio panel:
     /*
     LoadGraphs_GSZ();
-    for(Int_t i = 5; i < 7; i++) {
+    for(int i = 5; i < 7; i++) {
         cout << str_models[i] << "\n"; 
-        for(Int_t iBin = 0; iBin < nPtBins; iBin++) {
+        for(int iBin = 0; iBin < nPtBins; iBin++) {
             cout << Form("bin %i: rat: %.2f, upp: %.2f, low: %.2f, diff low-upp: %.2f\n",
                 iBin+1,
                 gr_ratios[i]->GetPointY(iBin),
@@ -331,9 +301,10 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
     SetPadMarginsLTRB(gPad,0.10,0.03,0.03,0.23);
 
     // draw frame
-    Float_t upperY = 2.4;
-    if(iModels == 3) upperY = 2.2;
-    TH1F* frRatio = gPad->DrawFrame(0.04,0.0,1.0,upperY);
+    Float_t rat_upp = 2.4;
+    if(modSel >= 3) rat_upp = 2.2;
+    if(modSel == 5) rat_upp = 1.65;
+    TH1F* frRatio = gPad->DrawFrame(t_low,0.0,t_upp,rat_upp);
     SetFrame(frRatio,textSize2);
     frRatio->SetTitle("Ratios model/data;|#it{t}| (GeV^{2});Model / Data");
     // y-axis
@@ -345,17 +316,19 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
     c2->cd();
     frRatio->Draw("AXIS");
     gr_err_corr->Draw("5 SAME");
-    for(Int_t i = 0; i < 7; i++) gr_ratios[i]->Draw("SAME P");
+    gr_ratios[0]->Draw("SAME P");
+    for(int i = 2; i < 9; i=i+2) gr_ratios[i]->Draw("SAME P");
+    for(int i = 1; i < 9; i=i+2) gr_ratios[i]->Draw("SAME P");
     gr_err_uncr->Draw("SAME PZ");
 
     // dashed line at y = 1
-    TLine *line = new TLine(0.04,1.,1.0,1.0);
+    TLine *line = new TLine(t_low,1.,t_upp,1.);
     line->SetLineColor(kBlack);
     line->SetLineWidth(1);
     line->SetLineStyle(2);
     line->Draw("SAME");
     // draw a legend
-    DrawLegend3(0,0.80,0.30,0.96,0.90,textSize2*0.65);
+    DrawLegend3(0,0.78,0.30,0.96,0.90,textSize2*0.65);
     c2->Modified();
     c2->Update();
     
@@ -381,29 +354,28 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
     frPlot->GetXaxis()->SetTitle("");
 
     frPlot->Draw("AXIS");
-    if(iModels != 1) gr_GSZ_err[1]->Draw("F SAME");
-    if(iModels != 1) gr_models[6]->Draw(draw_opt.Data());
-    if(iModels != 2) gr_GSZ_err[0]->Draw("F SAME");
-    if(iModels != 2) gr_models[5]->Draw(draw_opt.Data());
+    if(mods.find(std::to_string(6)) != string::npos) {
+        gr_GSZ_err[1]->Draw("F SAME");
+        gr_models[6]->Draw(draw_opt.Data());
+    }
+    if(mods.find(std::to_string(5)) != string::npos) {
+        gr_GSZ_err[0]->Draw("F SAME");
+        gr_models[5]->Draw(draw_opt.Data());
+    }
     gr_data_corr->Draw("5 SAME");
-    //for(Int_t i = 0; i < 5; i++) gr_models[i]->Draw("L SAME");
-    if(iModels != 1 && iModels != 3) gr_models[0]->Draw(draw_opt.Data());
-    if(iModels != 2 && iModels != 3) gr_models[1]->Draw(draw_opt.Data());
-    if(iModels != 1 && iModels != 3) gr_models[2]->Draw(draw_opt.Data());
-    if(iModels != 2) gr_models[3]->Draw(draw_opt.Data());
-    if(iModels != 1) gr_models[4]->Draw(draw_opt.Data());
-    if(iModels != 2) gr_models[7]->Draw(draw_opt.Data());
-    if(iModels != 1) gr_models[8]->Draw(draw_opt.Data());
+    if(mods.find(std::to_string(7)) != string::npos) gr_models[7]->Draw(draw_opt.Data());
+    for(int i = 0; i < 9; i++) if(mods.find(std::to_string(i)) != string::npos && i != 5 && i != 6 && i != 7) gr_models[i]->Draw(draw_opt.Data());
     gr_data_uncr->Draw("PZ SAME");
 
     // draw latex label
     ltx->SetTextSize(textSize3*0.88);
     Bool_t preliminary = kFALSE;
     if(preliminary) ltx->DrawLatex(0.55,0.92,"ALICE Preliminary, Pb#minusPb UPC   #sqrt{#it{s}_{NN}} = 5.02 TeV");
-    else ltx->DrawLatex(0.55,0.92,"ALICE, Pb#minusPb UPC   #sqrt{#it{s}_{NN}} = 5.02 TeV");
+    else            ltx->DrawLatex(0.55,0.92,"ALICE, Pb#minusPb UPC   #sqrt{#it{s}_{NN}} = 5.02 TeV");
     // draw legends
-    if(iModels == 0) DrawLegend1(iModels,0.17,0.04,0.42,0.34,textSize3*0.8,draw_leg);
-    else             DrawLegend1(iModels,0.17,0.04,0.42,0.28,textSize3*0.8,draw_leg);
+    if(modSel == 0) DrawLegend1(modSel,0.155,0.03,0.405,0.37,textSize3*0.8,draw_leg);
+    else if(modSel == 4) DrawLegend1(modSel,0.155,0.03,0.405,0.32,textSize3*0.8,draw_leg);
+    else DrawLegend1(modSel,0.155,0.03,0.405,0.28,textSize3*0.8,draw_leg);
     DrawLegend2(0.54,0.74,0.98,0.88,textSize3*0.8);
 
     // pad with the ratios
@@ -426,16 +398,9 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
     
     frRatio->Draw("AXIS");
     gr_err_corr->Draw("5 SAME");
-    //for(Int_t i = 0; i < 7; i++) gr_ratios[i]->Draw("SAME P");
-    if(iModels != 1 && iModels != 3) gr_ratios[0]->Draw("P SAME");
-    if(iModels != 2 && iModels != 3) gr_ratios[1]->Draw("P SAME");
-    if(iModels != 1 && iModels != 3) gr_ratios[2]->Draw("P SAME");
-    if(iModels != 2) gr_ratios[3]->Draw("P SAME");
-    if(iModels != 1) gr_ratios[4]->Draw("P SAME");
-    if(iModels != 2) gr_ratios[5]->Draw("P SAME");
-    if(iModels != 1) gr_ratios[6]->Draw("P SAME");
-    if(iModels != 2) gr_ratios[7]->Draw("P SAME");
-    if(iModels != 1) gr_ratios[8]->Draw("P SAME");
+    if(mods.find(std::to_string(0)) != string::npos) gr_ratios[0]->Draw("SAME P");
+    for(int i = 2; i < 9; i=i+2) if(mods.find(std::to_string(i)) != string::npos) gr_ratios[i]->Draw("SAME P");
+    for(int i = 1; i < 9; i=i+2) if(mods.find(std::to_string(i)) != string::npos) gr_ratios[i]->Draw("SAME P");
     gr_err_uncr->Draw("SAME PZ");
     line->Draw("SAME");
     /*
@@ -445,18 +410,42 @@ void PlotWithRatios(Int_t iBinn, Int_t iModels)
     */
 
     TString append = "";
-    if(iModels == 0) append += "_allModels";
-    if(iModels == 1) append += "_fluctOnly";
-    if(iModels == 2) append += "_nofluOnly";
-    if(iModels == 3) append += "_onlyMSGSZ";
+    if(modSel == 0) append += "_all";
+    if(modSel == 1) append += "_flu";
+    if(modSel == 2) append += "_noflu";
+    if(modSel == 3) append += "_MS-GSZ";
+    if(modSel == 4) append += "_MS-GSZ-MSS";
+    if(modSel == 5) append += "_MSS-GSZ";
+    if(modSel == 6) append += "_CCK";
+
+    append += Form("_upto%.1f",t_upp);
 
     c3->Print("Results/" + str_subfolder + "CrossSec/PlotWithRatios/" + bin_save + "plotWithRatios" + append + ".pdf");
-    if(iBinn == 0 && iModels == 3) {
+    c3->Print("Results/" + str_subfolder + "CrossSec/PlotWithRatios/" + bin_save + "plotWithRatios" + append + ".C");
+    if(!binned && modSel == 3) {
         if(preliminary) {
             c3->Print("Results/" + str_subfolder + "_PreliminaryFigures/crossSection.pdf");
             c3->Print("Results/" + str_subfolder + "_PreliminaryFigures/crossSection.eps");
         } else c3->Print("Results/" + str_subfolder + "_PaperFigures/crossSection.pdf");
     }
+
+    return;
+}
+
+void CrossSec_PlotWithRatios(int iAnalysis)
+{
+    InitAnalysis(iAnalysis);
+
+    gSystem->Exec("mkdir -p Results/" + str_subfolder + "CrossSec/PlotWithRatios/");
+
+    // original binning of the models ("continuous")
+    t_upp = 1.0;
+    for(int i = 0; i < 7; i++) PlotWithRatios(i);
+    t_upp = 1.2;
+    for(int i = 0; i < 7; i++) PlotWithRatios(i);
+    //PlotWithRatios(4);
+    // binning of the measurement (5 bins)
+    //for(int i = 0; i < 6; i++) PlotWithRatios(i,true);
 
     return;
 }

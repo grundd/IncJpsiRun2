@@ -25,9 +25,10 @@
 
 using namespace RooFit;
 
+Double_t N_bkgr_all[2]; // number of bkg events with arbitrary mass
 Double_t N_Jpsi_all[2]; // number of J/psi events with arbitrary mass
-Double_t N_bkgr_peak[2];// number of J/psi events with mass from 3.0 to 3.2 GeV (around the J/psi peak)
-Double_t N_Jpsi_peak[2];// number of bckgr events with mass from 3.0 to 3.2 GeV (around the J/psi peak)
+Double_t N_bkgr_peak[2]; // number of bkg events with mass from 3.0 to 3.2 GeV (around the J/psi peak)
+Double_t N_Jpsi_peak[2]; // number of J/psi events with mass from 3.0 to 3.2 GeV (around the J/psi peak)
 
 void InvMassFit_DrawCorrMatrix(TCanvas *cCorrMat, RooFitResult* fResFit)
 {
@@ -285,19 +286,21 @@ void InvMassFit_DoFit(Int_t opt, Double_t fMCutLow, Double_t fMCutUpp, Double_t 
     // Perform fit
     RooFitResult* fResFit = DSCBAndBkgPdf.fitTo(*fDataSet,Extended(kTRUE),Range(fMCutLow,fMCutUpp),Save());
 
-    // Calculate the number of all J/psi events
+    // Calculate the number of all J/psi events and of all events
     fM.setRange("WholeMassRange",fMCutLow,fMCutUpp);
-    RooAbsReal *iDSCB = DoubleSidedCB.createIntegral(fM,NormSet(fM),Range("WholeMassRange"));
-    // Integral of the normalized PDF, DSCB => will range from 0 to 1
-
+    RooAbsReal *iBkg = BkgPdf.createIntegral(fM,NormSet(fM),Range("WholeMassRange"));
+    N_bkgr_all[0] = iBkg->getVal()*N_bkg.getVal();
+    N_bkgr_all[1] = iBkg->getVal()*N_bkg.getError();
+    RooAbsReal *iDSCB = DoubleSidedCB.createIntegral(fM,NormSet(fM),Range("WholeMassRange")); // Integral of the normalized PDF, DSCB => will range from 0 to 1
     N_Jpsi_all[0] = iDSCB->getVal()*N_Jpsi.getVal();
     N_Jpsi_all[1] = iDSCB->getVal()*N_Jpsi.getError();
+    Double_t sum_all_val = N_bkgr_all[0] + N_Jpsi_all[0];
 
     // Calculate the number of J/psi and bkg events with mass from 3.0 to 3.2 GeV/c^2 (around the J/psi peak)
     fM.setRange("JpsiMassRange",3.0,3.2);
-    RooAbsReal *iBkg = BkgPdf.createIntegral(fM,NormSet(fM),Range("JpsiMassRange"));
-    N_bkgr_peak[0] = iBkg->getVal()*N_bkg.getVal();
-    N_bkgr_peak[1] = iBkg->getVal()*N_bkg.getError();
+    RooAbsReal *iBkg2 = BkgPdf.createIntegral(fM,NormSet(fM),Range("JpsiMassRange"));
+    N_bkgr_peak[0] = iBkg2->getVal()*N_bkg.getVal();
+    N_bkgr_peak[1] = iBkg2->getVal()*N_bkg.getError();
     RooAbsReal *iDSCB2 = DoubleSidedCB.createIntegral(fM,NormSet(fM),Range("JpsiMassRange"));
     N_Jpsi_peak[0] = iDSCB2->getVal()*N_Jpsi.getVal();
     N_Jpsi_peak[1] = iDSCB2->getVal()*N_Jpsi.getError();
@@ -315,10 +318,11 @@ void InvMassFit_DoFit(Int_t opt, Double_t fMCutLow, Double_t fMCutUpp, Double_t 
     gStyle->SetEndErrorSize(0.);
 
     RooPlot* fFrameM = fM.frame(Title("Mass fit")); 
-    fDataSet->plotOn(fFrameM,Name("fDataSet"),Binning(binM),MarkerStyle(kFullCircle),MarkerSize(1.),LineWidth(2));
+    fDataSet->plotOn(fFrameM,Name("fDataSet"),Binning(binM),MarkerStyle(1),MarkerSize(0.),LineWidth(0));
     DSCBAndBkgPdf.plotOn(fFrameM,Name("DoubleSidedCB"),Components(DoubleSidedCB),LineColor(kBlack),LineStyle(kDashed),LineWidth(3));
     DSCBAndBkgPdf.plotOn(fFrameM,Name("BkgPdf"),Components(BkgPdf),LineColor(kRed),LineStyle(kDashed),LineWidth(3));
     DSCBAndBkgPdf.plotOn(fFrameM,Name("DSCBAndBkgPdf"),LineColor(kBlue),LineWidth(3));
+    fDataSet->plotOn(fFrameM,Name("fDataSet"),Binning(binM),MarkerStyle(kFullCircle),MarkerSize(1.),LineWidth(2));
     // Vertical axis
     fFrameM->GetYaxis()->SetTitle(Form("Counts per %i MeV/#it{c}^{2}", BinSize));
     fFrameM->GetYaxis()->SetTitleSize(0.05);

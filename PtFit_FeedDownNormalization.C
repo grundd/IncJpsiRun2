@@ -55,6 +55,10 @@ void PtFit_FeedDownNormalization(Int_t iAnalysis)
     // error when all contributions combined in quadrature: R = 0.18 pm 0.03
     for(Double_t R = 0.16; R < 0.21; R+=0.01) Calc_fD(R,R);
 
+    // July 2023: test for Guillermo
+    Calc_fD(0.18,0.21);
+    Calc_fD(0.18,0.23);
+
     return;
 }
 

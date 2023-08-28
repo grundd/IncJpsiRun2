@@ -8,7 +8,7 @@ declare -i iAnalysis=3
 # define if compile each macro
 declare -i compile=0
 # define which macros to run
-declare -a arr=("0" "1" "2" "3" "4" "5" "6y" "7" "8y" "9y" "10")
+declare -a arr=("0" "1" "2" "3" "4" "5" "6" "7" "8" "9y" "10")
 #declare -a arr=("0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "10")
 #declare -a arr=("0" "1y" "2y" "3y" "4y" "5y" "6y" "7y" "8y" "9y" "10y")
 
@@ -152,7 +152,7 @@ if [ "${arr[9]}" = "9y" ]
 then
     if [[ "$compile" -eq 0 ]]
     then 
-        root -q STARlight_tVsPt.C\($iAnalysis\)
+        root -q STARlight_tVsPt2.cxx\($iAnalysis\)
         root -q CrossSec_Calculate.C\($iAnalysis\)
         root -q CrossSec_PrepareHistosAndGraphs.C\($iAnalysis\)
         root -q CrossSec_Plot.C\($iAnalysis\)
@@ -160,7 +160,7 @@ then
         root -q CrossSec_Fiducial.C\($iAnalysis\)
         root -q CrossSec_ExpFits.cxx\($iAnalysis\)
     else 
-        root -q STARlight_tVsPt.C+\($iAnalysis\)
+        root -q STARlight_tVsPt2.cxx+\($iAnalysis\)
         root -q CrossSec_Calculate.C+\($iAnalysis\)
         root -q CrossSec_PrepareHistosAndGraphs.C+\($iAnalysis\)
         root -q CrossSec_Plot.C+\($iAnalysis\)

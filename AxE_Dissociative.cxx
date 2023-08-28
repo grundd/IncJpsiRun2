@@ -162,7 +162,8 @@ void ReweightIncPtShape(TString process = "IncJ")
         PlotHistos("_rozprava/","hRec_oldNew","E0",kFALSE,0.,hRecOld,hRecNew,&lRec);
 
         // save the new template for the pT fit
-        if(process == "IncJ") {
+        if(process == "IncJ") 
+        {
             TFile* f = new TFile("Results/" + str_subfolder + "AxE_Dissociative/" + prefix + "incTemplate.root","RECREATE");
             TList *l = new TList();
             l->Add(hRec_ptFit);

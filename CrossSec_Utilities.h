@@ -41,8 +41,8 @@ TString str_models[9] = {"STARlight",
                          "MS-p",
                          "GSZ-el+diss",
                          "GSZ-el",
-                         "MSS-CGC+fl",
-                         "MSS-CGC"};
+                         "MSS-fl",
+                         "MSS"};
 TGraph* gr_models[9] = { NULL };
 TGraph* gr_GSZ_err[2] = { NULL };
 Double_t GSZ_err_scale_upp[2] = { 0 };
@@ -61,8 +61,8 @@ Color_t colors[9] = {
     kBlue, // MS-p
     kGreen+2, // GSZ-el+diss
     kOrange+2, // GSZ-el
-    kRed+1, // MSS-CGC+fl (!)
-    kYellow+2, // MSS-CGC (!)
+    kCyan+1, // MSS-CGC+fl (!)
+    kRed+1, // MSS-CGC (!)
 };
 
 void InitObjects()
@@ -471,7 +471,7 @@ Bool_t IntegrateModel(Int_t iM, Double_t t_min, Double_t t_max, Double_t &integr
         avgt = t_max + t_min / 2.;
     } 
     // if we integrate within at least two bins:
-    else{
+    else {
         // first bin
         Double_t first_integral = (h_models[iM]->GetBinLowEdge(iBinMin+1) - t_min) * h_models[iM]->GetBinContent(iBinMin);
         Double_t first_center = (t_min + h_models[iM]->GetBinLowEdge(iBinMin+1)) / 2.;
@@ -484,13 +484,13 @@ Bool_t IntegrateModel(Int_t iM, Double_t t_min, Double_t t_max, Double_t &integr
         avgt     += last_integral * last_center;
         // if within more than two bins => integral in between the first and last bins:
         if(iBinMax > iBinMin+1){
-            for(Int_t i = iBinMin+1; i <= iBinMax-1; i++){
+            for(Int_t i = iBinMin+1; i <= iBinMax-1; i++) {
                 integral += (h_models[iM]->GetBinLowEdge(i+1) - h_models[iM]->GetBinLowEdge(i)) * h_models[iM]->GetBinContent(i);
                 avgt     += (h_models[iM]->GetBinLowEdge(i+1) - h_models[iM]->GetBinLowEdge(i)) * h_models[iM]->GetBinContent(i) * h_models[iM]->GetBinCenter(i);
             }
             //integral += h_models[iM]->Integral(iBinMin+1, iBinMax-1, "width"); // alternative
         } 
-    }  
+    }
     avgt = avgt / integral; 
     // print the results
     ofstream os;

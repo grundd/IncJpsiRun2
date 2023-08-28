@@ -69,8 +69,7 @@ void PtFit_SetPtBinning()
     nBinsTypes = 6;
     BinsWidths = {0.01,0.02,0.05,0.10,0.20,0.50}; // GeV 
     BinsUpTo = {0.0, 0.1, 0.2, 0.4, 0.6, 1.0, 2.0}; // GeV
-    */ 
-
+    */
     // Fill the vector containing the calculated boundaries
     ptBoundaries_PtFit_vec.push_back(0.);
     tBoundaries_PtFit_vec.push_back(0.);
@@ -332,7 +331,7 @@ void PtFit_DoInvMassFit(Double_t fPtCutLow, Double_t fPtCutUpp, Int_t iBin)
     if(fPtCutLow < 0.20) sigma = 0.020;
     else                 sigma = 0.021;
     RooRealVar sigma_Jpsi("sigma_Jpsi","J/psi resolution",sigma,0.01,0.1);
-    //sigma_Jpsi.setConstant(kTRUE);
+    //sigma_Jpsi.setConstant(kTRUE); //(!)
     /*
     // Guillermo's suggestion: (email "new binning?" from July 14, 2022)
     Double_t sigma = 0.020;

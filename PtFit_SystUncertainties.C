@@ -176,5 +176,10 @@ void PtFit_SystUncertainties(Int_t iAnalysis)
     outfile.close();
     Printf("*** Results printed to %s. ***", str_out.Data());
 
+    // *******************************************************************************************
+    // Test for Guillermo (July 2023)
+    // *******************************************************************************************
+    PtFit_NoBkg_DoFit(4,5,10);
+    PtFit_NoBkg_DoFit(4,5,11);
     return;
 }

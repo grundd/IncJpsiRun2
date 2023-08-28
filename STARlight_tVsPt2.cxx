@@ -347,7 +347,7 @@ void CorrectionPt2ToT()
     ltw->SetFillStyle(0);
     ltw->Draw();
 
-    sOut = "Results/" + str_subfolder + "_rozprava/t_vs_pt_ratio.pdf";
+    sOut = "Results/" + str_subfolder + "_rozprava/t_vs_pt_ratio";
     c->Print((sOut + ".pdf").Data());
 
     return;

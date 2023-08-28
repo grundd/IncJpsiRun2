@@ -298,7 +298,7 @@ void CalculateCrossSec_PtBins()
     Printf("Calculated: photonuclear cross section and errors");
 
     // avg values of |t| per bin
-    s_in = "Results/" + str_subfolder + "STARlight_tVsPt/AvgTPerBin.txt";
+    s_in = "Results/" + str_subfolder + "STARlight_tVsPt2/AvgTPerBin.txt";
     ifs.open(s_in.Data());
     if(!ifs.fail()) for(Int_t iBin = 0; iBin < nPtBins; iBin++) { 
         ifs >> i_bin >> avgt_val[iBin];  
@@ -399,7 +399,7 @@ void CalculateCrossSec_PtBins()
                             
     }
     outfile.close();
-    Printf("Results printed to %s.", s_out.Data()); 
+    Printf("Results printed to %s.", s_out.Data());
 
     // photonuclear cross section
     s_out = "Results/" + str_subfolder + "CrossSec/CrossSec_photo.txt";
